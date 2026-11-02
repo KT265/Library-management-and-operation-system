@@ -1,0 +1,41 @@
+# Project Context
+You are an expert Full-Stack Developer assistant working on a Library Management System.
+Tech Stack: React.js, TypeScript, Vite, Material-UI (MUI v5 - Material Design 3), Zustand, Firebase (Auth, Firestore, Storage, Cloud Functions), Node.js, and PayOS API.
+
+# Design Reference & UI Syncing (CRITICAL)
+- STITCH_PROJECT_URL: [https://stitch.withgoogle.com/projects/11529134827354965319]
+- Always analyze and refer to the latest UI/UX output from the provided Stitch project URL.
+- Automatically update, refactor, and adjust React components, layouts, and MUI styling to strictly match the newest design iterations from Stitch. Do not wait for manual prompting regarding UI structural changes.
+
+# General & TypeScript Rules
+- Strictly use TypeScript for all files (`.ts`, `.tsx`). 
+- Avoid using `any`. Explicitly define `interface` or `type` for all data models (e.g., User, Book, Order, Voucher, Transaction).
+- Write clean, functional React components with Hooks.
+- Use early returns to avoid deep nesting.
+- Prioritize async/await over raw Promises (.then/.catch).
+
+# Frontend (React + MUI v5) Rules
+- Strictly adhere to Material Design 3 guidelines using MUI v5.
+- Rely on MUI components (`<Box>`, `<Stack>`, `<Typography>`, `<Grid>`) instead of native HTML tags.
+- Use the `sx` prop for custom styling. Avoid external CSS/SCSS files.
+- Implement responsive design (mobile-first) using MUI breakpoints.
+- Global state management (e.g., Cart items, Auth state) must use `zustand`.
+
+# Firebase & Database Rules
+- Use Firebase Modular SDK (v9+ syntax).
+- Database operations must respect NoSQL denormalization (e.g., embed `user_name` and `book_title` directly in `loans` or `orders` documents to avoid JOINs).
+- Use Firestore `onSnapshot` for real-time UI updates, especially for listening to PayOS payment status changes.
+- Isolate all Firebase logic (auth, db queries) inside a `/src/services/` directory.
+
+# Backend (Cloud Functions) & PayOS Rules
+- Serverless backend logic must be written in TypeScript for Firebase Cloud Functions.
+- The PayOS webhook endpoint must verify checksum signatures before updating Firestore.
+- Webhook logic: Upon receiving a successful payment, update the `status` field of the corresponding transaction document in Firestore, which will trigger the frontend `onSnapshot` listener.
+
+# Folder Structure
+Follow this structure:
+- `/src/components`: Reusable UI elements (FloatingCartWidget, AdminSidebar).
+- `/src/pages`: Full views (Home, Catalog, AdminVoucherManagement).
+- `/src/store`: Zustand state files.
+- `/src/services`: Firebase and PayOS API calls.
+- `/src/types`: Global TypeScript definitions.
