@@ -1,591 +1,546 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Stack,
-  Button,
-  Grid,
-  InputBase,
-  Chip,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { MOCK_BOOKS, MOCK_GENRES } from '../data/mockData';
-import { BookCard } from '../components/BookCard';
+import { useNavigate, Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
+import { Book } from '../types';
+
+interface FeaturedBook {
+  id: string;
+  title: string;
+  author: string;
+  publisher: string;
+  price: number;
+  originalPrice: number;
+  rating: number;
+  reviewCount: number;
+  coverImage: string;
+  dataAlt: string;
+  category: 'tech' | 'fiction' | 'growth';
+  inStock: boolean;
+  bookRef: Book;
+}
+
+// 4 Canonical Hand-Selected Volumes directly extracted from Stitch screen b8aa266d
+const FEATURED_BOOKS: FeaturedBook[] = [
+  {
+    id: 'book-1',
+    title: 'Designing Data-Intensive Applications',
+    author: 'Martin Kleppmann',
+    publisher: "O'Reilly Media",
+    price: 38.99,
+    originalPrice: 51.99,
+    rating: 4.9,
+    reviewCount: 384,
+    coverImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
+    dataAlt:
+      'Cover of Designing Data-Intensive Applications by Martin Kleppmann with navy blue geometric design and wildlife etchings',
+    category: 'tech',
+    inStock: true,
+    bookRef: {
+      id: 'book-1',
+      title: 'Designing Data-Intensive Applications',
+      author: 'Martin Kleppmann',
+      publisher: "O'Reilly Media",
+      price: 38.99,
+      originalPrice: 51.99,
+      rating: 4.9,
+      reviewCount: 384,
+      inStock: true,
+      stockCount: 42,
+      coverImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
+      genre: 'Distributed Systems',
+      format: 'Paperback',
+      description:
+        'Data is at the center of many challenges in system design today. In this comprehensive guide, author Martin Kleppmann helps you navigate this diverse landscape.',
+      featured: true,
+      isBestseller: true,
+    },
+  },
+  {
+    id: 'book-2',
+    title: 'Klara and the Sun',
+    author: 'Kazuo Ishiguro',
+    publisher: 'Faber & Faber',
+    price: 16.80,
+    originalPrice: 28.00,
+    rating: 4.8,
+    reviewCount: 612,
+    coverImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91',
+    dataAlt:
+      'Cover of Klara and the Sun by Kazuo Ishiguro with minimalist warm pastel background and solar orb abstraction',
+    category: 'fiction',
+    inStock: true,
+    bookRef: {
+      id: 'book-2',
+      title: 'Klara and the Sun',
+      author: 'Kazuo Ishiguro',
+      publisher: 'Faber & Faber',
+      price: 16.80,
+      originalPrice: 28.00,
+      rating: 4.8,
+      reviewCount: 612,
+      inStock: true,
+      stockCount: 18,
+      coverImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91',
+      genre: 'Literary Fiction',
+      format: 'Hardcover',
+      description:
+        'Klara and the Sun tells the story of Klara, an Artificial Friend with outstanding observational qualities.',
+      featured: true,
+      isBestseller: true,
+    },
+  },
+  {
+    id: 'book-3',
+    title: 'Atomic Habits',
+    author: 'James Clear',
+    publisher: 'Penguin Random House',
+    price: 17.55,
+    originalPrice: 27.00,
+    rating: 4.9,
+    reviewCount: 1240,
+    coverImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuA2BWm70dWoUsBGPZh-GfVQvNBbXF8KFo6zjoUgPVUKYZLXRijxNTN5yeaIeojZbMELfaMa-tNRjuaWHMWbWHYAPm4dck_l5maC7t-3Zgfr77PBaST7gK4E14qptSYRgfFU2qKvvki6-waOqNAvZDXkFEFywNMx63cdN8GSdVJGHMc2ZjHbbVXQvpc-8vEhfE3ixFKLUNEJ521vIVqSUiTteNI4iStessbP7vo0a09j',
+    dataAlt:
+      'Cover of Atomic Habits by James Clear with clean editorial ivory cover and tiny scattered particle typography',
+    category: 'growth',
+    inStock: true,
+    bookRef: {
+      id: 'book-3',
+      title: 'Atomic Habits',
+      author: 'James Clear',
+      publisher: 'Penguin Random House',
+      price: 17.55,
+      originalPrice: 27.00,
+      rating: 4.9,
+      reviewCount: 1240,
+      inStock: true,
+      stockCount: 85,
+      coverImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuA2BWm70dWoUsBGPZh-GfVQvNBbXF8KFo6zjoUgPVUKYZLXRijxNTN5yeaIeojZbMELfaMa-tNRjuaWHMWbWHYAPm4dck_l5maC7t-3Zgfr77PBaST7gK4E14qptSYRgfFU2qKvvki6-waOqNAvZDXkFEFywNMx63cdN8GSdVJGHMc2ZjHbbVXQvpc-8vEhfE3ixFKLUNEJ521vIVqSUiTteNI4iStessbP7vo0a09j',
+      genre: 'Self-Growth',
+      format: 'Hardcover',
+      description:
+        'An easy and proven way to build good habits and break bad ones by world-leading expert James Clear.',
+      featured: true,
+      isBestseller: true,
+    },
+  },
+  {
+    id: 'book-4',
+    title: 'The Pragmatic Programmer',
+    author: 'David Thomas & Andrew Hunt',
+    publisher: 'Addison-Wesley',
+    price: 34.90,
+    originalPrice: 49.99,
+    rating: 4.9,
+    reviewCount: 520,
+    coverImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDj7s1OBzce6kCz5wGtwYZ3a-ORJm9FKX_6dx6Y2pBev81GoIosBU4XTedUHGUaFjwDSNBGSf1G_clkjkTX5VNQqARdGSuFLAOhZXCe9lhZRRqZbKyUGr8WcbTDdzOmoEjtw648PqKFW6vxHPH1WiVGyjaIwsfO62Y519w4jZ7lFGNsjd2DGrmVYwhnQTjypDmrfCY17QzajWu26Y8COz5dMkf2od5EecgJlSpaTGbR',
+    dataAlt:
+      'Cover of The Pragmatic Programmer 20th Anniversary Edition with silver metallic tones and clean modern typesetting',
+    category: 'tech',
+    inStock: true,
+    bookRef: {
+      id: 'book-4',
+      title: 'The Pragmatic Programmer',
+      author: 'David Thomas & Andrew Hunt',
+      publisher: 'Addison-Wesley',
+      price: 34.90,
+      originalPrice: 49.99,
+      rating: 4.9,
+      reviewCount: 520,
+      inStock: true,
+      stockCount: 29,
+      coverImage:
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDj7s1OBzce6kCz5wGtwYZ3a-ORJm9FKX_6dx6Y2pBev81GoIosBU4XTedUHGUaFjwDSNBGSf1G_clkjkTX5VNQqARdGSuFLAOhZXCe9lhZRRqZbKyUGr8WcbTDdzOmoEjtw648PqKFW6vxHPH1WiVGyjaIwsfO62Y519w4jZ7lFGNsjd2DGrmVYwhnQTjypDmrfCY17QzajWu26Y8COz5dMkf2od5EecgJlSpaTGbR',
+      genre: 'Tech & Coding',
+      format: 'Hardcover',
+      description:
+        'The Pragmatic Programmer cuts through the increasing specialization and technicalities of modern software development.',
+      featured: true,
+      isBestseller: false,
+    },
+  },
+];
+
+// 6 Curated Genres from Stitch screen b8aa266d
+const CURATED_GENRES = [
+  { name: 'Literary Fiction', count: '1,420 Volumes', icon: 'book_4' },
+  { name: 'Tech & Coding', count: '890 Volumes', icon: 'terminal' },
+  { name: 'Sci-Fi & Fantasy', count: '1,110 Volumes', icon: 'rocket_launch' },
+  { name: 'Self-Growth', count: '640 Volumes', icon: 'psychology' },
+  { name: 'History & Mind', count: '780 Volumes', icon: 'account_balance' },
+  { name: 'Graphic Novels', count: '420 Volumes', icon: 'draw' },
+];
+
+const TRENDING_TAGS = ['Fiction', 'Sci-Fi', 'Tech & Code', 'Biography', 'Fine Art'];
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { setSearchQuery } = useStore();
+  const { setSearchQuery, setActiveGenre, addToCart } = useStore();
   const [heroSearch, setHeroSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'tech' | 'fiction'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'tech' | 'fiction'>('all');
 
-  const handleHeroSearch = () => {
+  const handleHeroSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (heroSearch.trim()) {
-      setSearchQuery(heroSearch);
+      setSearchQuery(heroSearch.trim());
       navigate('/catalog');
     }
   };
 
-  const filteredBooks = MOCK_BOOKS.filter((book) => {
-    if (activeTab === 'tech') {
-      return book.genre === 'Tech & Coding' || book.genre === 'Distributed Systems' || book.genre === 'Computer Science';
-    }
-    if (activeTab === 'fiction') {
-      return book.genre === 'Literary Fiction' || book.genre === 'Sci-Fi & Fantasy';
-    }
+  const handleGenreChipClick = (tag: string) => {
+    setHeroSearch(tag);
+  };
+
+  const handleCuratedGenreClick = (genreName: string) => {
+    setActiveGenre(genreName);
+    setSearchQuery(genreName);
+    navigate('/catalog');
+  };
+
+  const handleAddToCart = (bookItem: FeaturedBook) => {
+    addToCart(bookItem.bookRef, 1);
+  };
+
+  const handleBuyNow = (bookItem: FeaturedBook) => {
+    addToCart(bookItem.bookRef, 1);
+    navigate('/checkout');
+  };
+
+  const filteredBooks = FEATURED_BOOKS.filter((b) => {
+    if (activeFilter === 'tech') return b.category === 'tech';
+    if (activeFilter === 'fiction') return b.category === 'fiction';
     return true;
   });
 
   return (
-    <Box sx={{ width: '100%', pb: 8 }}>
-      {/* Hero Showcase Section */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 5 }, pt: 3, pb: 4 }}>
-        <Box
-          sx={{
-            maxWidth: 1440,
-            mx: 'auto',
-            position: 'relative',
-            borderRadius: '28px',
-            bgcolor: '#e2e8f0',
-            overflow: 'hidden',
-            p: { xs: 3, sm: 4, md: 6, lg: 8 },
-            boxShadow: '0 1px 4px rgba(26, 54, 93, 0.04)',
-          }}
-        >
+    <div className="flex flex-col w-full">
+      {/* 1. Hero Editorial Banner Section */}
+      <div className="w-full px-gutter-lg py-space-md">
+        <div className="relative overflow-hidden rounded-3xl bg-surface-container-high p-space-lg lg:p-space-xxl shadow-sm">
           {/* Ambient Lighting Spheres */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: -80,
-              right: -80,
-              width: 380,
-              height: 380,
-              borderRadius: '50%',
-              bgcolor: 'rgba(218, 226, 249, 0.5)',
-              filter: 'blur(70px)',
-              pointerEvents: 'none',
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: -60,
-              right: '25%',
-              width: 320,
-              height: 320,
-              borderRadius: '50%',
-              bgcolor: 'rgba(255, 219, 207, 0.45)',
-              filter: 'blur(60px)',
-              pointerEvents: 'none',
-            }}
-          />
+          <div className="absolute -right-20 -top-20 w-96 h-96 rounded-full bg-secondary-container/40 blur-3xl pointer-events-none" />
+          <div className="absolute right-1/4 -bottom-16 w-80 h-80 rounded-full bg-tertiary-fixed/30 blur-2xl pointer-events-none" />
 
-          <Grid container spacing={4} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
-            {/* Left Hero Copy */}
-            <Grid item xs={12} lg={7}>
-              <Box sx={{ maxWidth: 640 }}>
-                {/* Event Ribbon Badge */}
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    px: 2,
-                    py: 0.6,
-                    borderRadius: 9999,
-                    bgcolor: 'tertiary.main',
-                    color: '#ffffff',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.04em',
-                    mb: 2.5,
-                    boxShadow: '0 2px 8px rgba(200, 90, 50, 0.3)',
-                  }}
-                >
-                  <Box component="span" className="material-symbols-outlined" sx={{ fontSize: 16 }}>
-                    local_fire_department
-                  </Box>
-                  <span>AUTUMN LITERARY GALA • LIMITED TIME</span>
-                </Box>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
+            {/* Left Column: Headline, Search & Trending */}
+            <div className="lg:col-span-7 flex flex-col items-start">
+              <div className="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-tertiary text-on-tertiary font-label-md text-label-md shadow-sm mb-space-md">
+                <span className="material-symbols-outlined text-[16px]">local_fire_department</span>
+                <span>AUTUMN LITERARY GALA • LIMITED TIME</span>
+              </div>
 
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontWeight: 800,
-                    color: 'primary.main',
-                    fontSize: { xs: '2rem', sm: '2.8rem', md: '3.4rem' },
-                    lineHeight: 1.15,
-                    letterSpacing: '-0.02em',
-                    mb: 2,
-                  }}
-                >
-                  Autumn Literary Gala:{' '}
-                  <Box
-                    component="span"
-                    sx={{
-                      color: 'tertiary.main',
-                      display: { xs: 'inline', sm: 'block' },
-                    }}
-                  >
-                    Up to 40% Off
-                  </Box>{' '}
-                  Bestsellers
-                </Typography>
+              <h1 className="font-display-md text-display-md text-primary tracking-tight mb-space-sm">
+                Autumn Literary Gala: <br className="hidden sm:inline" />
+                <span className="text-tertiary-container">Up to 40% Off</span> Bestsellers
+              </h1>
 
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: { xs: '1rem', md: '1.125rem' },
-                    lineHeight: 1.6,
-                    mb: 3.5,
-                  }}
-                >
-                  Immerse yourself in award-winning fiction, definitive software engineering treatises, and profound memoirs. Hand-picked physical editions with next-day complimentary dispatch.
-                </Typography>
+              <p className="font-body-lg text-body-lg text-secondary max-w-xl mb-space-lg">
+                Immerse yourself in award-winning fiction, definitive software engineering treatises,
+                and profound memoirs. Hand-picked physical editions with next-day complimentary dispatch.
+              </p>
 
-                {/* Hero Search Box */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    bgcolor: '#ffffff',
-                    borderRadius: 9999,
-                    p: 0.8,
-                    pl: 2.5,
-                    boxShadow: '0 4px 16px rgba(26, 54, 93, 0.08)',
-                    mb: 2.5,
-                    border: '1px solid #d9e2ec',
-                  }}
-                >
-                  <Box
-                    component="span"
-                    className="material-symbols-outlined"
-                    sx={{ fontSize: 22, color: 'text.secondary', mr: 1.5 }}
-                  >
-                    search
-                  </Box>
-                  <InputBase
-                    placeholder="Search by title, author, or ISBN-13..."
-                    value={heroSearch}
-                    onChange={(e) => setHeroSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleHeroSearch()}
-                    sx={{ flex: 1, fontSize: '0.95rem' }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={handleHeroSearch}
-                    sx={{
-                      borderRadius: 9999,
-                      px: 3.5,
-                      py: 1.2,
-                      bgcolor: 'primary.main',
-                      fontWeight: 700,
-                      '&:hover': { bgcolor: 'primary.light' },
-                    }}
-                  >
-                    Search
-                  </Button>
-                </Box>
-
-                {/* Trending Tags */}
-                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}>
-                    Trending:
-                  </Typography>
-                  {['Fiction', 'Sci-Fi', 'Tech & Code', 'Biography', 'Fine Art'].map((tag) => (
-                    <Chip
-                      key={tag}
-                      label={tag}
-                      size="small"
-                      onClick={() => {
-                        setSearchQuery(tag);
-                        navigate('/catalog');
-                      }}
-                      sx={{
-                        bgcolor: '#ffffff',
-                        color: 'text.primary',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        '&:hover': { bgcolor: 'secondaryContainer.main' },
-                      }}
-                    />
-                  ))}
-                </Stack>
-              </Box>
-            </Grid>
-
-            {/* Right Hero Visual Book Duo */}
-            <Grid item xs={12} lg={5}>
-              <Box
-                sx={{
-                  position: 'relative',
-                  height: { xs: 340, sm: 400 },
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+              {/* Hero Search Box */}
+              <form
+                onSubmit={handleHeroSearch}
+                className="w-full max-w-xl bg-surface-container-lowest p-2 rounded-full shadow-md flex items-center gap-space-xs mb-space-md"
               >
-                {/* Book 1 (Left tilted) */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    width: { xs: 180, sm: 220 },
-                    height: { xs: 260, sm: 310 },
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: '0 15px 35px rgba(26, 54, 93, 0.2)',
-                    transform: 'rotate(-12deg) translateX(-45px) translateY(15px)',
-                    transition: 'transform 0.4s ease',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'rotate(-6deg) translateX(-35px) translateY(5px)',
-                    },
-                  }}
+                <span className="material-symbols-outlined text-outline ml-3 text-[22px]">search</span>
+                <input
+                  id="heroSearchInput"
+                  type="text"
+                  value={heroSearch}
+                  onChange={(e) => setHeroSearch(e.target.value)}
+                  placeholder="Search by title, author, or ISBN-13..."
+                  className="w-full bg-transparent font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none px-2"
+                />
+                <button
+                  type="submit"
+                  className="shrink-0 px-space-lg py-2.5 rounded-full bg-primary text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary-container transition-all cursor-pointer"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Trending Genre Pills */}
+              <div className="flex flex-wrap items-center gap-space-xs mb-space-xl">
+                <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mr-1">
+                  Trending:
+                </span>
+                {TRENDING_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleGenreChipClick(tag)}
+                    className="genre-chip px-space-md py-1 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-md text-label-md shadow-sm hover:bg-secondary-container hover:text-on-secondary-container transition-colors cursor-pointer"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-space-md" />
+            </div>
+
+            {/* Right Column: 3D Layered Covers & Discount Callout */}
+            <div className="lg:col-span-5 relative flex items-center justify-center pt-space-lg lg:pt-0">
+              <div className="relative w-full max-w-md h-80 sm:h-96 flex items-center justify-center">
+                {/* Book 1 (Left tilted): Klara and the Sun */}
+                <div
                   onClick={() => navigate('/book/book-2')}
+                  className="absolute w-52 sm:w-56 h-72 sm:h-80 rounded-2xl overflow-hidden shadow-xl transform -rotate-12 -translate-x-12 translate-y-4 transition-transform hover:-rotate-6 hover:translate-y-2 duration-300 cursor-pointer group"
                 >
-                  <Box
-                    component="img"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91"
+                  <img
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyuuv-f3hWDjo3tTeMopy0Y-N2MCzN-NhaiL9yf1Wc5r0zxpvQ4z5LmocPXSxOO9FtaDiYAY7SMs9FScflsyKKrV35-sIyfYzCPiBDEkUaCBH30-o_GCoAt0l4JmhLA9QFWqjcKAIai9V17O7YEc00FH3aXbnh3yLjLYIX4zGjJ1wWJyQHFQv2_KL-XxxFDtzGCGdnpMBTJYqa4bImqvwrtHMWgm7lanOi4dZyXRTH"
+                    data-alt="Cover of Klara and the Sun with artistic minimalist sun orb on warm ochre textured linen cover art by Kazuo Ishiguro"
                     alt="Klara and the Sun"
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      p: 2,
-                      background: 'linear-gradient(to top, rgba(0,32,69,0.85), transparent)',
-                      color: '#ffffff',
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: 'secondaryContainer.main', textTransform: 'uppercase' }}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent flex flex-col justify-end p-space-md text-on-primary">
+                    <span className="font-label-sm text-label-sm uppercase tracking-widest text-secondary-fixed">
                       Nobel Laureate
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                    </span>
+                    <span className="font-title-md text-title-md leading-tight">
                       Klara and the Sun
-                    </Typography>
-                  </Box>
-                </Box>
+                    </span>
+                  </div>
+                </div>
 
-                {/* Book 2 (Right prominent) */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    width: { xs: 195, sm: 240 },
-                    height: { xs: 275, sm: 330 },
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: '0 20px 40px rgba(26, 54, 93, 0.28)',
-                    transform: 'rotate(6deg) translateX(40px) translateY(-10px)',
-                    transition: 'transform 0.4s ease',
-                    zIndex: 2,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'rotate(2deg) translateX(30px) translateY(-5px)',
-                    },
-                  }}
+                {/* Book 2 (Right prominent tilted): Designing Data-Intensive Applications */}
+                <div
                   onClick={() => navigate('/book/book-1')}
+                  className="absolute w-56 sm:w-60 h-76 sm:h-84 rounded-2xl overflow-hidden shadow-2xl transform rotate-6 translate-x-10 -translate-y-2 transition-transform hover:rotate-2 hover:translate-y-0 duration-300 z-10 cursor-pointer group"
                 >
-                  <Box
-                    component="img"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW"
+                  <img
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWLrd75pKHdN7Kcyv9sftkyLxBOtVtNBfuXtH1R1uN5xNn5MiHSjQ7h9BSuRSUF6DefQ-ZmvpgIjRFX0taYM-LlYQvDlVbDdll_F3_Jel-qcW6ceJZk5Z8JEN_ft4Q4YlaEn4ojrHQUFRnR71fPmyIpAX4VnnJaWrrCKaPThWozPYIrNc-U5V0_CRcUmcbzOHFT7XHZORsMaPsztNx39_52u7OjgNknlH8veTjKJem"
+                    data-alt="Cover of Designing Data-Intensive Applications showing iconic wild boar woodcut print in dark Prussian blue and cream tones"
                     alt="Designing Data-Intensive Applications"
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      p: 2,
-                      background: 'linear-gradient(to top, rgba(0,32,69,0.9), transparent)',
-                      color: '#ffffff',
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: 'tertiaryContainer.main', textTransform: 'uppercase' }}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-transparent to-transparent flex flex-col justify-end p-space-md text-on-primary">
+                    <span className="font-label-sm text-label-sm uppercase tracking-widest text-tertiary-fixed">
                       Essential Tech
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                    </span>
+                    <span className="font-title-md text-title-md leading-tight">
                       Designing Data-Intensive Applications
-                    </Typography>
-                  </Box>
-                </Box>
+                    </span>
+                  </div>
+                </div>
 
-                {/* Floating Discount Tag */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 10,
-                    right: 16,
-                    zIndex: 3,
-                    bgcolor: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(8px)',
-                    px: 2,
-                    py: 1,
-                    borderRadius: '16px',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      bgcolor: 'tertiary.main',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Box component="span" className="material-symbols-outlined" sx={{ fontSize: 20 }}>
-                      percent
-                    </Box>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', lineHeight: 1 }}>
+                {/* Floating Instant Discount Badge */}
+                <div className="absolute top-2 right-4 z-20 bg-surface-container-lowest/95 backdrop-blur-md px-space-md py-space-sm rounded-2xl shadow-lg flex items-center gap-3 pointer-events-none">
+                  <div className="w-10 h-10 rounded-full bg-tertiary flex items-center justify-center text-on-tertiary">
+                    <span className="material-symbols-outlined text-[20px]">percent</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant leading-none">
                       Instant Discount
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'tertiary.main' }}>
+                    </span>
+                    <span className="font-title-lg text-title-lg text-tertiary font-bold leading-tight">
                       Save 40%
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Curated Genres Grid Section */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 5 }, py: 4 }}>
-        <Box sx={{ maxWidth: 1440, mx: 'auto' }}>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="flex-end"
-            sx={{ mb: 3 }}
+      {/* 2. Explore by Curated Genres Section */}
+      <div className="w-full px-gutter-lg py-space-md">
+        <div className="flex items-center justify-between mb-space-md">
+          <div>
+            <h2 className="font-title-lg text-title-lg text-primary tracking-tight">
+              Explore by Curated Genres
+            </h2>
+            <p className="font-body-md text-body-md text-secondary">
+              Browse across catalog collections selected by literary curators
+            </p>
+          </div>
+          <Link
+            to="/catalog"
+            data-path="catalog"
+            className="font-label-lg text-label-lg text-primary hover:underline flex items-center gap-1"
           >
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: '-0.01em' }}>
-                Explore by Curated Genres
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                Browse across catalog collections selected by literary curators
-              </Typography>
-            </Box>
-            <Button
-              onClick={() => navigate('/catalog')}
-              sx={{
-                fontWeight: 700,
-                color: 'primary.main',
-                '&:hover': { textDecoration: 'underline' },
-              }}
-              endIcon={
-                <Box component="span" className="material-symbols-outlined" sx={{ fontSize: 18 }}>
-                  chevron_right
-                </Box>
-              }
-            >
-              All Genres
-            </Button>
-          </Stack>
+            <span>All Genres</span>
+            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+          </Link>
+        </div>
 
-          <Grid container spacing={2}>
-            {MOCK_GENRES.map((genre) => (
-              <Grid item xs={6} sm={4} lg={2} key={genre.name}>
-                <Box
-                  onClick={() => {
-                    setSearchQuery(genre.name);
-                    navigate('/catalog');
-                  }}
-                  sx={{
-                    p: 2.5,
-                    borderRadius: '20px',
-                    bgcolor: '#f1f5f9',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.25s ease',
-                    boxShadow: '0 1px 3px rgba(26,54,93,0.03)',
-                    '&:hover': {
-                      bgcolor: 'secondaryContainer.main',
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 6px 16px rgba(26,54,93,0.08)',
-                      '& .genre-icon': {
-                        bgcolor: 'primary.main',
-                        color: '#ffffff',
-                      },
-                    },
-                  }}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-space-md">
+          {CURATED_GENRES.map((genre) => (
+            <div
+              key={genre.name}
+              data-path="catalog"
+              onClick={() => handleCuratedGenreClick(genre.name)}
+              className="group flex flex-col items-center text-center p-space-md rounded-2xl bg-surface-container-low hover:bg-secondary-container transition-all shadow-sm cursor-pointer"
+            >
+              <div className="w-12 h-12 rounded-full bg-surface-container-lowest text-primary group-hover:bg-primary group-hover:text-on-primary flex items-center justify-center mb-space-xs transition-colors shadow-sm">
+                <span className="material-symbols-outlined text-[24px]">{genre.icon}</span>
+              </div>
+              <span className="font-title-sm text-title-sm text-on-surface group-hover:text-on-secondary-container transition-colors">
+                {genre.name}
+              </span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">
+                {genre.count}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Hand-Selected Volumes (Featured Catalog Highlights) */}
+      <div className="w-full px-gutter-lg py-space-xl">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-space-lg gap-space-sm">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-tertiary" />
+              <span className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest font-bold">
+                Featured Catalog Highlights
+              </span>
+            </div>
+            <h2 className="font-headline-md text-headline-md text-primary tracking-tight">
+              Hand-Selected Volumes
+            </h2>
+          </div>
+
+          {/* Segmented Filter Pills */}
+          <div className="flex items-center gap-space-xs bg-surface-container-low p-1 rounded-full self-start sm:self-auto">
+            <button
+              type="button"
+              data-filter="all"
+              onClick={() => setActiveFilter('all')}
+              className={`tab-pill px-space-md py-1.5 rounded-full font-label-md text-label-md transition-all cursor-pointer ${
+                activeFilter === 'all'
+                  ? 'bg-surface-container-lowest text-primary font-semibold shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              All Picks
+            </button>
+            <button
+              type="button"
+              data-filter="tech"
+              onClick={() => setActiveFilter('tech')}
+              className={`tab-pill px-space-md py-1.5 rounded-full font-label-md text-label-md transition-all cursor-pointer ${
+                activeFilter === 'tech'
+                  ? 'bg-surface-container-lowest text-primary font-semibold shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              Engineering
+            </button>
+            <button
+              type="button"
+              data-filter="fiction"
+              onClick={() => setActiveFilter('fiction')}
+              className={`tab-pill px-space-md py-1.5 rounded-full font-label-md text-label-md transition-all cursor-pointer ${
+                activeFilter === 'fiction'
+                  ? 'bg-surface-container-lowest text-primary font-semibold shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+            >
+              Literature
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Books Responsive Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-lg" id="featuredGrid">
+          {filteredBooks.map((book) => (
+            <div
+              key={book.id}
+              className="group flex flex-col justify-between rounded-3xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+            >
+              <div
+                className="cursor-pointer"
+                onClick={() => navigate(`/book/${book.id}`)}
+              >
+                {/* 3:4 Aspect Ratio Cover Preview */}
+                <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-surface-container mb-space-md shadow-inner">
+                  <img
+                    src={book.coverImage}
+                    data-alt={book.dataAlt}
+                    alt={book.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+
+                {/* Stock Status & Star Rating Row */}
+                <div className="flex items-center justify-between mb-space-xs">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+                    <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                    <span>In Stock</span>
+                  </span>
+                  <div className="flex items-center gap-1 font-label-sm text-label-sm text-on-surface">
+                    <span
+                      className="material-symbols-outlined text-[16px] text-tertiary-container"
+                      style={{ fontVariationSettings: '"FILL" 1' }}
+                    >
+                      star
+                    </span>
+                    <span className="font-bold">{book.rating}</span>
+                    <span className="text-outline">({book.reviewCount})</span>
+                  </div>
+                </div>
+
+                {/* Book Title & Author/Publisher */}
+                <h3 className="font-title-md text-title-md text-primary font-bold line-clamp-1 group-hover:text-primary-container transition-colors">
+                  {book.title}
+                </h3>
+                <p className="font-body-sm text-body-sm text-secondary mb-space-md">
+                  {book.author} • {book.publisher}
+                </p>
+              </div>
+
+              {/* Price & Action Button Cluster */}
+              <div className="pt-space-sm mt-auto">
+                <div className="flex items-baseline gap-2 mb-space-sm">
+                  <span className="font-title-lg text-title-lg text-primary font-bold">
+                    ${book.price.toFixed(2)}
+                  </span>
+                  <span className="font-body-sm text-body-sm text-outline line-through">
+                    ${book.originalPrice.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Action 1: Buy Now */}
+                <button
+                  type="button"
+                  data-path="cart-checkout"
+                  onClick={() => handleBuyNow(book)}
+                  className="w-full mb-2 py-2 px-4 rounded-full bg-secondary-container text-on-primary-fixed hover:bg-secondary-fixed font-label-md text-label-md font-semibold flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all border-0 cursor-pointer"
                 >
-                  <Box
-                    className="genre-icon"
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      bgcolor: '#ffffff',
-                      color: 'primary.main',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 1.5,
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
-                      transition: 'all 0.25s ease',
-                    }}
-                  >
-                    <Box component="span" className="material-symbols-outlined" sx={{ fontSize: 24 }}>
-                      {genre.icon}
-                    </Box>
-                  </Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2, mb: 0.5 }}>
-                    {genre.name}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {genre.count}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      </Box>
+                  <span className="material-symbols-outlined text-[18px]">bolt</span>
+                  <span>Buy Now</span>
+                </button>
 
-      {/* Featured Catalog Highlights */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 5 }, py: 4 }}>
-        <Box sx={{ maxWidth: 1440, mx: 'auto' }}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            justifyContent="space-between"
-            alignItems={{ xs: 'flex-start', sm: 'flex-end' }}
-            spacing={2}
-            sx={{ mb: 4 }}
-          >
-            <Box>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'tertiary.main' }} />
-                <Typography variant="caption" sx={{ fontWeight: 800, color: 'tertiary.main', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Featured Catalog Highlights
-                </Typography>
-              </Stack>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: '-0.02em' }}>
-                Hand-Selected Volumes
-              </Typography>
-            </Box>
+                {/* Action 2: Add to Bag */}
+                <button
+                  type="button"
+                  onClick={() => handleAddToCart(book)}
+                  className="add-cart-btn w-full h-11 rounded-full bg-primary text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm hover:bg-primary-container active:scale-95 transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+                  <span>Add to Bag</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-            {/* Filter Tabs */}
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{
-                bgcolor: '#f1f5f9',
-                p: '4px',
-                borderRadius: 9999,
-              }}
-            >
-              <Button
-                size="small"
-                onClick={() => setActiveTab('all')}
-                sx={{
-                  px: 2,
-                  py: 0.6,
-                  borderRadius: 9999,
-                  fontSize: '0.8rem',
-                  fontWeight: activeTab === 'all' ? 700 : 500,
-                  bgcolor: activeTab === 'all' ? '#ffffff' : 'transparent',
-                  color: activeTab === 'all' ? 'primary.main' : 'text.secondary',
-                  boxShadow: activeTab === 'all' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
-                  '&:hover': { bgcolor: activeTab === 'all' ? '#ffffff' : '#e2e8f0' },
-                }}
-              >
-                All Picks
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setActiveTab('tech')}
-                sx={{
-                  px: 2,
-                  py: 0.6,
-                  borderRadius: 9999,
-                  fontSize: '0.8rem',
-                  fontWeight: activeTab === 'tech' ? 700 : 500,
-                  bgcolor: activeTab === 'tech' ? '#ffffff' : 'transparent',
-                  color: activeTab === 'tech' ? 'primary.main' : 'text.secondary',
-                  boxShadow: activeTab === 'tech' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
-                  '&:hover': { bgcolor: activeTab === 'tech' ? '#ffffff' : '#e2e8f0' },
-                }}
-              >
-                Engineering
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setActiveTab('fiction')}
-                sx={{
-                  px: 2,
-                  py: 0.6,
-                  borderRadius: 9999,
-                  fontSize: '0.8rem',
-                  fontWeight: activeTab === 'fiction' ? 700 : 500,
-                  bgcolor: activeTab === 'fiction' ? '#ffffff' : 'transparent',
-                  color: activeTab === 'fiction' ? 'primary.main' : 'text.secondary',
-                  boxShadow: activeTab === 'fiction' ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
-                  '&:hover': { bgcolor: activeTab === 'fiction' ? '#ffffff' : '#e2e8f0' },
-                }}
-              >
-                Literature
-              </Button>
-            </Stack>
-          </Stack>
-
-          {/* Book Grid */}
-          <Grid container spacing={3}>
-            {filteredBooks.slice(0, 8).map((book) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={book.id}>
-                <BookCard book={book} />
-              </Grid>
-            ))}
-          </Grid>
-
-          {/* Explore More CTA */}
-          <Box sx={{ mt: 6, textAlign: 'center' }}>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/catalog')}
-              sx={{
-                px: 4,
-                py: 1.5,
-                borderRadius: 9999,
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                borderColor: 'primary.main',
-                color: 'primary.main',
-                '&:hover': {
-                  bgcolor: 'secondaryContainer.main',
-                  borderColor: 'primary.main',
-                },
-              }}
-              endIcon={
-                <Box component="span" className="material-symbols-outlined" sx={{ fontSize: 20 }}>
-                  arrow_forward
-                </Box>
-              }
-            >
-              Explore Complete Catalog ({MOCK_BOOKS.length} Titles)
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+      {/* Structural Spacers from Stitch Design */}
+      <div className="w-full px-gutter-lg py-space-md" />
+      <div className="w-full px-gutter-lg py-space-xl" />
+    </div>
   );
 };
 
+export default Home;
