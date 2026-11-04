@@ -23,6 +23,24 @@
   }
 }
 
+@layer components {
+  /* Star Icon Filled State */
+  .icon-fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Cart Drawer 10-Item Maximum Viewport Height */
+  .cart-drawer-scroll-limit {
+    max-height: calc(10 * 74px);
+    overflow-y: auto;
+  }
+
+  /* Tabular Numerals for Currency & ISBNs */
+  .num-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 /* Material Symbols Outlined Icon Styling */
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';

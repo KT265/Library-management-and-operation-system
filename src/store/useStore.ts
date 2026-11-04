@@ -63,7 +63,7 @@ const INITIAL_CART_ITEMS: CartItem[] = [
     bookId: 'book-1',
     title: 'Designing Data-Intensive Applications',
     author: 'Martin Kleppmann',
-    price: 38.99,
+    price: 360000,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
     quantity: 1,
     selected: true,
@@ -74,7 +74,7 @@ const INITIAL_CART_ITEMS: CartItem[] = [
     bookId: 'book-2',
     title: 'Klara and the Sun',
     author: 'Kazuo Ishiguro',
-    price: 16.80,
+    price: 185000,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91',
     quantity: 1,
     selected: true,
@@ -83,9 +83,9 @@ const INITIAL_CART_ITEMS: CartItem[] = [
   {
     id: 'cart-3',
     bookId: 'book-3',
-    title: 'Atomic Habits: Tiny Changes',
+    title: 'Atomic Habits: Tiny Changes, Remarkable Results',
     author: 'James Clear',
-    price: 21.00,
+    price: 169000,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvQXFI2eOxiw-mX5BtGITzJqbrTJRfdtnITBPipyoBiaNzug3GmDkPW_SqqkMir_LUc2CXLuiGFtzMkyBZq9OHvRZxIPcG6w5fvU3GELlXnOE594wVUJ0yYMtr8-J1U-8hMhtqYmOSKmUJjeCETCp9Yul7Hbj_hUwO-UtdogSUQb6NJ6q9-ITwWwwwCr-EEySb8EgXEPQtAEEQos9_ydaRQrgt2j7tb3EHhO_Vj8C',
     quantity: 1,
     selected: true,
@@ -103,22 +103,23 @@ const INITIAL_ORDERS: Order[] = [
     items: [
       {
         bookId: 'book-4',
-        title: 'The Architecture of Silence',
-        price: 34.0,
+        title: 'The Pragmatic Programmer',
+        price: 320000,
         quantity: 1,
         coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAdt59T1h03vA_Uv0JHXvzevXxjlgCUqcl81eSzNIjPMWYxGlSWPRNZsQOMeCsSVJyobDSsvSLuUVlNA3Ka8CfjBdg_u6JJYXvAd1CN_21mWyFEGcIHxoBmB2eW_Arj_njKxG5zYZYvFtTyYDmXhUbcotMU4zyjQwRtFMfQkSymbAFX-pLI1xhxpabtkRdssaZh7D6FMYdkze3aqvrqu-ulRMuKL4ptvZhMDAKyIZaY',
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuDyuuv-f3hWDjo3tTeMopy0Y-N2MCzN-NhaiL9yf1Wc5r0zxpvQ4z5LmocPXSxOO9FtaDiYAY7SMs9FScflsyKKrV35-sIyfYzCPiBDEkUaCBH30-o_GCoAt0l4JmhLA9QFWqjcKAIai9V17O7YEc00FH3aXbnh3yLjLYIX4zGjJ1wWJyQHFQv2_KL-XxxFDtzGCGdnpMBTJYqa4bImqvwrtHMWgm7lanOi4dZyXRTH',
       },
     ],
-    subtotal: 91.84,
-    discount: 10.0,
+    subtotal: 320000,
+    discount: 50000,
     shippingFee: 0,
-    totalAmount: 91.84,
+    totalAmount: 270000,
+    total: 270000,
     status: 'processing',
     paymentStatus: 'paid',
-    voucherCode: 'BIBLIO10',
-    createdAt: '2025-10-24T10:30:00Z',
-    updatedAt: '2025-10-24T10:30:00Z',
+    voucherCode: 'WELCOME10',
+    createdAt: '2026-10-24T10:30:00Z',
+    updatedAt: '2026-10-24T10:30:00Z',
   },
   {
     id: 'ord-101',
@@ -130,16 +131,17 @@ const INITIAL_ORDERS: Order[] = [
       {
         bookId: 'book-1',
         title: 'Designing Data-Intensive Applications',
-        price: 38.99,
+        price: 360000,
         quantity: 1,
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
       },
     ],
-    subtotal: 38.99,
+    subtotal: 360000,
     discount: 0,
     shippingFee: 0,
-    totalAmount: 38.99,
+    totalAmount: 360000,
+    total: 360000,
     status: 'delivered',
     paymentStatus: 'paid',
     createdAt: '2026-10-15T08:00:00Z',
@@ -155,16 +157,17 @@ const INITIAL_ORDERS: Order[] = [
       {
         bookId: 'book-2',
         title: 'Klara and the Sun',
-        price: 16.8,
+        price: 185000,
         quantity: 1,
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91',
       },
     ],
-    subtotal: 16.8,
+    subtotal: 185000,
     discount: 0,
     shippingFee: 0,
-    totalAmount: 16.8,
+    totalAmount: 185000,
+    total: 185000,
     status: 'pending',
     paymentStatus: 'pending',
     createdAt: '2026-11-01T12:00:00Z',
@@ -197,7 +200,7 @@ export const useStore = create<StoreState>((set, get) => ({
       user: {
         ...currentUser,
         role,
-        name: role === 'admin' ? 'Curator Admin' : 'Minh Nguyen',
+        name: role === 'admin' ? 'Quản trị viên' : 'Minh Nguyen',
         email: role === 'admin' ? 'ops@bookverse.io' : 'minh.nguyen@example.com',
       },
     });
@@ -218,7 +221,7 @@ export const useStore = create<StoreState>((set, get) => ({
       const updated = [...cartItems];
       updated[existingIndex].quantity += quantity;
       set({ cartItems: updated, isCartOpen: true });
-      get().showToast(`Added "${book.title}" to Bag`);
+      get().showToast(`Đã thêm "${book.title}" vào giỏ hàng`);
       return;
     }
 
@@ -235,7 +238,7 @@ export const useStore = create<StoreState>((set, get) => ({
     };
 
     set({ cartItems: [newItem, ...cartItems], isCartOpen: true });
-    get().showToast(`Added "${book.title}" to Bag`);
+    get().showToast(`Đã thêm "${book.title}" vào giỏ hàng`);
   },
 
   removeFromCart: (cartItemId: string) => {
@@ -278,9 +281,9 @@ export const useStore = create<StoreState>((set, get) => ({
     const demoItems: CartItem[] = Array.from({ length: count }, (_, i) => ({
       id: `cart-demo-${i + 1}`,
       bookId: `demo-book-${i + 1}`,
-      title: `Curated Volume ${i + 1}: Modern Treatise`,
-      author: `Author ${i + 1}`,
-      price: +(19.99 + (i % 5) * 5.5).toFixed(2),
+      title: `Tác phẩm tinh tuyển ${i + 1}: Chuyên khảo hiện đại`,
+      author: `Tác giả ${i + 1}`,
+      price: 150000 + (i % 5) * 50000,
       coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
       quantity: 1,
       selected: true,
@@ -338,4 +341,3 @@ export const useStore = create<StoreState>((set, get) => ({
   orders: INITIAL_ORDERS,
   addOrder: (order: Order) => set((state) => ({ orders: [order, ...state.orders] })),
 }));
-

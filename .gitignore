@@ -76,15 +76,3 @@ scripts/
 PROJECT.md
 TEST_INFRA.md
 TEST_READY.md
-
-screens_html/
-
-# Testing Infrastructure & Test Caches
-.test-cache/
-tests/
-scripts/
-
-# AI Specifications & Reports
-PROJECT.md
-TEST_INFRA.md
-TEST_READY.md

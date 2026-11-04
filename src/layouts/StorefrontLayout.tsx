@@ -7,12 +7,20 @@ import { ToastNotification } from '../components/common/ToastNotification';
 
 export const StorefrontLayout: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-surface font-body-md text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container">
+    <div
+      id="sf-layout-root"
+      data-testid="sf-layout-root"
+      className="flex flex-col min-h-screen bg-surface font-body-md text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container"
+    >
       {/* 1. Fixed Top Navigation Bar */}
       <StorefrontHeader />
 
       {/* 2. Main Viewport Content Area */}
-      <main className="w-full pt-20 bg-surface min-h-[calc(100vh-14rem)] flex flex-col flex-1">
+      <main
+        id="sf-layout-main"
+        data-testid="sf-layout-main"
+        className="w-full pt-20 bg-surface min-h-[calc(100vh-14rem)] flex flex-col flex-1"
+      >
         <Outlet />
       </main>
 

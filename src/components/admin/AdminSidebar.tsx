@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 
 interface NavItem {
+  id: string;
   label: string;
   path: string;
   icon: string;
@@ -12,26 +13,30 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: 'Dashboard Overview',
+    id: 'dashboard',
+    label: 'Tổng quan phân tích',
     path: '/admin',
     icon: 'dashboard',
     exact: true,
     dataPath: 'admin-dashboard-overview',
   },
   {
-    label: 'Book Inventory',
+    id: 'inventory',
+    label: 'Kho sách & Ấn phẩm',
     path: '/admin/inventory',
     icon: 'inventory_2',
     dataPath: 'admin-book-inventory',
   },
   {
-    label: 'Order Fulfillment',
+    id: 'orders',
+    label: 'Xử lý đơn hàng',
     path: '/admin/orders',
     icon: 'local_shipping',
     dataPath: 'admin-order-fulfillment',
   },
   {
-    label: 'Voucher Management',
+    id: 'vouchers',
+    label: 'Quản lý mã ưu đãi',
     path: '/admin/vouchers',
     icon: 'local_offer',
     dataPath: 'admin-voucher-management',
@@ -55,6 +60,8 @@ export const AdminSidebar: React.FC = () => {
 
   return (
     <aside
+      id="admin-sidebar-root"
+      data-testid="admin-sidebar-root"
       className="fixed left-0 top-0 h-full w-72 bg-surface-container-low z-50 flex flex-col justify-between py-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.04)] select-none"
       aria-label="Admin Navigation Sidebar"
     >
@@ -63,6 +70,8 @@ export const AdminSidebar: React.FC = () => {
         <div className="px-space-lg flex items-center justify-between">
           <Link
             to="/admin"
+            id="admin-sidebar-brand-link"
+            data-testid="admin-sidebar-brand-link"
             className="flex items-center gap-space-sm text-primary group"
             data-path="admin-dashboard-overview"
           >
@@ -74,32 +83,40 @@ export const AdminSidebar: React.FC = () => {
                 BookVerse
               </span>
               <span className="font-label-sm text-label-sm text-secondary block">
-                Management Studio
+                Trung tâm quản trị
               </span>
             </div>
           </Link>
         </div>
 
         {/* Mode Switcher: Storefront <-> Admin */}
-        <div className="px-space-md">
+        <div
+          id="admin-sidebar-mode-switcher"
+          data-testid="admin-sidebar-mode-switcher"
+          className="px-space-md"
+        >
           <div className="p-1.5 rounded-full bg-surface-container flex items-center gap-1">
             <button
+              id="admin-sidebar-btn-storefront"
+              data-testid="admin-sidebar-btn-storefront"
               type="button"
               onClick={handleSwitchToStorefront}
               className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-all cursor-pointer"
               data-path="storefront-home"
             >
               <span className="material-symbols-outlined text-[16px]">storefront</span>
-              <span>Storefront</span>
+              <span>Cửa hàng</span>
             </button>
             <button
+              id="admin-sidebar-btn-admin"
+              data-testid="admin-sidebar-btn-admin"
               type="button"
               onClick={handleSwitchToAdmin}
               className="flex-1 flex items-center justify-center gap-1 py-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm shadow-sm transition-all cursor-pointer"
               data-path="admin-dashboard-overview"
             >
               <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
-              <span>Admin</span>
+              <span>Quản trị</span>
             </button>
           </div>
         </div>
@@ -107,12 +124,14 @@ export const AdminSidebar: React.FC = () => {
         {/* Navigation Section Heading */}
         <div className="px-space-lg">
           <span className="font-label-sm text-label-sm font-bold uppercase tracking-wider text-outline">
-            Core Management
+            Nghiệp vụ quản lý
           </span>
         </div>
 
         {/* Navigation Menu */}
         <nav
+          id="admin-sidebar-nav"
+          data-testid="admin-sidebar-nav"
           className="px-space-md space-y-1.5"
           data-active-classes="bg-secondary-container text-on-secondary-container font-semibold shadow-sm"
         >
@@ -124,6 +143,8 @@ export const AdminSidebar: React.FC = () => {
             return (
               <Link
                 key={item.path}
+                id={`admin-sidebar-link-${item.id}`}
+                data-testid={`admin-sidebar-link-${item.id}`}
                 to={item.path}
                 data-path={item.dataPath}
                 aria-current={isActive ? 'page' : undefined}
@@ -134,8 +155,7 @@ export const AdminSidebar: React.FC = () => {
                 }`}
               >
                 <span
-                  className="material-symbols-outlined text-[20px]"
-                  style={{ fontVariationSettings: isActive ? '"FILL" 1' : '"FILL" 0' }}
+                  className={`material-symbols-outlined text-[20px] ${isActive ? 'fill' : ''}`}
                 >
                   {item.icon}
                 </span>
@@ -147,14 +167,18 @@ export const AdminSidebar: React.FC = () => {
       </div>
 
       {/* Curator Admin Profile Card */}
-      <div className="px-space-md space-y-space-md">
+      <div
+        id="admin-sidebar-profile-card"
+        data-testid="admin-sidebar-profile-card"
+        className="px-space-md space-y-space-md"
+      >
         <div className="flex items-center gap-space-sm px-space-sm pt-space-xs border-t border-surface-container-highest/60">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm">
             <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
           </div>
           <div className="truncate min-w-0">
             <p className="font-label-md text-label-md text-on-surface font-semibold truncate">
-              {user?.name || 'Curator Admin'}
+              {user?.name || 'Quản trị viên'}
             </p>
             <p className="font-body-sm text-body-sm text-on-surface-variant truncate">
               {user?.email || 'ops@bookverse.io'}

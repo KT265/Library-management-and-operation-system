@@ -7,6 +7,7 @@ export const ToastNotification: React.FC = () => {
   return (
     <div
       id="toastNotification"
+      data-testid="sf-toast-root"
       className={`fixed bottom-6 right-6 z-50 transform transition-all duration-300 pointer-events-none ${
         isToastOpen ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'
       }`}
@@ -15,7 +16,7 @@ export const ToastNotification: React.FC = () => {
         <span className="material-symbols-outlined text-[20px] text-tertiary-fixed">
           shopping_bag
         </span>
-        <span id="toastMessage">{toastMessage}</span>
+        <span id="toastMessage" data-testid="sf-toast-message">{toastMessage}</span>
       </div>
     </div>
   );

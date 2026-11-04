@@ -43,6 +43,12 @@ export interface BookReview {
   role?: string;
 }
 
+export interface BookFormatOption {
+  price: number;
+  original: number;
+  labelVi?: string;
+}
+
 export interface Book {
   id: string;
   title: string;
@@ -65,6 +71,7 @@ export interface Book {
   keyFeatures?: string[];
   specs?: BookSpec;
   reviews?: BookReview[];
+  formats?: Partial<Record<'hardcover' | 'paperback' | 'ebook', BookFormatOption>>;
 }
 
 export interface CartItem {
@@ -79,7 +86,7 @@ export interface CartItem {
   inStock?: boolean;
 }
 
-export type VoucherDiscountType = 'percentage' | 'fixed';
+export type VoucherDiscountType = 'percentage' | 'fixed' | 'shipping';
 export type VoucherStatus = 'active' | 'scheduled' | 'expired';
 
 export interface Voucher {
@@ -119,6 +126,7 @@ export interface Order {
   discount: number;
   shippingFee: number;
   totalAmount: number;
+  total?: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   voucherCode?: string;
@@ -136,4 +144,3 @@ export interface Transaction {
   status: PaymentStatus;
   createdAt: string;
 }
-
