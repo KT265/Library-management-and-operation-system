@@ -7,7 +7,6 @@ import { CuratedGenresSection } from '../components/home/CuratedGenresSection';
 import { FeaturedPicksSection } from '../components/home/FeaturedPicksSection';
 import { FeaturedBookItem } from '../components/home/FeaturedBookCard';
 import { PatronReviewsSection } from '../components/home/PatronReviewsSection';
-import { NewsletterCtaSection } from '../components/home/NewsletterCtaSection';
 
 const FEATURED_BOOKS: FeaturedBookItem[] = [
   {
@@ -126,8 +125,6 @@ export const Home: React.FC = () => {
       {/* 4. Patron Testimonials & Institutional Assurance */}
       <PatronReviewsSection />
 
-      {/* 5. Newsletter Subscription CTA */}
-      <NewsletterCtaSection />
     </div>
   );
 };

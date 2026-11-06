@@ -21,23 +21,23 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
           data-testid="admin-orders-header-title"
           className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight"
         >
-          Điều phối Đơn hàng &amp; Lưu hành
+          Quản lý &amp; Điều phối Đơn hàng
         </h1>
         <p
           id="orders-subtitle"
           data-testid="admin-orders-header-subtitle"
           className="font-body-md text-body-md text-secondary mt-1"
         >
-          Theo dõi đơn hàng xuất kho, chu kỳ mượn đọc của độc giả và xử lý trả sách
+          Theo dõi tiến độ đơn hàng xuất kho, trạng thái giao vận và đối soát thanh toán
         </p>
       </div>
 
       <div className="flex items-center gap-space-sm flex-wrap">
         <button
           type="button"
-          id="btn-sync-payos-webhooks"
+          id="btn-sync-orders-data"
           data-testid="admin-orders-header-btn-sync"
-          title="Sync Webhooks"
+          title="Đồng bộ dữ liệu đơn hàng"
           onClick={onSyncWebhooks}
           disabled={isSyncing}
           className="inline-flex items-center gap-2 px-space-md py-2.5 rounded-full bg-surface-container-lowest hover:bg-surface-container text-primary font-label-md text-label-md font-semibold border border-outline-variant/30 shadow-sm transition-colors cursor-pointer"
@@ -49,7 +49,7 @@ export const OrdersHeader: React.FC<OrdersHeaderProps> = ({
           >
             refresh
           </span>
-          <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ PayOS Webhook'}</span>
+          <span>{isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ dữ liệu đơn hàng'}</span>
         </button>
       </div>
     </div>

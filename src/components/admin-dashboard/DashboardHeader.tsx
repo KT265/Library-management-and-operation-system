@@ -65,16 +65,18 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </span>
         </div>
 
-        <button
-          type="button"
-          id="btn-export-report"
-          data-testid="admin-dashboard-header-btn-export"
-          onClick={onExportReport}
-          className="inline-flex items-center gap-2 px-space-md py-2 rounded-full bg-surface-container-lowest text-primary hover:bg-surface-container text-label-lg font-label-lg font-semibold border border-outline-variant/30 shadow-sm transition-colors cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[18px]">download</span>
-          <span>Xuất báo cáo</span>
-        </button>
+        {onExportReport && (
+          <button
+            type="button"
+            id="btn-export-dashboard"
+            data-testid="admin-dashboard-header-btn-export"
+            onClick={onExportReport}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-outline-variant/30 text-xs font-semibold text-secondary hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">download</span>
+            <span>Xuất báo cáo</span>
+          </button>
+        )}
       </div>
     </div>
   );

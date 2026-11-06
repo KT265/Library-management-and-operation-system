@@ -22,7 +22,7 @@ const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
     price: 360000,
     publisher: 'NXB Trẻ',
     publishYear: 2023,
-    formatVi: 'Bìa cứng',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDhuiJbYjbBTNMTSvNzEOg0hozusRe0q75o0ImjGvjVudqogCGSYo3jJLRBS8ZVmsTON6QJOHmdeDyM6BfxokKEKvyigGVOKC5-eDhUofXube4SHqMDasP3KQFHyMqMJlJnUu3l2QrryaaIe560_q3WYcQTijSeTCVyTTVqKdcmFKksLxo0Cq-MxOSu5smoTEvpjGY4CyLj-IM7hoZ-y_PymBmlL3kHimWDU9snqQEr',
     coverAlt:
@@ -39,7 +39,7 @@ const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
     price: 169000,
     publisher: 'NXB Thế Giới',
     publishYear: 2022,
-    formatVi: 'Bìa mềm',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuBWUStideZHq6BmOKiYu7mgtlQihp3F4Y2Wn3RED25OX9mUHfLms37LzaG3-Fn2_xSKVsRSfqoLs-9dG4mio3HNWA7yhx6SEb3lkCvfXsAyb_pr17ZO1DDNTpqO_8BaXXVSrmZ1wO_eUpOmk6obkeDZwNCIrh-1r3wsbaGujhdRgevosIlGwN64gmq_vA1XzYg_WbRRwYz5cq0XGsAoXw1zKe_JmABYP5hqgqokiYki',
     coverAlt:
@@ -56,7 +56,7 @@ const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
     price: 185000,
     publisher: 'NXB Hội Nhà Văn',
     publishYear: 2021,
-    formatVi: 'Bìa mềm',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuBYTQ_WwYkQvYn3nrOUA5Gd69WYH8f-tnmZKz9f8hY-0Wa4Vuhx5O9MtUDdQb6UXxCrIX5foekfPKWqgYRFVz92N0n9WDLSJ0r61pjmxpDkBZB1fbS48c4ZYcyJ9m3DrOlqVq16Z6aoday_uVEyKcYnnt7pKIh6EbEMmdY4uzg1s-Vt1yZLWjmjvRFYiG70iTueQTUPDp5F08pjWXtNmTRNLXE3MVEvDIhDjFr-w5nJ',
     coverAlt:
@@ -73,7 +73,7 @@ const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
     price: 320000,
     publisher: 'NXB Tổng hợp TP.HCM',
     publishYear: 2023,
-    formatVi: 'Bìa cứng',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuAtcRj3ztsntN5PnK6PR6R-sSTO1NuppR4punJz6oZTNQbWZ7gheS0b4E-J7dB4IIkG7bLA5J6wAjFE1hNQ7Jh-Vs0H-lojI_4btNfJEbaRySiyaqA_Xj2hmEnv0sA9XlxzBN9zVfkD9MndFwbrYc5eNg7_6Z9qXIHFGPRXXvgJmKUiZpAmRyZSAnTZYHOSc_xz5_msBcpIQY-eLAC8pnT7h8QD0KlEJybFj29UxU_B',
     coverAlt:
@@ -90,7 +90,7 @@ const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
     price: 280000,
     publisher: 'NXB Trẻ',
     publishYear: 2022,
-    formatVi: 'Bìa mềm',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvxAwJheM7Qa0JWNH-udcIwmFxnwm9HdQNbYHUdGB4lm39CbVjmMyF5MiMkq_AI6TSxqE67I871L0GsWzjGHN50XfoHYauYGlrYsSJ9amFSHesg7s90tMH5GWOahDSFai3IYFzyTC4n9wWtXowDI30PGR7Ie95fe-UpXjGNe8hfEHmvWuquv5LtRnLrlTuYFXoa7ewQuMb9E73MHQbYz4sL9i1twIp7PJ_jAW2oPb',
     coverAlt:
@@ -107,7 +107,7 @@ const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
     price: 210000,
     publisher: 'NXB Hội Nhà Văn',
     publishYear: 2020,
-    formatVi: 'Bìa mềm',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuCSqcasNMn6kZQtsQ6QM49MI2d5LAsUgaJWddcG1Ch-Civ0bCD4Obg4VJCnCutKW267lUIbt6MQiiR4t-8dWzEyIair1fPm4p-NKqU1Wm2vIbk8zdwqaltEAKVnviwoHpfBS_DPEyeMNC2TRygQja8JmFOba8ZVS2xVUlcozqBaaBdO37GqmjhHnD5FXan1usZKqSzY-Q0TdhGvV4pExQ0G7Pyxu_3oeGzvcxCcAWz1',
     coverAlt:
@@ -133,7 +133,7 @@ const COMPLEMENTARY_ITEMS: InventoryBook[] = Array.from({ length: 42 }, (_, i) =
     price: 185000 + (i % 6) * 35000,
     publisher: 'NXB BookVerse Guild',
     publishYear: 2023,
-    formatVi: i % 2 === 0 ? 'Bìa mềm' : 'Bìa cứng',
+    formatVi: 'Ấn bản tiêu chuẩn',
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDhuiJbYjbBTNMTSvNzEOg0hozusRe0q75o0ImjGvjVudqogCGSYo3jJLRBS8ZVmsTON6QJOHmdeDyM6BfxokKEKvyigGVOKC5-eDhUofXube4SHqMDasP3KQFHyMqMJlJnUu3l2QrryaaIe560_q3WYcQTijSeTCVyTTVqKdcmFKksLxo0Cq-MxOSu5smoTEvpjGY4CyLj-IM7hoZ-y_PymBmlL3kHimWDU9snqQEr',
     coverAlt: `Bìa tác phẩm Tuyển tập Ấn bản ${index}`,

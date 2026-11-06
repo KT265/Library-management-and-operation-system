@@ -24,7 +24,6 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
   sortOption,
   onSortChange,
   categories,
-  onExportCsv,
 }) => {
   return (
     <div
@@ -120,18 +119,6 @@ export const InventoryToolbar: React.FC<InventoryToolbarProps> = ({
             expand_more
           </span>
         </div>
-
-        {/* Export CSV Button */}
-        <button
-          type="button"
-          id="exportCsvBtn"
-          data-testid="admin-inventory-toolbar-btn-export"
-          onClick={onExportCsv}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 text-label-md font-label-md font-semibold text-secondary hover:text-on-surface transition-colors cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[18px]">file_download</span>
-          <span>Xuất CSV</span>
-        </button>
       </div>
     </div>
   );

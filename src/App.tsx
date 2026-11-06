@@ -22,6 +22,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminInventory } from './pages/AdminInventory';
 import { AdminOrders } from './pages/AdminOrders';
 import { AdminVouchers } from './pages/AdminVouchers';
+import { AdminUsers } from './pages/AdminUsers';
 
 export const App: React.FC = () => {
   return (
@@ -53,6 +54,9 @@ export const App: React.FC = () => {
               <Route path="inventory" element={<AdminInventory />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="vouchers" element={<AdminVouchers />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="permissions" element={<Navigate to="/admin/users" replace />} />
+              <Route path="roles" element={<Navigate to="/admin/users" replace />} />
             </Route>
 
             {/* Wildcard Fallback */}

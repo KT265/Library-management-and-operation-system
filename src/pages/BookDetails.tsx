@@ -6,12 +6,10 @@ import { Book } from '../types';
 import { BookBreadcrumbs } from '../components/book-details/BookBreadcrumbs';
 import { CoverGallery, GalleryThumbnail } from '../components/book-details/CoverGallery';
 import { BookHeroInfo } from '../components/book-details/BookHeroInfo';
-import { FormatSelector, BookFormatType, FormatDetails } from '../components/book-details/FormatSelector';
 import { PurchaseActionCluster } from '../components/book-details/PurchaseActionCluster';
 import { TrustBadgesBar } from '../components/book-details/TrustBadgesBar';
 import { BookTabsSection, BookTabId } from '../components/book-details/BookTabsSection';
 import { RelatedBooksCarousel } from '../components/book-details/RelatedBooksCarousel';
-import { BorrowEditionModal } from '../components/book-details/BorrowEditionModal';
 
 /**
  * Publishing metadata dimensions index (delegated to SpecificationsTab):
@@ -56,46 +54,14 @@ export const BookDetails: React.FC = () => {
 
   const canonicalBook = MOCK_BOOKS.find((b) => b.id === id) || MOCK_BOOKS[0];
 
-  const [selectedFormat, setSelectedFormat] = useState<BookFormatType>('paperback');
   const [quantity, setQuantity] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<BookTabId>('tab-overview');
   const [activeThumbIndex, setActiveThumbIndex] = useState<number>(0);
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
-  const [isBorrowModalOpen, setIsBorrowModalOpen] = useState<boolean>(false);
 
-  // Format pricing computation
-  const basePrice = canonicalBook.price || 360000;
-  const formatOptions: FormatDetails[] = [
-    {
-      id: 'hardcover',
-      label: 'Hardcover',
-      labelVi: 'Bìa cứng cao cấp',
-      subLabelVi: 'Đóng chỉ may gáy, bìa dày lưu trữ',
-      price: canonicalBook.formats?.hardcover?.price || Math.round(basePrice * 1.25),
-      originalPrice: canonicalBook.formats?.hardcover?.original || Math.round(basePrice * 1.45),
-    },
-    {
-      id: 'paperback',
-      label: 'Paperback',
-      labelVi: 'Bìa mềm tiêu chuẩn',
-      subLabelVi: 'Gáy gập 180° tiện đọc ghi chú',
-      price: canonicalBook.formats?.paperback?.price || basePrice,
-      originalPrice: canonicalBook.formats?.paperback?.original || canonicalBook.originalPrice || Math.round(basePrice * 1.25),
-    },
-    {
-      id: 'ebook',
-      label: 'Kindle / ePub',
-      labelVi: 'Bản điện tử (ePub)',
-      subLabelVi: 'Tải đọc tức thì trên mọi thiết bị',
-      price: canonicalBook.formats?.ebook?.price || Math.round(basePrice * 0.5),
-      originalPrice: canonicalBook.formats?.ebook?.original || Math.round(basePrice * 0.7),
-    },
-  ];
-
-  const activeFormatObj = formatOptions.find((f) => f.id === selectedFormat) || formatOptions[1];
-  const unitPrice = activeFormatObj.price;
-  const originalPrice = activeFormatObj.originalPrice;
+  const unitPrice = canonicalBook.price || 360000;
+  const originalPrice = canonicalBook.originalPrice || Math.round(unitPrice * 1.25);
   const stockCeiling = canonicalBook.stockCount || 38;
 
   const handleDecrement = () => {
@@ -168,15 +134,9 @@ export const BookDetails: React.FC = () => {
             />
           </div>
 
-          {/* Right Column: Book Hero Info, Format Selector & Actions */}
+          {/* Right Column: Book Hero Info & Actions */}
           <div className="lg:col-span-7 flex flex-col gap-space-lg">
             <BookHeroInfo book={canonicalBook} />
-
-            <FormatSelector
-              formatOptions={formatOptions}
-              selectedFormat={selectedFormat}
-              onSelectFormat={setSelectedFormat}
-            />
 
             <PurchaseActionCluster
               unitPrice={unitPrice}
@@ -188,7 +148,6 @@ export const BookDetails: React.FC = () => {
               onIncrement={handleIncrement}
               onAddToCart={handleAddToCart}
               onBuyNow={handleBuyNow}
-              onOpenBorrowModal={() => setIsBorrowModalOpen(true)}
             />
 
             <TrustBadgesBar />
@@ -205,13 +164,6 @@ export const BookDetails: React.FC = () => {
         {/* 4. Recommendations Carousel */}
         <RelatedBooksCarousel />
       </div>
-
-      {/* 5. Borrow Edition Modal */}
-      <BorrowEditionModal
-        isOpen={isBorrowModalOpen}
-        book={canonicalBook}
-        onClose={() => setIsBorrowModalOpen(false)}
-      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FulfillmentOrder, OrderFulfillmentCycle } from './types';
+import { FulfillmentOrder } from './types';
 import { FulfillmentOrderRow } from './FulfillmentOrderRow';
 
 interface FulfillmentOrdersTableProps {
@@ -10,7 +10,6 @@ interface FulfillmentOrdersTableProps {
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (rows: number) => void;
   onOpenConsole: (order: FulfillmentOrder) => void;
-  onUpdateCycle: (orderId: string, newCycle: OrderFulfillmentCycle) => void;
   onResolveOverdue: (order: FulfillmentOrder) => void;
 }
 
@@ -22,7 +21,6 @@ export const FulfillmentOrdersTable: React.FC<FulfillmentOrdersTableProps> = ({
   onPageChange,
   onRowsPerPageChange,
   onOpenConsole,
-  onUpdateCycle,
   onResolveOverdue,
 }) => {
   const totalPages = Math.ceil(orders.length / rowsPerPage) || 1;
@@ -90,7 +88,6 @@ export const FulfillmentOrdersTable: React.FC<FulfillmentOrdersTableProps> = ({
                   key={order.id}
                   order={order}
                   onOpenConsole={onOpenConsole}
-                  onUpdateCycle={onUpdateCycle}
                   onResolveOverdue={onResolveOverdue}
                 />
               ))

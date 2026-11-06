@@ -31,12 +31,7 @@ export const VoucherKpisBento: React.FC = () => {
               4
             </span>
             <span className="text-secondary font-title-sm text-title-sm">mã</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full text-xs">
-              Sẵn sàng áp dụng
-            </span>
-          </div>
+          </div>         
         </div>
       </div>
 
@@ -65,46 +60,8 @@ export const VoucherKpisBento: React.FC = () => {
             </span>
             <span className="text-secondary font-title-sm text-title-sm">lượt</span>
           </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="text-primary font-semibold bg-surface-container-high px-2 py-0.5 rounded-full text-xs">
-              Tỷ lệ quy đổi 78.4%
-            </span>
-          </div>
         </div>
       </div>
-
-      {/* Card 3: Total Discount Given */}
-      <div
-        id="kpi-total-discount-given"
-        data-testid="admin-vouchers-kpi-discount-given"
-        className="p-space-lg rounded-2xl bg-surface-container-lowest shadow-sm border border-outline-variant/30 flex flex-col justify-between"
-      >
-        <div className="flex items-center justify-between mb-space-md">
-          <span className="font-label-md text-label-md font-semibold text-secondary uppercase tracking-wider">
-            Giá trị tiết kiệm (VND)
-          </span>
-          <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center">
-            <span className="material-symbols-outlined text-[20px]">savings</span>
-          </div>
-        </div>
-        <div>
-          <div className="flex items-baseline gap-2">
-            <span
-              id="kpi-discount-given-value"
-              data-testid="admin-vouchers-kpi-discount-val"
-              className="font-display-md text-display-md font-bold text-primary tracking-tight num-tabular"
-            >
-              218.500.000 ₫
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="text-primary font-semibold bg-secondary-container px-2 py-0.5 rounded-full text-xs">
-              Ngân sách trợ giá độc giả
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Card 4: Expiring Soon */}
       <div
         id="kpi-expiring-soon"
@@ -129,11 +86,6 @@ export const VoucherKpisBento: React.FC = () => {
               2
             </span>
             <span className="text-tertiary font-title-sm text-title-sm">mã sắp hết hạn</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="text-on-tertiary bg-tertiary px-2 py-0.5 rounded-full text-xs font-bold">
-              Cần gia hạn chiến dịch
-            </span>
           </div>
         </div>
       </div>

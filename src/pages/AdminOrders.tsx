@@ -15,7 +15,7 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
   {
     id: 'ord-9842',
     orderNumber: '#ORD-9842',
-    dispatchType: 'Nhận tại quầy thư viện',
+    dispatchType: 'Nhận tại cửa hàng',
     patronName: 'TS. Emily Vance',
     patronEmail: 'e.vance@mit.edu',
     patronAvatar:
@@ -26,13 +26,13 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuAnS1t9sxFgJPWbU1L436mPSO_xYodqi8MmtvCkV1MUciCJPyinRxOzM4CBeUrtiwYZmuxk5nXun_ZIzdHXxLpLBGWdOh_77-kQmZRrbLCuzGNKYpk6hfBYV77sERw6O27A_fX5Y8_OMeuBek_CBIL1fC4MXk9x8ySwrkTeEEBj-mZShXVAJrqyw7a6kqyFT62opZFsUO6-NQM_QNaPUDOceyhoLpjZHOhcMFy4hbvi',
         quantity: 1,
-        loanNote: 'Mượn ấn bản bìa cứng',
+        orderNote: 'Ấn bản tiêu chuẩn',
       },
     ],
     dueDate: '30 Thg 10, 2025',
-    dueSubtext: 'Còn 3 ngày hạn mượn',
-    paymentStatus: 'Paid via PayOS',
-    fulfillmentCycle: 'Borrowing',
+    dueSubtext: 'Đang vận chuyển',
+    paymentStatus: 'VietQR Settled',
+    fulfillmentCycle: 'Delivered',
     orderTotalVND: 360000,
   },
   {
@@ -49,12 +49,12 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuDwqymBozqhPBbHCa6GU0WHOKzH3YPTunZV99YjIilgKmuHIsaZChkAnJRnYPigql4qGRzvxKncEuOEzAxbr2L31ploECY_pe4GrqSfullMIzghwSDlOrTzTEFp2nBH4Z20nCf-Gexb_BVORXnZrjqH9RHkY62xTs7yqJWOEYUia_Ma5ZEZkNfLgt3EERFGkGGzFA1J7_L3gKVE9mjoLG1t8jSimskmjqK3nfqECh7U',
         quantity: 2,
-        loanNote: 'Mua bán lẻ sở hữu',
+        orderNote: 'Mua bán lẻ sở hữu',
       },
     ],
     dueDate: '26 Thg 10, 2025',
     dueSubtext: 'Đã hoàn tất giao đúng hạn',
-    paymentStatus: 'Paid via PayOS',
+    paymentStatus: 'VietQR Settled',
     fulfillmentCycle: 'Returned',
     orderTotalVND: 338000,
   },
@@ -72,7 +72,7 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuC-6UQpcHUiw9xMrnLf_Gq_5Y8B5riiX9VF1M2m6zbylofYdnOEuAUekkW15n14ch2HhGL8NQ25sj13oQf6wk7g8tOxKgBD-M6NZNDkv0gvRUP_UhaYnD7vSg28uaAlBFlubFjXkO-E0pmuu2yV-3Hi_73Sb6MrbE8EWR69VjFF43V_C1g5M8RFHgrvJtOowNPf-jgx4ok396VJaVufB0I4QEdi0DkvET7UwBbCXRVS',
         quantity: 1,
-        loanNote: 'Mượn đọc 21 ngày',
+        orderNote: 'Ấn bản tiêu chuẩn',
       },
     ],
     dueDate: '04 Thg 11, 2025',
@@ -84,7 +84,7 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
   {
     id: 'ord-9835',
     orderNumber: '#ORD-9835',
-    dispatchType: 'Bàn lưu hành mượn trả',
+    dispatchType: 'Giao hàng hỏa tốc',
     patronName: 'Julian Barnes',
     patronEmail: 'j.barnes@archsystem.io',
     patronAvatar:
@@ -95,21 +95,19 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuDDdjkNZpjjMAW77nDoMynRJZxUtk2dFVdsyADceY8fYeOTu_IQ9eoIo1bG8i78NrNrF1gxE5_yn79QeTrnDYtTh3OvZ0Qb_uC7Yjybz6zCtB8Z8b0o0Q_7Z8mAYrH9mcSCz5sPEIfHttQ4WWbphK_2Wd-Q4A-sfyK1uGD5bQ-OTIDFlnZ03SJROLcVSybnZwQgQ68BSdBt0pLkufOxXnqeQYhEUfYkJncr4m6NHeWM',
         quantity: 1,
-        loanNote: 'Mượn tiêu chuẩn',
+        orderNote: 'Giao nhận tiêu chuẩn',
       },
     ],
     dueDate: '18 Thg 10, 2025',
-    dueSubtext: 'Quá hạn 7 ngày cần hoàn trả',
-    paymentStatus: 'Paid via PayOS',
-    fulfillmentCycle: 'Overdue',
-    fineAmountVND: 50000,
-    isOverdue: true,
+    dueSubtext: 'Đã hoàn tất giao hàng',
+    paymentStatus: 'VietQR Settled',
+    fulfillmentCycle: 'Delivered',
     orderTotalVND: 320000,
   },
   {
     id: 'ord-9830',
     orderNumber: '#ORD-9830',
-    dispatchType: 'Điểm nhận trường học',
+    dispatchType: 'Giao hàng tận nơi',
     patronName: 'Thảo Trần',
     patronEmail: 'thao.tran@polytech.edu.vn',
     patronAvatar:
@@ -120,13 +118,13 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuC0B5EoR8Q55vyjhLtGFslVM9aqDbg2H2N9S_s7-Qf5ECyhI6EovRR9SI0hvsxpXW8D3KOCoCHWobuHvVg_jOPLHu5Xkj8TdX-0NdiqcFitGY0VUBgIBGNYdbS2RqjII28ABa_UcMayKcTJC_KT2SB3ldhFXvmyxVOj1mBGyP-uw18cXa_bYhbDrrSvwKGa8XvcYR4wWwamIIPWgf-Xrer4w0k0bN7ZjT2qBYRQVv7k',
         quantity: 1,
-        loanNote: 'Mượn đọc 14 ngày',
+        orderNote: 'Đặt trước ấn bản mới',
       },
     ],
     dueDate: '01 Thg 11, 2025',
-    dueSubtext: 'Còn 5 ngày hạn mượn',
-    paymentStatus: 'Paid via PayOS',
-    fulfillmentCycle: 'Borrowing',
+    dueSubtext: 'Đang vận chuyển',
+    paymentStatus: 'VietQR Settled',
+    fulfillmentCycle: 'Delivered',
     orderTotalVND: 280000,
   },
   {
@@ -143,7 +141,7 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
         coverImage:
           'https://lh3.googleusercontent.com/aida-public/AB6AXuAZyrcBPs0IZ_bqN_IcsUDS6bASzWQ-IUOiIDIfzV_oO-OPG5hvPVdnS9P6FgZxI4ownOKPd72BismjWnD96agmTSSrUhER0SH8m4W0a-qPw000rkyZBu0Th-o4V88Cu7sxNWjNy7ZLoFzlX2m0NWLqV8h1RGyd_m6QinMrZAQU9lVll5UIusBJ7a1TOS1P1pbeLemiloM5ew18zig_xNSmSaHbPF8kZxRAMU9oyaaO',
         quantity: 1,
-        loanNote: 'Bộ ấn phẩm bán lẻ & mượn đọc',
+        orderNote: 'Bộ ấn phẩm bán lẻ',
       },
     ],
     dueDate: '22 Thg 10, 2025',
@@ -157,10 +155,10 @@ const DEFAULT_FULFILLMENT_ORDERS: FulfillmentOrder[] = [
 // Generate complementary items to reach 74 total fulfillments matching Stitch spec
 const COMPLEMENTARY_ORDERS: FulfillmentOrder[] = Array.from({ length: 68 }, (_, i) => {
   const num = 9823 - i;
-  const cycles: OrderFulfillmentCycle[] = ['Returned', 'Borrowing', 'Pending', 'Returned'];
+  const cycles: OrderFulfillmentCycle[] = ['Returned', 'Delivered', 'Pending', 'Returned'];
   const cycle = cycles[i % cycles.length];
   const paymentStatuses: FulfillmentOrder['paymentStatus'][] = [
-    'Paid via PayOS',
+    'VietQR Settled',
     'Pending VietQR',
     'COD Settled',
   ];
@@ -177,7 +175,7 @@ const COMPLEMENTARY_ORDERS: FulfillmentOrder[] = Array.from({ length: 68 }, (_, 
         title: `Ấn phẩm Tuyển tập #${(i % 12) + 1}`,
         coverImage: '',
         quantity: 1,
-        loanNote: 'Lưu hành tiêu chuẩn',
+        orderNote: 'Lưu hành tiêu chuẩn',
       },
     ],
     dueDate: '15 Thg 11, 2025',
@@ -230,10 +228,11 @@ export const AdminOrders: React.FC = () => {
       }
 
       // 3. Payment Method filter
-      if (filterState.paymentFilter === 'payos' && order.paymentStatus !== 'Paid via PayOS') {
-        return false;
-      }
-      if (filterState.paymentFilter === 'vietqr' && order.paymentStatus !== 'Pending VietQR') {
+      if (
+        filterState.paymentFilter === 'vietqr' &&
+        order.paymentStatus !== 'VietQR Settled' &&
+        order.paymentStatus !== 'Pending VietQR'
+      ) {
         return false;
       }
       if (filterState.paymentFilter === 'cod' && order.paymentStatus !== 'COD Settled') {
@@ -265,29 +264,8 @@ export const AdminOrders: React.FC = () => {
     setIsSyncing(true);
     setTimeout(() => {
       setIsSyncing(false);
-      showToast?.('Đồng bộ PayOS Webhook thành công! Tất cả giao dịch VietQR đã được đối soát.');
+      showToast?.('Đồng bộ dữ liệu đơn hàng thành công! Tất cả giao dịch VietQR đã được đối soát.');
     }, 1200);
-  };
-
-  const handleUpdateCycle = (orderId: string, newCycle: OrderFulfillmentCycle) => {
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id !== orderId) return o;
-        return {
-          ...o,
-          fulfillmentCycle: newCycle,
-          isOverdue: newCycle === 'Overdue' ? o.isOverdue : false,
-          fineAmountVND: newCycle === 'Overdue' ? o.fineAmountVND : undefined,
-          dueSubtext:
-            newCycle === 'Returned'
-              ? 'Đã hoàn tất lưu kho'
-              : newCycle === 'Borrowing'
-              ? 'Đang lưu hành mượn đọc'
-              : o.dueSubtext,
-        };
-      })
-    );
-    showToast?.(`Đã cập nhật tiến độ đơn hàng ${orderId} sang “${newCycle}”.`);
   };
 
   const handleResolveOverdue = (order: FulfillmentOrder) => {
@@ -342,7 +320,6 @@ export const AdminOrders: React.FC = () => {
           setCurrentPage(1);
         }}
         onOpenConsole={(order) => setConsoleOrder(order)}
-        onUpdateCycle={handleUpdateCycle}
         onResolveOverdue={handleResolveOverdue}
       />
 

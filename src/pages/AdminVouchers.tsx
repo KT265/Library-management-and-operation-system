@@ -31,7 +31,7 @@ const DEFAULT_VOUCHERS: AdminVoucher[] = [
     id: 'v-2',
     code: 'AUTUMN20',
     campaign: 'Lễ hội Mùa thu Toàn hệ thống',
-    description: 'Khuyến mại theo mùa cho ấn bản bìa cứng và bộ sách sưu tầm',
+    description: 'Khuyến mại theo mùa cho ấn bản sách tiêu chuẩn và bộ sưu tập',
     discountType: 'percent',
     discountValue: 20,
     discountLabel: 'Giảm 20%',

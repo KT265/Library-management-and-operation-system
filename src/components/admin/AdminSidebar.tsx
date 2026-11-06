@@ -41,6 +41,13 @@ const NAV_ITEMS: NavItem[] = [
     icon: 'local_offer',
     dataPath: 'admin-voucher-management',
   },
+  {
+    id: 'users',
+    label: 'Phân quyền người dùng',
+    path: '/admin/users',
+    icon: 'manage_accounts',
+    dataPath: 'user-role-management',
+  },
 ];
 
 export const AdminSidebar: React.FC = () => {

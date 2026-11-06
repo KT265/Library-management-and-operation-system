@@ -32,11 +32,6 @@ export const PatronHeaderCard: React.FC<PatronHeaderCardProps> = ({
               data-testid="user-profile-header-avatar"
               className="w-20 h-20 rounded-full object-cover ring-4 ring-secondary-container shadow-md"
             />
-            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm">
-              <span className="material-symbols-outlined text-[16px] fill">
-                workspace_premium
-              </span>
-            </div>
           </div>
 
           <div className="flex flex-col">
@@ -47,15 +42,6 @@ export const PatronHeaderCard: React.FC<PatronHeaderCardProps> = ({
               >
                 {patronName}
               </h2>
-              <span
-                data-testid="user-profile-header-badge"
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-semibold bg-primary/10 text-primary border border-primary/20"
-              >
-                <span className="material-symbols-outlined text-[14px] fill">
-                  workspace_premium
-                </span>
-                <span>Bibliophile Scholar • Level 4 / Thành viên Tinh hoa</span>
-              </span>
             </div>
 
             <p
@@ -64,10 +50,6 @@ export const PatronHeaderCard: React.FC<PatronHeaderCardProps> = ({
             >
               {patronEmail}
             </p>
-
-            <span className="font-body-xs text-body-xs text-outline mt-1">
-              Member since 2021 • Thành viên từ năm 2021
-            </span>
           </div>
         </div>
 

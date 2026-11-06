@@ -44,14 +44,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onSearch, onGenreSelect 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-center">
           {/* Left Column: Headline, Search & Trending */}
           <div className="lg:col-span-7 flex flex-col items-start">
-            <div
-              data-testid="home-hero-banner-pill-announcement"
-              className="inline-flex items-center gap-2 px-space-md py-1 rounded-full bg-tertiary text-on-tertiary font-label-md text-label-md shadow-sm mb-space-md"
-            >
-              <span className="material-symbols-outlined text-[16px]">local_fire_department</span>
-              <span>LỄ HỘI SÁCH MÙA THU • ƯU ĐÃI CÓ HẠN</span>
-            </div>
-
             <h1
               data-testid="home-hero-banner-text-headline"
               className="font-display-md text-display-md text-primary tracking-tight mb-space-sm"
@@ -99,9 +91,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onSearch, onGenreSelect 
               data-testid="home-hero-banner-trending-bar"
               className="flex flex-wrap items-center gap-space-xs mb-space-xl"
             >
-              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mr-1">
-                Xu hướng:
-              </span>
               {TRENDING_TAGS.map((tag) => (
                 <button
                   key={tag.id}

@@ -130,22 +130,6 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
           </>
         )}
       </button>
-
-      {/* Guarantee & Assurances */}
-      <div className="mt-space-md pt-space-md border-t border-outline-variant/20 flex flex-col space-y-2 text-[12px] text-on-surface-variant">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[16px] text-primary">verified</span>
-          <span>100% Ấn bản chính hãng từ nhà xuất bản</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[16px] text-primary">security</span>
-          <span>Bảo mật giao dịch VietQR &amp; Thanh toán khi nhận hàng</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[16px] text-primary">replay</span>
-          <span>Đổi trả trong 7 ngày nếu lỗi in ấn bao bì</span>
-        </div>
-      </div>
     </div>
   );
 };

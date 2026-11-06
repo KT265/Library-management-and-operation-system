@@ -19,7 +19,7 @@ const STOCK_ALERTS: StockAlertItem[] = [
   },
   {
     id: 'alert-2',
-    title: 'Piranesi (Bản Bìa Cứng)',
+    title: 'Piranesi',
     author: 'Susanna Clarke',
     isbn: '978-1635575637',
     copiesLeft: 3,

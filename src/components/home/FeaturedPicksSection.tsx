@@ -28,15 +28,6 @@ export const FeaturedPicksSection: React.FC<FeaturedPicksSectionProps> = ({
     >
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-space-lg gap-space-sm">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-tertiary" />
-            <span
-              data-testid="home-featured-badge-tagline"
-              className="font-label-sm text-label-sm text-tertiary uppercase tracking-widest font-bold"
-            >
-              Ấn phẩm tuyển tập đặc biệt
-            </span>
-          </div>
           <h2
             data-testid="home-featured-heading"
             className="font-headline-md text-headline-md text-primary tracking-tight"

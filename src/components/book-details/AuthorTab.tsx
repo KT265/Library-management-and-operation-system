@@ -33,15 +33,6 @@ export const AuthorTab: React.FC<AuthorTabProps> = ({ book }) => {
             {book.authorBio ||
               `${book.author} là một chuyên gia uy tín trong lĩnh vực của mình, từng công bố nhiều chuyên khảo và nghiên cứu khoa học có giá trị thực tiễn cao.`}
           </p>
-
-          <div className="mt-space-md flex flex-wrap gap-2">
-            <span className="px-3 py-1 rounded-full bg-surface-container-low text-on-surface font-label-sm text-label-sm">
-              Nhà xuất bản: {book.publisher}
-            </span>
-            <span className="px-3 py-1 rounded-full bg-surface-container-low text-on-surface font-label-sm text-label-sm">
-              Chuyên ngành: {book.genre}
-            </span>
-          </div>
         </div>
       </div>
     </div>

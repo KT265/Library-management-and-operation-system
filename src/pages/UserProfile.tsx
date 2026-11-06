@@ -7,7 +7,6 @@ import {
 } from '../components/user-profile/types';
 import { PatronHeaderCard } from '../components/user-profile/PatronHeaderCard';
 import { ReadingStatsBento } from '../components/user-profile/ReadingStatsBento';
-import { ReadingPreferencesCard } from '../components/user-profile/ReadingPreferencesCard';
 import { OrderHistorySection } from '../components/user-profile/OrderHistorySection';
 import { EditProfileModal } from '../components/user-profile/EditProfileModal';
 import { WriteReviewModal } from '../components/user-profile/WriteReviewModal';
@@ -32,7 +31,7 @@ const CANONICAL_ORDERS: OrderDisplay[] = [
         bookId: 'book-4',
         title: 'The Architecture of Silence',
         author: 'Helena Cross',
-        format: 'Bìa cứng cao cấp',
+        format: 'Ấn bản tiêu chuẩn',
         price: 240000,
         quantity: 1,
         coverImage:
@@ -42,7 +41,7 @@ const CANONICAL_ORDERS: OrderDisplay[] = [
         bookId: 'book-5',
         title: 'Echoes in the Pine Grove',
         author: 'Marcus Thorne',
-        format: 'Bìa mềm tiêu chuẩn',
+        format: 'Ấn bản tiêu chuẩn',
         price: 125000,
         quantity: 1,
         coverImage:
@@ -52,7 +51,7 @@ const CANONICAL_ORDERS: OrderDisplay[] = [
         bookId: 'book-6',
         title: 'Modernist Letterforms',
         author: 'S. C. Bradley',
-        format: 'Ấn bản đặc biệt',
+        format: 'Ấn bản tiêu chuẩn',
         price: 120000,
         quantity: 1,
         coverImage:
@@ -74,7 +73,7 @@ const CANONICAL_ORDERS: OrderDisplay[] = [
         bookId: 'book-7',
         title: 'Cartographies of the Mind: Selected Works',
         author: 'Prof. Julian A. Vance',
-        format: 'Bìa cứng mạ vàng',
+        format: 'Ấn bản tiêu chuẩn',
         price: 320000,
         quantity: 1,
         signedCopy: true,
@@ -96,7 +95,7 @@ const CANONICAL_ORDERS: OrderDisplay[] = [
         bookId: 'book-8',
         title: 'The Poetics of Space',
         author: 'Gaston Bachelard',
-        format: 'Bìa mềm',
+        format: 'Ấn bản tiêu chuẩn',
         price: 180000,
         quantity: 1,
         coverImage:
@@ -106,7 +105,7 @@ const CANONICAL_ORDERS: OrderDisplay[] = [
         bookId: 'book-9',
         title: 'Typography Essentials',
         author: 'Ina Saltz',
-        format: 'Bìa mềm',
+        format: 'Ấn bản tiêu chuẩn',
         price: 180000,
         quantity: 1,
         coverImage:
@@ -239,9 +238,6 @@ export const UserProfile: React.FC = () => {
 
         {/* 2. Reading Stats Bento */}
         <ReadingStatsBento />
-
-        {/* 3. Reading Preferences Card */}
-        <ReadingPreferencesCard />
 
         {/* 4. Order History Section & 5. Order History Cards */}
         <OrderHistorySection

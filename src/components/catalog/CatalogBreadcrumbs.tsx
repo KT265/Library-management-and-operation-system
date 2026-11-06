@@ -1,15 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-interface CatalogBreadcrumbsProps {
-  displayedCount: number;
-  totalCount: number;
-}
-
-export const CatalogBreadcrumbs: React.FC<CatalogBreadcrumbsProps> = ({
-  displayedCount,
-  totalCount,
-}) => {
+export const CatalogBreadcrumbs: React.FC = () => {
   return (
     <nav
       id="catalog-breadcrumbs"
@@ -33,17 +25,6 @@ export const CatalogBreadcrumbs: React.FC<CatalogBreadcrumbsProps> = ({
         >
           Danh mục sách
         </span>
-      </div>
-
-      <div
-        data-testid="catalog-breadcrumbs-counter"
-        className="text-on-surface-variant font-label-sm text-label-sm"
-      >
-        <span>Hiển thị </span>
-        <strong className="text-primary">{displayedCount}</strong>
-        <span> trên tổng số </span>
-        <strong className="text-primary">{totalCount}</strong>
-        <span> ấn phẩm</span>
       </div>
     </nav>
   );

@@ -26,8 +26,6 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
   const [totalUsageLimit, setTotalUsageLimit] = useState('500');
   const [startDate, setStartDate] = useState('2026-11-01');
   const [expiryDate, setExpiryDate] = useState('2026-12-31');
-  const [isPerUser, setIsPerUser] = useState(true);
-  const [canCombine, setCanCombine] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -108,8 +106,6 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
       status: 'active',
       minSpend: minSpendNum,
       startDate,
-      isPerUser,
-      canCombine,
     };
 
     onSaveVoucher(voucher);
@@ -298,28 +294,6 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
                 className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-          </div>
-
-          {/* Row 5: Policy Checkboxes */}
-          <div className="flex items-center gap-6 pt-1">
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-secondary">
-              <input
-                type="checkbox"
-                checked={isPerUser}
-                onChange={(e) => setIsPerUser(e.target.checked)}
-                className="rounded border-outline-variant text-primary focus:ring-primary"
-              />
-              <span>Giới hạn 1 lượt dùng / mỗi tài khoản</span>
-            </label>
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-secondary">
-              <input
-                type="checkbox"
-                checked={canCombine}
-                onChange={(e) => setCanCombine(e.target.checked)}
-                className="rounded border-outline-variant text-primary focus:ring-primary"
-              />
-              <span>Cho phép kết hợp với ưu đãi khác</span>
-            </label>
           </div>
 
           {/* Footer Actions */}

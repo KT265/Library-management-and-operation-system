@@ -34,14 +34,14 @@ const CATALOG_BOOKS: Book[] = (() => {
     coverImage:
       'https://lh3.googleusercontent.com/aida-public/AB6AXuDrWsVl9tJ4A0uh4f9SX7mrqJL4-1UcG2D4fSR0m8vPPT-hQrGvH-6KCWwWtlQwhwmPKcCOdv3kf6zeXI58S4kDXbHT2Y_TE5-avM0DKbUl3gyQaOgZODnUCX1jZVbw0ju2mknqvKAa3kPliMv4uLxkU_wNplv3zVsFkp2DTAtdGcABrCE_n9d6nraOzvUjv0PoCw-gH_10W8VUkACtvn9YFwEBPIlC_eySkC6Ta2vg',
     genre: 'Graphic Novels',
-    format: 'Hardcover',
+    format: 'Standard',
     description:
       'Design Systems là cuốn cẩm nang toàn diện khám phá các nguyên tắc nền tảng và mô hình thiết kế giao diện có khả năng mở rộng cao.',
     featured: true,
     isBestseller: false,
     specs: {
       isbn: '978-3945749586',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 288,
       language: 'English',
       publisher: 'Smashing Media',
@@ -209,10 +209,7 @@ export const Catalog: React.FC = () => {
         {/* 1. Breadcrumbs */}
         <div className="w-full px-gutter-lg pt-space-md">
           <div className="max-w-[1440px] mx-auto">
-            <CatalogBreadcrumbs
-              displayedCount={displayedBooks.length}
-              totalCount={totalItems}
-            />
+            <CatalogBreadcrumbs />
           </div>
         </div>
 

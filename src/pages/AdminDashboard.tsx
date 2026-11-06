@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { DashboardHeader } from '../components/admin-dashboard/DashboardHeader';
 import { KpiMetricsBento } from '../components/admin-dashboard/KpiMetricsBento';
-import { SalesTrajectoryChart } from '../components/admin-dashboard/SalesTrajectoryChart';
 import { RecentOrdersTable } from '../components/admin-dashboard/RecentOrdersTable';
 import { LowStockAlertsCard } from '../components/admin-dashboard/LowStockAlertsCard';
 
@@ -29,9 +28,6 @@ export const AdminDashboard: React.FC = () => {
 
       {/* 2. Top 4 KPI Metric Bento Cards */}
       <KpiMetricsBento />
-
-      {/* 3. Sales Trajectory & Run-Rate SVG Visualization */}
-      <SalesTrajectoryChart />
 
       {/* 4. Bottom Grid: Recent Orders & Warehouse Stock Alerts */}
       <div

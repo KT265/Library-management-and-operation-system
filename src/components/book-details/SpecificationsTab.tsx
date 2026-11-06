@@ -10,16 +10,6 @@ export const SpecificationsTab: React.FC<SpecificationsTabProps> = ({ book }) =>
 
   const specRows = [
     {
-      labelVi: 'Mã ISBN-13',
-      legacyKey: 'ISBN-13',
-      val: specs?.isbn || '978-1449373320',
-    },
-    {
-      labelVi: 'Mã ISBN-10',
-      legacyKey: 'ISBN-10',
-      val: '1449373321',
-    },
-    {
       labelVi: 'Số trang',
       legacyKey: 'Print Length',
       val: `${specs?.pages || 616} trang`,
@@ -48,11 +38,6 @@ export const SpecificationsTab: React.FC<SpecificationsTabProps> = ({ book }) =>
       labelVi: 'Nhà xuất bản',
       legacyKey: 'Publisher',
       val: specs?.publisher || book.publisher,
-    },
-    {
-      labelVi: 'Phân loại kho',
-      legacyKey: 'Inventory Classification',
-      val: `${book.genre} • Mã lưu trữ BK-${book.id.toUpperCase()}`,
     },
   ];
 

@@ -103,20 +103,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
           </div>
 
-          {/* Bio */}
-          <div className="flex flex-col space-y-1">
-            <label className="font-label-md text-label-md text-on-surface font-semibold">
-              Giới thiệu bản thân &amp; Ghi chú đọc sách
-            </label>
-            <textarea
-              rows={3}
-              value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              placeholder="Chia sẻ đôi nét về thể loại văn học bạn đam mê..."
-              className="w-full p-3 bg-surface-container-low rounded-lg text-on-surface font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"
-            />
-          </div>
-
           {/* Modal Actions */}
           <div className="flex items-center justify-end gap-space-sm pt-space-sm border-t border-outline-variant/30">
             <button

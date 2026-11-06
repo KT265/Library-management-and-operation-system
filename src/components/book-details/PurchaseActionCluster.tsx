@@ -11,7 +11,6 @@ interface PurchaseActionClusterProps {
   onIncrement: () => void;
   onAddToCart: () => void;
   onBuyNow: () => void;
-  onOpenBorrowModal: () => void;
 }
 
 export const PurchaseActionCluster: React.FC<PurchaseActionClusterProps> = ({
@@ -24,7 +23,6 @@ export const PurchaseActionCluster: React.FC<PurchaseActionClusterProps> = ({
   onIncrement,
   onAddToCart,
   onBuyNow,
-  onOpenBorrowModal,
 }) => {
   const subtotal = unitPrice * quantity;
   const savings = Math.max(0, originalPrice - unitPrice);
@@ -154,16 +152,6 @@ export const PurchaseActionCluster: React.FC<PurchaseActionClusterProps> = ({
         </button>
       </div>
 
-      {/* Secondary Circulation Borrow Action */}
-      <button
-        type="button"
-        data-testid="book-details-purchase-btn-borrow"
-        onClick={onOpenBorrowModal}
-        className="w-full py-2.5 rounded-full border border-outline-variant hover:bg-surface-container-high text-primary font-label-md text-label-md flex items-center justify-center gap-2 transition-colors cursor-pointer"
-      >
-        <span className="material-symbols-outlined text-[18px]">local_library</span>
-        <span>Mượn sách đọc tại chỗ / Mượn về</span>
-      </button>
     </div>
   );
 };

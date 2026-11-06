@@ -16,7 +16,7 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 42,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
     genre: 'Distributed Systems',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Dữ liệu là trọng tâm của nhiều thách thức trong thiết kế hệ thống ngày nay. Những vấn đề phức tạp như khả năng mở rộng, tính nhất quán, độ tin cậy, hiệu quả và khả năng bảo trì cần được giải quyết thấu đáo. Trong cuốn cẩm nang toàn diện này, tác giả Martin Kleppmann giúp bạn định hướng thông qua việc phân tích ưu nhược điểm của các công nghệ xử lý và lưu trữ dữ liệu hiện đại.',
     featured: true,
     isBestseller: true,
@@ -27,18 +27,13 @@ export const MOCK_BOOKS: Book[] = [
     ],
     specs: {
       isbn: '978-1449373320',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 616,
       language: 'English',
       publisher: "O'Reilly Media",
       dimensions: '17.8 x 3.6 x 23.4 cm',
       weight: '950 g',
       publicationYear: 2017
-    },
-    formats: {
-      hardcover: { price: 450000, original: 520000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 360000, original: 450000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 180000, original: 240000, labelVi: 'Bản điện tử (ePub)' }
     },
     reviews: [
       {
@@ -74,7 +69,7 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 18,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91',
     genre: 'Literary Fiction',
-    format: 'Hardcover',
+    format: 'Standard',
     description: 'Klara and the Sun, cuốn tiểu thuyết đầu tiên của Kazuo Ishiguro kể từ khi ông được trao giải Nobel Văn học, kể câu chuyện cảm động về Klara, một Người Bạn Nhân Tạo có khả năng quan sát phi thường, người từ vị trí của mình trong cửa hàng luôn chăm chú dõi theo hành vi của những người ghé thăm.',
     featured: true,
     isBestseller: true,
@@ -85,7 +80,7 @@ export const MOCK_BOOKS: Book[] = [
     ],
     specs: {
       isbn: '978-0593318171',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 320,
       language: 'English',
       publisher: 'Faber & Faber',
@@ -93,11 +88,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '540 g',
       publicationYear: 2021
     },
-    formats: {
-      hardcover: { price: 240000, original: 290000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 185000, original: 240000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 120000, original: 160000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-3',
@@ -114,7 +104,7 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 85,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvQXFI2eOxiw-mX5BtGITzJqbrTJRfdtnITBPipyoBiaNzug3GmDkPW_SqqkMir_LUc2CXLuiGFtzMkyBZq9OHvRZxIPcG6w5fvU3GELlXnOE594wVUJ0yYMtr8-J1U-8hMhtqYmOSKmUJjeCETCp9Yul7Hbj_hUwO-UtdogSUQb6NJ6q9-ITwWwwwCr-EEySb8EgXEPQtAEEQos9_ydaRQrgt2j7tb3EHhO_Vj8C',
     genre: 'Self-Growth',
-    format: 'Hardcover',
+    format: 'Standard',
     description: 'Bất kể mục tiêu của bạn là gì, Atomic Habits cung cấp một khuôn khổ đã được kiểm chứng để cải thiện bản thân mỗi ngày. James Clear, một trong những chuyên gia hàng đầu thế giới về hình thành thói quen, chia sẻ những chiến lược thực tiễn giúp bạn xây dựng thói quen tốt, loại bỏ thói quen xấu và làm chủ những hành vi nhỏ bé mang lại kết quả phi thường.',
     featured: true,
     isBestseller: true,
@@ -125,7 +115,7 @@ export const MOCK_BOOKS: Book[] = [
     ],
     specs: {
       isbn: '978-0735211292',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 320,
       language: 'English',
       publisher: 'Avery / Penguin',
@@ -133,11 +123,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '500 g',
       publicationYear: 2018
     },
-    formats: {
-      hardcover: { price: 220000, original: 260000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 169000, original: 220000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 110000, original: 150000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-4',
@@ -154,7 +139,7 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 29,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyuuv-f3hWDjo3tTeMopy0Y-N2MCzN-NhaiL9yf1Wc5r0zxpvQ4z5LmocPXSxOO9FtaDiYAY7SMs9FScflsyKKrV35-sIyfYzCPiBDEkUaCBH30-o_GCoAt0l4JmhLA9QFWqjcKAIai9V17O7YEc00FH3aXbnh3yLjLYIX4zGjJ1wWJyQHFQv2_KL-XxxFDtzGCGdnpMBTJYqa4bImqvwrtHMWgm7lanOi4dZyXRTH',
     genre: 'Tech & Coding',
-    format: 'Hardcover',
+    format: 'Standard',
     description: 'The Pragmatic Programmer là một trong những cuốn sách công nghệ hiếm hoi mà bạn sẽ đọc đi đọc lại nhiều lần trong sự nghiệp. Dù bạn mới bắt đầu hay đã là chuyên gia dày dạn kinh nghiệm, bạn đều sẽ tìm thấy những góc nhìn mới mẻ và sâu sắc sau mỗi lần giở lại từng trang sách.',
     featured: true,
     isBestseller: false,
@@ -165,7 +150,7 @@ export const MOCK_BOOKS: Book[] = [
     ],
     specs: {
       isbn: '978-0135957059',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 352,
       language: 'English',
       publisher: 'Addison-Wesley',
@@ -173,11 +158,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '820 g',
       publicationYear: 2019
     },
-    formats: {
-      hardcover: { price: 320000, original: 420000, labelVi: 'Bìa cứng kỷ niệm 20 năm' },
-      paperback: { price: 260000, original: 340000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 150000, original: 200000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-5',
@@ -194,13 +174,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 15,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAWLrd75pKHdN7Kcyv9sftkyLxBOtVtNBfuXtH1R1uN5xNn5MiHSjQ7h9BSuRSUF6DefQ-ZmvpgIjRFX0taYM-LlYQvDlVbDdll_F3_Jel-qcW6ceJZk5Z8JEN_ft4Q4YlaEn4ojrHQUFRnR71fPmyIpAX4VnnJaWrrCKaPThWozPYIrNc-U5V0_CRcUmcbzOHFT7XHZORsMaPsztNx39_52u7OjgNknlH8veTjKJem',
     genre: 'Computer Science',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Bằng cách áp dụng các quy tắc kiến trúc phổ quát của Robert C. Martin, bạn có thể cải thiện đáng kể năng suất của lập trình viên trong suốt vòng đời của bất kỳ hệ thống phần mềm nào. Uncle Bob giải thích những điều bạn muốn đạt được và những nguyên tắc cốt lõi bạn cần nắm vững.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-0134494166',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 432,
       language: 'English',
       publisher: 'Prentice Hall',
@@ -208,11 +188,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '640 g',
       publicationYear: 2017
     },
-    formats: {
-      hardcover: { price: 350000, original: 420000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 280000, original: 350000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 140000, original: 190000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-6',
@@ -229,13 +204,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 33,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
     genre: 'Sci-Fi & Fantasy',
-    format: 'Hardcover',
+    format: 'Standard',
     description: 'Đặt trong bối cảnh cuộc Cách mạng Văn hóa của Trung Quốc, một dự án quân sự bí mật đã gửi tín hiệu vào không gian để thiết lập liên lạc với người ngoài hành tinh. Một nền văn minh ngoài trái đất đang trên bờ vực diệt vong đã nhận được tín hiệu và lên kế hoạch xâm chiếm Trái Đất.',
     featured: false,
     isBestseller: true,
     specs: {
       isbn: '978-0765382030',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 400,
       language: 'English',
       publisher: 'Tor Books',
@@ -243,11 +218,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '590 g',
       publicationYear: 2014
     },
-    formats: {
-      hardcover: { price: 280000, original: 340000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 210000, original: 280000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 110000, original: 150000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-7',
@@ -264,13 +234,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 22,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvQXFI2eOxiw-mX5BtGITzJqbrTJRfdtnITBPipyoBiaNzug3GmDkPW_SqqkMir_LUc2CXLuiGFtzMkyBZq9OHvRZxIPcG6w5fvU3GELlXnOE594wVUJ0yYMtr8-J1U-8hMhtqYmOSKmUJjeCETCp9Yul7Hbj_hUwO-UtdogSUQb6NJ6q9-ITwWwwwCr-EEySb8EgXEPQtAEEQos9_ydaRQrgt2j7tb3EHhO_Vj8C',
     genre: 'History & Mind',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Tác giả đưa chúng ta vào một chuyến du hành đột phá về tâm trí và phân tích hai hệ thống thúc đẩy cách chúng ta suy nghĩ: Hệ thống 1 vận hành nhanh chóng, trực giác và cảm tính; Hệ thống 2 vận hành chậm rãi hơn, thận trọng và đậm tính logic.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-0374533557',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 512,
       language: 'English',
       publisher: 'Farrar, Straus and Giroux',
@@ -278,11 +248,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '450 g',
       publicationYear: 2013
     },
-    formats: {
-      hardcover: { price: 290000, original: 360000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 225000, original: 290000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 125000, original: 170000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-8',
@@ -299,13 +264,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 12,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyuuv-f3hWDjo3tTeMopy0Y-N2MCzN-NhaiL9yf1Wc5r0zxpvQ4z5LmocPXSxOO9FtaDiYAY7SMs9FScflsyKKrV35-sIyfYzCPiBDEkUaCBH30-o_GCoAt0l4JmhLA9QFWqjcKAIai9V17O7YEc00FH3aXbnh3yLjLYIX4zGjJ1wWJyQHFQv2_KL-XxxFDtzGCGdnpMBTJYqa4bImqvwrtHMWgm7lanOi4dZyXRTH',
     genre: 'Distributed Systems',
-    format: 'Hardcover',
+    format: 'Standard',
     description: 'Khi nói đến việc chọn, sử dụng và bảo trì cơ sở dữ liệu, việc hiểu rõ các thành phần nội bộ là chìa khóa then chốt. Cuốn sách thực tế này hướng dẫn bạn qua các khái niệm cơ bản về động cơ lưu trữ, B-tree, LSM-tree và hệ thống phân tán đứng sau các cơ sở dữ liệu hiện đại ngày nay.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-1492040347',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 376,
       language: 'English',
       publisher: "O'Reilly Media",
@@ -313,11 +278,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '640 g',
       publicationYear: 2019
     },
-    formats: {
-      hardcover: { price: 380000, original: 480000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 310000, original: 390000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 175000, original: 220000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-9',
@@ -334,13 +294,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 40,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAWLrd75pKHdN7Kcyv9sftkyLxBOtVtNBfuXtH1R1uN5xNn5MiHSjQ7h9BSuRSUF6DefQ-ZmvpgIjRFX0taYM-LlYQvDlVbDdll_F3_Jel-qcW6ceJZk5Z8JEN_ft4Q4YlaEn4ojrHQUFRnR71fPmyIpAX4VnnJaWrrCKaPThWozPYIrNc-U5V0_CRcUmcbzOHFT7XHZORsMaPsztNx39_52u7OjgNknlH8veTjKJem',
     genre: 'Tech & Coding',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Cuốn sách cung cấp một quy trình 4 bước đáng tin cậy để giải quyết các câu hỏi phỏng vấn thiết kế hệ thống khó nhằn. Bao gồm 16 câu hỏi phỏng vấn thiết kế hệ thống thực tế với sơ đồ kiến trúc chi tiết và hướng dẫn giải thích từng bước.',
     featured: false,
     isBestseller: true,
     specs: {
       isbn: '979-8664653403',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 300,
       language: 'English',
       publisher: 'Independently Published',
@@ -348,11 +308,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '550 g',
       publicationYear: 2020
     },
-    formats: {
-      hardcover: { price: 360000, original: 440000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 290000, original: 380000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 145000, original: 195000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-10',
@@ -369,13 +324,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 19,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA9OWzkbWHX0EEUxgjNw0-2pIGCHILqrqmjBTJpxT_pyjGFvnllY24sDe9tQCJvNQD6vLQXC16_gBcEU3ynsskC4w-VEyVUlhKrDom1QmGFGEqe3X5mgqabmAxnfOdm60EaEFcKDFSA3b9RdlK5vmXjCREFKGA9DR7Ll331-lA0nGpQJyCZ_hhi0ZOH6M1INPnyXMId3l-GBDlR0bSftswGP4D9vO3mc9svVJ-tLVKW',
     genre: 'Tech & Coding',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Các thành viên trong nhóm Site Reliability Engineering của Google giải thích cách xây dựng, triển khai, giám sát và duy trì một số hệ thống phần mềm lớn nhất thế giới, biến công việc vận hành thành một bộ môn kỹ thuật phần mềm có thể mở rộng.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-1491929124',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 550,
       language: 'English',
       publisher: "O'Reilly Media",
@@ -383,11 +338,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '820 g',
       publicationYear: 2016
     },
-    formats: {
-      hardcover: { price: 440000, original: 520000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 350000, original: 440000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 175000, original: 220000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-11',
@@ -404,13 +354,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 25,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvQXFI2eOxiw-mX5BtGITzJqbrTJRfdtnITBPipyoBiaNzug3GmDkPW_SqqkMir_LUc2CXLuiGFtzMkyBZq9OHvRZxIPcG6w5fvU3GELlXnOE594wVUJ0yYMtr8-J1U-8hMhtqYmOSKmUJjeCETCp9Yul7Hbj_hUwO-UtdogSUQb6NJ6q9-ITwWwwwCr-EEySb8EgXEPQtAEEQos9_ydaRQrgt2j7tb3EHhO_Vj8C',
     genre: 'Distributed Systems',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Phiên bản thứ hai được cập nhật hoàn toàn này cung cấp cho các kiến trúc sư và nhà phát triển cái nhìn toàn diện về các chủ đề cần cân nhắc khi xây dựng, quản lý và phát triển các kiến trúc vi dịch vụ trong kỷ nguyên điện toán đám mây.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-1492034025',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 612,
       language: 'English',
       publisher: "O'Reilly Media",
@@ -418,11 +368,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '910 g',
       publicationYear: 2021
     },
-    formats: {
-      hardcover: { price: 460000, original: 550000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 370000, original: 460000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 185000, original: 230000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-12',
@@ -439,13 +384,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 16,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAWLrd75pKHdN7Kcyv9sftkyLxBOtVtNBfuXtH1R1uN5xNn5MiHSjQ7h9BSuRSUF6DefQ-ZmvpgIjRFX0taYM-LlYQvDlVbDdll_F3_Jel-qcW6ceJZk5Z8JEN_ft4Q4YlaEn4ojrHQUFRnR71fPmyIpAX4VnnJaWrrCKaPThWozPYIrNc-U5V0_CRcUmcbzOHFT7XHZORsMaPsztNx39_52u7OjgNknlH8veTjKJem',
     genre: 'Distributed Systems',
-    format: 'Paperback',
+    format: 'Standard',
     description: 'Làm thế nào để chuyển đổi một hệ thống khối lớn thành vi dịch vụ mà không làm gián đoạn hoạt động kinh doanh? Sam Newman chỉ ra nhiều chiến lược và mô hình di chuyển dữ liệu từng bước, giúp giảm thiểu rủi ro tối đa cho doanh nghiệp.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-1492047841',
-      format: 'Paperback',
+      format: 'Standard',
       pages: 272,
       language: 'English',
       publisher: "O'Reilly Media",
@@ -453,11 +398,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '450 g',
       publicationYear: 2019
     },
-    formats: {
-      hardcover: { price: 380000, original: 450000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 295000, original: 380000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 150000, original: 190000, labelVi: 'Bản điện tử (ePub)' }
-    }
   },
   {
     id: 'book-13',
@@ -474,13 +414,13 @@ export const MOCK_BOOKS: Book[] = [
     stockCount: 24,
     coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDZY_mCmXd7d5r_9SF1xi1uh_K0jg84AePGHukXA-pDFfJ8zp3esiwY481hBlZgEqYYlxlDfVGqIcwbI6-N2yAwRfcxZ_7W0NWX6jnTHutvSZtX4ImBzSBbzXMrQVrXaemDdDtFWSy5SO_eRAoCHxWzPhp1afQDtoog8aVnaWu1h_Fo_cujmszPGNG6gt7Ruo8OOFKGJdFZKS7fRm8OEzDOefFDDjnxC1K1GXzinb91',
     genre: 'Graphic Novels',
-    format: 'Hardcover',
+    format: 'Standard',
     description: 'Cuốn sách khám phá các cách tiếp cận thực tế để xây dựng hệ thống thiết kế số bền vững, chia sẻ những bài học từ các nhóm sản phẩm hàng đầu thế giới về cách tạo nên trải nghiệm người dùng nhất quán và hiệu quả.',
     featured: false,
     isBestseller: false,
     specs: {
       isbn: '978-3945749586',
-      format: 'Hardcover',
+      format: 'Standard',
       pages: 288,
       language: 'English',
       publisher: 'Smashing Magazine',
@@ -488,11 +428,6 @@ export const MOCK_BOOKS: Book[] = [
       weight: '620 g',
       publicationYear: 2017
     },
-    formats: {
-      hardcover: { price: 285000, original: 360000, labelVi: 'Bìa cứng cao cấp' },
-      paperback: { price: 220000, original: 290000, labelVi: 'Bìa mềm tiêu chuẩn' },
-      ebook: { price: 140000, original: 180000, labelVi: 'Bản điện tử (ePub)' }
-    }
   }
 ];
 
@@ -592,8 +527,8 @@ export const MOCK_VOUCHERS: Voucher[] = [
     startDate: '2026-08-01',
     expiryDate: '2026-09-30',
     status: 'expired',
-    description: 'Chương trình xả kho hè áp dụng cho các ấn bản bìa mềm chọn lọc.',
-    applicableCategory: 'Sách bìa mềm'
+    description: 'Chương trình xả kho hè áp dụng cho các ấn bản chọn lọc.',
+    applicableCategory: 'Tất cả danh mục'
   }
 ];
 

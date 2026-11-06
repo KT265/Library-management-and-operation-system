@@ -20,7 +20,7 @@ export type BookGenre =
   | 'Distributed Systems'
   | 'Computer Science';
 
-export type BookFormat = 'Hardcover' | 'Paperback' | "Collector's Cloth" | 'E-Book';
+export type BookFormat = 'Standard';
 
 export interface BookSpec {
   isbn: string;
@@ -71,7 +71,6 @@ export interface Book {
   keyFeatures?: string[];
   specs?: BookSpec;
   reviews?: BookReview[];
-  formats?: Partial<Record<'hardcover' | 'paperback' | 'ebook', BookFormatOption>>;
 }
 
 export interface CartItem {

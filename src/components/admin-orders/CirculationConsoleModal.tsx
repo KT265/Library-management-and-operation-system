@@ -32,8 +32,8 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
       ...order,
       trackingCode,
       fulfillmentCycle: selectedCycle,
-      isOverdue: selectedCycle === 'Overdue' ? order.isOverdue : false,
-      fineAmountVND: selectedCycle === 'Overdue' ? order.fineAmountVND : undefined,
+      isOverdue: false,
+      fineAmountVND: undefined,
     });
     onClose();
   };
@@ -114,7 +114,7 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
                 >
                   <span className="font-medium text-primary text-xs">{b.title}</span>
                   <span className="text-secondary text-xs">
-                    {b.quantity} cuốn • {b.loanNote}
+                    {b.quantity} cuốn • {b.orderNote}
                   </span>
                 </div>
               ))}
@@ -156,7 +156,7 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
           {/* Cycle State Selector */}
           <div>
             <label htmlFor="select-cycle-state" className="block text-secondary font-medium mb-1">
-              Tiến độ lưu hành ấn phẩm
+              Tiến độ giao hàng &amp; xử lý
             </label>
             <select
               id="select-cycle-state"
@@ -166,9 +166,9 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
               className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
             >
               <option value="Pending">Chờ xuất kho (Pending)</option>
-              <option value="Borrowing">Đang mượn đọc / Đang giao (Borrowing)</option>
-              <option value="Returned">Đã hoàn tất / Nhập kho (Returned)</option>
-              <option value="Overdue">Quá hạn cần thu hồi (Overdue)</option>
+              <option value="Delivered">Đã giao hàng (Delivered)</option>
+              <option value="Returned">Đã hoàn tất / Đổi trả (Returned)</option>
+              <option value="Cancelled">Đã huỷ đơn (Cancelled)</option>
             </select>
           </div>
 

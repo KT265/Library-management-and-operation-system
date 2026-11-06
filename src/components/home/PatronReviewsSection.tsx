@@ -51,7 +51,7 @@ const VALUE_PROPS = [
   },
   {
     icon: 'qr_code_scanner',
-    title: 'Thanh toán VietQR & PayOS tức thì',
+    title: 'Thanh toán VietQR tức thì',
     desc: 'Quét mã thanh toán bảo mật với cơ chế đối soát tự động, xuất hóa đơn điện tử ngay.',
   },
   {

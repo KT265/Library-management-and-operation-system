@@ -156,11 +156,7 @@ export const CatalogBookCard: React.FC<CatalogBookCardProps> = ({
               : `Còn hàng (${book.stockCount || 24} cuốn)`}
           </span>
           <span className="font-label-sm text-label-sm text-outline">
-            {book.format === 'Hardcover'
-              ? 'Bìa cứng'
-              : book.format === 'Paperback'
-              ? 'Bìa mềm'
-              : 'Bản điện tử'}
+            Ấn bản tiêu chuẩn
           </span>
         </div>
 

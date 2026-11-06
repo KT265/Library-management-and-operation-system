@@ -32,12 +32,6 @@ export const KpiMetricsBento: React.FC = () => {
               1.225.000.000 ₫
             </span>
           </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="inline-flex items-center text-primary-container font-semibold bg-secondary-fixed px-2 py-0.5 rounded-full text-label-sm">
-              <span className="material-symbols-outlined text-[14px] mr-0.5">trending_up</span>
-              +14.2% so với tháng trước
-            </span>
-          </div>
         </div>
       </div>
 
@@ -66,16 +60,10 @@ export const KpiMetricsBento: React.FC = () => {
             </span>
             <span className="text-secondary font-title-sm text-title-sm">đơn</span>
           </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="inline-flex items-center text-primary font-semibold bg-surface-container-high px-2 py-0.5 rounded-full text-label-sm">
-              <span className="material-symbols-outlined text-[14px] mr-0.5">trending_up</span>
-              +8.5%
-            </span>
-          </div>
         </div>
       </div>
 
-      {/* Card 3: Bản sách đang mượn / lưu hành */}
+      {/* Card 3: Sách tồn kho */}
       <div
         id="circulationMetric"
         data-testid="admin-dashboard-kpi-card-circulation"
@@ -83,7 +71,7 @@ export const KpiMetricsBento: React.FC = () => {
       >
         <div className="flex items-center justify-between mb-space-md">
           <span className="font-label-md text-label-md font-semibold text-secondary uppercase tracking-wider">
-            Sách đang lưu hành
+            Tổng đầu sách
           </span>
           <div className="w-10 h-10 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center">
             <span className="material-symbols-outlined text-[20px]">auto_stories</span>
@@ -99,12 +87,7 @@ export const KpiMetricsBento: React.FC = () => {
               324
             </span>
             <span className="text-tertiary font-title-sm text-title-sm">cuốn</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="inline-flex items-center text-on-tertiary bg-tertiary px-2 py-0.5 rounded-full font-bold text-label-sm">
-              Đang mượn đọc
-            </span>
-          </div>
+          </div>          
         </div>
       </div>
 
@@ -132,12 +115,7 @@ export const KpiMetricsBento: React.FC = () => {
               8.920
             </span>
             <span className="text-secondary font-title-sm text-title-sm">thành viên</span>
-          </div>
-          <div className="flex items-center gap-1.5 mt-2 font-label-md text-label-md">
-            <span className="text-primary font-semibold bg-secondary-container px-2 py-0.5 rounded-full text-label-sm">
-              +380 thành viên mới
-            </span>
-          </div>
+          </div>       
         </div>
       </div>
     </div>

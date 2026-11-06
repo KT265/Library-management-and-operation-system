@@ -153,7 +153,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   {/* 6. Định dạng lưu hành */}
                   <td className="py-3 px-4 text-center">
                     <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-surface-container-high text-secondary">
-                      {book.formatVi || 'Bìa mềm'}
+                      {book.formatVi || 'Ấn bản tiêu chuẩn'}
                     </span>
                   </td>
 

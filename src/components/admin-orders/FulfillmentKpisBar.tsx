@@ -29,25 +29,25 @@ export const FulfillmentKpisBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Pill 2: Đang lưu hành / Active Borrowings */}
+      {/* Pill 2: Đã hoàn tất / Completed Orders */}
       <div
-        id="kpi-active-borrowings"
-        data-testid="admin-orders-kpi-active-borrowings"
+        id="kpi-completed-orders"
+        data-testid="admin-orders-kpi-completed-orders"
         className="p-space-md rounded-2xl bg-surface-container-lowest shadow-sm border border-outline-variant/30 flex items-center justify-between"
       >
         <div>
           <span className="text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider block">
-            Đang lưu hành (Active Borrowings)
+            Đã hoàn tất (Completed)
           </span>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="font-display-sm text-display-sm font-bold text-primary num-tabular">
               24
             </span>
-            <span className="text-secondary font-label-md text-label-md">bản mượn</span>
+            <span className="text-secondary font-label-md text-label-md">đơn hàng</span>
           </div>
         </div>
         <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
-          <span className="material-symbols-outlined text-[20px]">auto_stories</span>
+          <span className="material-symbols-outlined text-[20px]">check_circle</span>
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export const FulfillmentKpisBar: React.FC = () => {
         </div>
       </div>
 
-      {/* Pill 4: Quá hạn thu hồi / Overdue Returns */}
+      {/* Pill 4: Chờ xác nhận / Pending Confirmation */}
       <div
         id="kpi-overdue-returns"
         data-testid="admin-orders-kpi-overdue-returns"
@@ -81,7 +81,7 @@ export const FulfillmentKpisBar: React.FC = () => {
       >
         <div>
           <span className="text-secondary font-label-sm text-label-sm font-semibold uppercase tracking-wider block">
-            Mượn quá hạn (Overdue Returns)
+            Chờ xác nhận (Pending)
           </span>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="font-display-sm text-display-sm font-bold text-error num-tabular">

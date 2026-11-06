@@ -13,11 +13,10 @@ export const OrdersFilterToolbar: React.FC<OrdersFilterToolbarProps> = ({
   onResetFilters,
 }) => {
   const statusTabs: { key: OrdersFilterState['statusChip']; label: string }[] = [
-    { key: 'All', label: 'Tất cả chu kỳ' },
+    { key: 'All', label: 'Tất cả' },
     { key: 'Pending', label: 'Chờ xử lý' },
-    { key: 'Borrowing', label: 'Đang mượn' },
-    { key: 'Returned', label: 'Đã hoàn trả' },
-    { key: 'Overdue', label: 'Quá hạn' },
+    { key: 'Delivered', label: 'Đã giao hàng' },
+    { key: 'Cancelled', label: 'Đã huỷ' },
   ];
 
   return (
@@ -71,8 +70,7 @@ export const OrdersFilterToolbar: React.FC<OrdersFilterToolbarProps> = ({
               className="appearance-none bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-full px-4 py-2 pr-8 text-label-md font-label-md font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-colors"
             >
               <option value="all">Phương thức: Tất cả</option>
-              <option value="payos">Đã thanh toán qua PayOS</option>
-              <option value="vietqr">Chờ quét mã VietQR</option>
+              <option value="vietqr">Thanh toán qua VietQR</option>
               <option value="cod">Thanh toán tiền mặt khi nhận hàng (COD)</option>
             </select>
             <span className="material-symbols-outlined text-outline text-[16px] absolute right-2.5 pointer-events-none">

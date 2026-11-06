@@ -2,17 +2,17 @@ export interface OrderBookItem {
   title: string;
   coverImage: string;
   quantity: number;
-  loanNote: string;
+  orderNote: string;
   price?: number;
 }
 
-export type OrderPaymentStatus = 'Paid via PayOS' | 'Pending VietQR' | 'COD Settled';
-export type OrderFulfillmentCycle = 'Borrowing' | 'Returned' | 'Pending' | 'Overdue';
+export type OrderPaymentStatus = 'VietQR Settled' | 'Pending VietQR' | 'COD Settled';
+export type OrderFulfillmentCycle = 'Delivered' | 'Returned' | 'Pending' | 'Cancelled';
 
 export interface FulfillmentOrder {
   id: string;
   orderNumber: string;
-  dispatchType: string;
+  dispatchType?: string;
   patronName: string;
   patronEmail: string;
   patronAvatar: string;
@@ -30,8 +30,8 @@ export interface FulfillmentOrder {
 
 export interface OrdersFilterState {
   searchTerm: string;
-  statusChip: 'All' | 'Pending' | 'Borrowing' | 'Returned' | 'Overdue';
-  paymentFilter: 'all' | 'payos' | 'vietqr' | 'cod';
+  statusChip: 'All' | 'Pending' | 'Delivered' | 'Returned' | 'Cancelled';
+  paymentFilter: 'all' | 'vietqr' | 'cod';
   fromDate: string;
   toDate: string;
 }

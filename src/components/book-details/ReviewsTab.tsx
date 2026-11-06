@@ -96,7 +96,7 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({ book }) => {
             <div className="flex items-center gap-2">
               <span className="font-label-lg font-bold text-primary">Alexandre R.</span>
               <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[11px]">
-                Đã mua ấn bản bìa cứng
+                Đã mua ấn bản tiêu chuẩn
               </span>
             </div>
             <div className="flex items-center text-tertiary-container">
@@ -118,7 +118,7 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({ book }) => {
             <div className="flex items-center gap-2">
               <span className="font-label-lg font-bold text-primary">Danielle Lin</span>
               <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[11px]">
-                Đã mua ấn bản bìa mềm
+                Đã mua ấn bản tiêu chuẩn
               </span>
             </div>
             <div className="flex items-center text-tertiary-container">

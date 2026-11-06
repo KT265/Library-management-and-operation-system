@@ -5,23 +5,21 @@ import { FulfillmentOrder, OrderFulfillmentCycle } from './types';
 interface FulfillmentOrderRowProps {
   order: FulfillmentOrder;
   onOpenConsole: (order: FulfillmentOrder) => void;
-  onUpdateCycle: (orderId: string, newCycle: OrderFulfillmentCycle) => void;
   onResolveOverdue: (order: FulfillmentOrder) => void;
 }
 
 export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
   order,
   onOpenConsole,
-  onUpdateCycle,
   onResolveOverdue,
 }) => {
   const getPaymentBadge = (status: FulfillmentOrder['paymentStatus']) => {
     switch (status) {
-      case 'Paid via PayOS':
+      case 'VietQR Settled':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary-container text-on-secondary-container">
             <span className="material-symbols-outlined text-[14px]">verified</span>
-            <span>Đã thanh toán qua PayOS</span>
+            <span>Đã thanh toán VietQR</span>
           </span>
         );
       case 'Pending VietQR':
@@ -45,10 +43,10 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
 
   const getCycleBadge = (cycle: OrderFulfillmentCycle) => {
     switch (cycle) {
-      case 'Borrowing':
+      case 'Delivered':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
-            Đang mượn
+            Đã giao hàng
           </span>
         );
       case 'Returned':
@@ -63,10 +61,10 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
             Chờ xử lý
           </span>
         );
-      case 'Overdue':
+      case 'Cancelled':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">
-            Quá hạn (Phạt: {formatVND(order.fineAmountVND || 50000)})
+            Đã huỷ
           </span>
         );
       default:
@@ -84,12 +82,11 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
           : 'hover:bg-surface-container-low/60'
       }`}
     >
-      {/* 1. Mã đơn hàng & Kiểu điều phối */}
+      {/* 1. Mã đơn hàng */}
       <td className="py-3 px-4">
         <span className="font-mono font-bold text-primary text-sm block">
           {order.orderNumber}
         </span>
-        <span className="text-secondary text-xs mt-0.5 block">{order.dispatchType}</span>
       </td>
 
       {/* 2. Độc giả / Người mua */}
@@ -126,7 +123,7 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
                   {b.title}
                 </span>
                 <span className="text-secondary text-xs">
-                  SL: {b.quantity} • {b.loanNote}
+                  SL: {b.quantity} • {b.orderNote}
                 </span>
               </div>
             </div>
@@ -154,22 +151,10 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
         </div>
       </td>
 
-      {/* 6. Tiến độ đơn hàng / Quick-toggle Cycle */}
+      {/* 6. Tiến độ giao hàng */}
       <td className="py-3 px-4 text-center">
-        <div className="flex flex-col items-center gap-1.5">
+        <div className="flex items-center justify-center">
           {getCycleBadge(order.fulfillmentCycle)}
-          <select
-            value={order.fulfillmentCycle}
-            onChange={(e) =>
-              onUpdateCycle(order.id, e.target.value as OrderFulfillmentCycle)
-            }
-            className="text-[11px] bg-surface-container-low border border-outline-variant/30 rounded-md px-1.5 py-0.5 text-secondary cursor-pointer focus:outline-none"
-          >
-            <option value="Pending">Chờ xử lý</option>
-            <option value="Borrowing">Đang lưu hành</option>
-            <option value="Returned">Đã hoàn tất</option>
-            <option value="Overdue">Quá hạn</option>
-          </select>
         </div>
       </td>
 

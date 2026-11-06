@@ -98,6 +98,15 @@ export const VoucherToolbar: React.FC<VoucherToolbarProps> = ({
             </span>
           </div>
 
+          {/* Match Count Indicator */}
+          <span
+            id="vouchers-match-count"
+            data-testid="admin-vouchers-toolbar-match-count"
+            className="text-xs text-secondary font-medium whitespace-nowrap hidden sm:inline-block"
+          >
+            Hiển thị: <strong className="text-primary num-tabular">{matchCount}</strong> mã
+          </span>
+
           {/* Refresh Table Button */}
           <button
             type="button"
@@ -110,28 +119,6 @@ export const VoucherToolbar: React.FC<VoucherToolbarProps> = ({
             <span className="material-symbols-outlined text-[20px]">refresh</span>
           </button>
         </div>
-      </div>
-
-      {/* Active Filter Criteria Pill Indicators */}
-      <div
-        id="voucher-criteria-indicators"
-        data-testid="admin-vouchers-toolbar-criteria"
-        className="flex items-center gap-2 pt-1 text-on-surface-variant font-label-sm text-label-sm overflow-x-auto border-t border-surface-container-high/60"
-      >
-        <span className="text-secondary font-semibold">Tiêu chí áp dụng (Active Criteria):</span>
-        <span className="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container flex items-center gap-1 font-medium">
-          Kênh: Toàn bộ Storefront &amp; API
-        </span>
-        <span className="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant flex items-center gap-1 font-medium">
-          Phạm vi: Toàn quốc
-        </span>
-        <span
-          className="text-secondary ml-auto hidden sm:inline font-semibold num-tabular"
-          id="counter-match-text"
-          data-testid="admin-vouchers-toolbar-match-count"
-        >
-          Hiển thị {matchCount} voucher
-        </span>
       </div>
     </div>
   );
