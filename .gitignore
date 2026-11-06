@@ -1,0 +1,119 @@
+# ==============================================================================
+# DEPENDENCIES
+# ==============================================================================
+node_modules/
+.pnp
+.pnp.js
+
+# ==============================================================================
+# PRODUCTION & BUILD ARTIFACTS
+# ==============================================================================
+dist/
+dist-ssr/
+build/
+out/
+*.tsbuildinfo
+.vite/
+
+# ==============================================================================
+# ENVIRONMENT VARIABLES & SENSITIVE CREDENTIALS (TUYỆT ĐỐI BẢO MẬT - KHÔNG COMMIT)
+# ==============================================================================
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+
+# Payment Gateways & API Configs containing Secrets
+payosConfig.cjs
+payosConfig.*
+*payosConfig*
+
+# Cloud & Service Account Keys
+serviceAccountKey.json
+serviceAccountKey*.json
+*-firebase-adminsdk-*.json
+firebase-debug.log*
+firestore-debug.log*
+google-services.json
+GoogleService-Info.plist
+
+# API Secrets, OAuth Credentials & Certificates
+credentials.json
+client_secret*.json
+*.pem
+*.key
+*.cert
+*.pfx
+*.p12
+
+# ==============================================================================
+# LOCAL DATABASE & SEED SCRIPTS
+# ==============================================================================
+data/
+/data
+seed.cjs
+seed.*
+*.sqlite
+*.sqlite3
+*.db
+
+# ==============================================================================
+# LOGS
+# ==============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+ui-debug.log*
+
+# ==============================================================================
+# TESTING & CODE COVERAGE
+# ==============================================================================
+coverage/
+.nyc_output/
+.test-cache/
+tests/
+scripts/
+
+# ==============================================================================
+# AI AGENT WORKSPACES, SPECIFICATIONS & ARTIFACTS
+# ==============================================================================
+.agents/
+.agents
+screens_html/
+PROJECT.md
+TEST_INFRA.md
+TEST_READY.md
+
+# ==============================================================================
+# IDE & EDITOR FILES
+# ==============================================================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*.bak
+*~
+
+# ==============================================================================
+# OPERATING SYSTEM FILES & TEMPORARY FILES
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
