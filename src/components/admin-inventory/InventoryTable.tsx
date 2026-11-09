@@ -50,7 +50,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
           <thead>
             <tr className="border-b border-surface-container-high bg-surface-container-low text-secondary font-label-md text-label-md uppercase tracking-wider">
               <th scope="col" id="th-book-code" className="py-3.5 px-4 font-semibold">
-                Mã sách &amp; Bìa
+                Bìa sách &amp; ISBN
               </th>
               <th scope="col" id="th-book-info" className="py-3.5 px-4 font-semibold min-w-[220px]">
                 Tác phẩm &amp; Tác giả
@@ -98,7 +98,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   data-testid={`admin-inventory-row-${book.id}`}
                   className="hover:bg-surface-container-low/60 transition-colors"
                 >
-                  {/* 1. Mã sách & Bìa */}
+                  {/* 1. Bìa sách & ISBN */}
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
                       <img
@@ -107,9 +107,6 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                         className="w-10 h-14 rounded object-cover shadow-xs shrink-0"
                       />
                       <div>
-                        <span className="font-mono text-xs text-secondary block font-bold">
-                          {book.id}
-                        </span>
                         <span className="font-mono text-xs text-outline block">
                           {book.isbn}
                         </span>

@@ -8,6 +8,9 @@ export interface User {
   avatar?: string;
   phone?: string;
   address?: string;
+  city?: string;
+  district?: string;
+  detailedAddress?: string;
 }
 
 export type BookGenre =
@@ -55,6 +58,7 @@ export interface Book {
   subtitle?: string;
   author: string;
   authorBio?: string;
+  authorImage?: string;
   publisher: string;
   price: number;
   originalPrice?: number;

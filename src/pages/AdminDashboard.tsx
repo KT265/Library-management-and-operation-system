@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useStore } from '../store/useStore';
 import { DashboardHeader } from '../components/admin-dashboard/DashboardHeader';
 import { KpiMetricsBento } from '../components/admin-dashboard/KpiMetricsBento';
 import { RecentOrdersTable } from '../components/admin-dashboard/RecentOrdersTable';
@@ -7,11 +6,6 @@ import { LowStockAlertsCard } from '../components/admin-dashboard/LowStockAlerts
 
 export const AdminDashboard: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState('30');
-  const showToast = useStore((state) => state.showToast);
-
-  const handleExportReport = () => {
-    showToast?.('Đang kết xuất báo cáo tổng quan hoạt động kinh doanh định dạng PDF/CSV...');
-  };
 
   return (
     <div
@@ -19,11 +13,10 @@ export const AdminDashboard: React.FC = () => {
       data-testid="admin-dashboard-page-root"
       className="flex flex-col w-full pb-space-xxl space-y-space-xl"
     >
-      {/* 1. Header with Title, Range Selector, and Export Action */}
+      {/* 1. Header with Title and Range Selector */}
       <DashboardHeader
         selectedRange={selectedRange}
         onRangeChange={setSelectedRange}
-        onExportReport={handleExportReport}
       />
 
       {/* 2. Top 4 KPI Metric Bento Cards */}

@@ -3,6 +3,7 @@ export interface InventoryBook {
   title: string;
   author: string;
   authorBio?: string;
+  authorImage?: string;
   category: string;
   categories?: string[];
   isbn: string;

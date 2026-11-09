@@ -7,6 +7,8 @@ import { SignInForm } from '../components/auth/SignInForm';
 import { RegisterForm } from '../components/auth/RegisterForm';
 import { SocialOAuthDivider } from '../components/auth/SocialOAuthDivider';
 
+const systemLogo = new URL('../Public/Logo.png', import.meta.url).href;
+
 export interface AuthProps {
   initialMode?: 'signin' | 'register';
 }
@@ -144,8 +146,15 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
             data-testid="auth-header-link-brand"
             className="flex items-center gap-space-sm text-primary group"
           >
-            <div className="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-105 transition-transform">
-              <span className="material-symbols-outlined text-[20px]">menu_book</span>
+            <div
+              className="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-105 transition-transform overflow-hidden"
+              data-icon="menu_book"
+            >
+              <img
+                src={systemLogo}
+                alt="BookVerse Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="font-headline-sm text-headline-sm font-bold tracking-tight text-primary">
               BookVerse

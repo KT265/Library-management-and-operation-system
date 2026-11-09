@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   AdminManagedUser,
   UserRole,
-  SYSTEM_PERMISSIONS,
   DEFAULT_ADMIN_PERMISSIONS,
   DEFAULT_USER_PERMISSIONS,
   getInitials,
 } from './types';
-import { formatVND } from '../../utils/currency';
 
 interface EditRoleModalProps {
   isOpen: boolean;
@@ -91,15 +89,6 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
     }
   };
 
-  // Handle individual permission checkbox toggle
-  const handleTogglePermission = (permId: string) => {
-    setSelectedPermissions((prev) =>
-      prev.includes(permId)
-        ? prev.filter((id) => id !== permId)
-        : [...prev, permId]
-    );
-  };
-
   // Submit and save
   const handleSave = () => {
     const trimmedName = formData.name.trim();
@@ -143,7 +132,6 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
   const displayName = isCreateMode ? (formData.name || 'Người dùng mới') : (user?.name || '');
   const displayEmail = isCreateMode ? (formData.email || 'Nhập thông tin sau khi xác nhận') : (user?.email || '');
   const displayPhone = isCreateMode ? (formData.phone || 'Chưa cập nhật') : (user?.phone || '');
-  const displayUid = isCreateMode ? formData.uid : (user?.uid || '');
   const displayInitials = isCreateMode
     ? (formData.name ? getInitials(formData.name) : '+')
     : (user?.initials || (user?.name ? getInitials(user.name) : 'TT'));
@@ -183,7 +171,7 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
                 data-testid="admin-modal-subhead"
                 className="font-body-sm text-body-sm text-secondary"
               >
-                {isCreateMode ? 'Khởi tạo tài khoản hệ thống' : `Mã UID: ${displayUid}`}
+                {isCreateMode ? 'Khởi tạo tài khoản hệ thống' : 'Chỉ định vai trò và phân quyền tài khoản'}
               </p>
             </div>
           </div>
@@ -265,14 +253,6 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
                       {displayPhone}
                     </span>
                   </div>
-                  {user && (
-                    <div className="mt-1 text-label-sm font-label-sm text-secondary">
-                      Tích lũy chi tiêu:{' '}
-                      <strong className="text-primary font-semibold tabular-nums">
-                        {formatVND(user.totalSpend)}
-                      </strong>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -369,53 +349,6 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
                   </p>
                 </div>
               </label>
-            </div>
-          </div>
-
-          {/* Granular Permission Checkboxes Matrix (R3) */}
-          <div className="bg-surface-container-lowest rounded-xl p-4 border border-surface-container-high space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block font-label-md text-label-md font-semibold text-primary uppercase tracking-wider">
-                Chi tiết đặc quyền truy cập hệ thống
-              </label>
-              <span className="font-label-sm text-label-sm text-secondary font-medium">
-                {selectedPermissions.length} / {SYSTEM_PERMISSIONS.length} quyền
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2 pt-1">
-              {SYSTEM_PERMISSIONS.map((perm) => {
-                const isChecked = selectedPermissions.includes(perm.id);
-                return (
-                  <label
-                    key={perm.id}
-                    id={`perm-checkbox-item-${perm.id}`}
-                    data-testid={`admin-perm-checkbox-${perm.id}`}
-                    className={`perm-checkbox-item flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
-                      isChecked
-                        ? 'bg-surface-container-low border-primary/30'
-                        : 'bg-surface-container-lowest/50 border-surface-container hover:bg-surface-container-low/50'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      id={`checkbox-${perm.id}`}
-                      data-testid={`admin-perm-input-${perm.id}`}
-                      checked={isChecked}
-                      onChange={() => handleTogglePermission(perm.id)}
-                      className="mt-0.5 rounded text-primary focus:ring-primary accent-[#002045] w-4 h-4 cursor-pointer"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-body-sm font-semibold text-on-surface leading-tight">
-                        {perm.name}
-                      </div>
-                      <div className="text-body-sm text-on-surface-variant text-[11px] leading-tight mt-0.5">
-                        {perm.description}
-                      </div>
-                    </div>
-                  </label>
-                );
-              })}
             </div>
           </div>
 

@@ -1,19 +1,16 @@
 import React from 'react';
 import { AdminManagedUser } from './types';
-import { formatVND } from '../../utils/currency';
 
 interface UserTableRowProps {
   user: AdminManagedUser;
   onEditRole: (user: AdminManagedUser) => void;
-  onToggleLock: (user: AdminManagedUser) => void;
-  onViewSecurityLog: (user: AdminManagedUser) => void;
+  onToggleLock?: (user: AdminManagedUser) => void;
+  onViewSecurityLog?: (user: AdminManagedUser) => void;
 }
 
 export const UserTableRow: React.FC<UserTableRowProps> = ({
   user,
   onEditRole,
-  onToggleLock,
-  onViewSecurityLog,
 }) => {
   const isAdmin = user.role === 'admin';
   const isLocked = user.status === 'locked';
@@ -66,12 +63,6 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
               >
                 {user.name}
               </span>
-              <span
-                data-testid={`admin-user-uid-${user.id}`}
-                className="px-2 py-0.5 rounded-full text-[11px] font-mono font-medium bg-surface-container text-secondary"
-              >
-                {user.uid}
-              </span>
             </div>
             <div
               data-testid={`admin-user-email-${user.id}`}
@@ -93,17 +84,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         </div>
       </td>
 
-      {/* Col 3: Accumulated Spend (VND Standard format R2) */}
-      <td className="py-3.5 px-space-md">
-        <div
-          data-testid={`admin-user-spend-${user.id}`}
-          className="text-on-surface font-body-sm font-semibold tabular-nums"
-        >
-          {formatVND(user.totalSpend)}
-        </div>
-      </td>
-
-      {/* Col 4: Role Badge */}
+      {/* Col 3: Role Badge */}
       <td className="py-3.5 px-space-md">
         {isAdmin ? (
           <div
@@ -130,33 +111,10 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         )}
       </td>
 
-      {/* Col 5: Status */}
-      <td className="py-3.5 px-space-md">
-        {isLocked ? (
-          <span
-            id={`status-badge-locked-${user.uid}`}
-            data-testid={`admin-user-status-badge-${user.id}`}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-error-container text-on-error-container"
-          >
-            <span className="material-symbols-outlined text-[14px]">lock</span>
-            <span>Tạm khóa</span>
-          </span>
-        ) : (
-          <span
-            id={`status-badge-active-${user.uid}`}
-            data-testid={`admin-user-status-badge-${user.id}`}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-label-sm font-label-sm font-semibold bg-secondary-container/60 text-primary"
-          >
-            <span className="material-symbols-outlined text-[14px]">check_circle</span>
-            <span>Hoạt động</span>
-          </span>
-        )}
-      </td>
-
-      {/* Col 6: Action Buttons */}
+      {/* Col 4: Action Buttons (Only SetRoleUser) */}
       <td className="py-3.5 px-space-md text-right">
-        <div className="flex items-center justify-end gap-1">
-          {/* Change Role Button */}
+        <div className="flex items-center justify-end">
+          {/* Change Role Button (SetRoleUser) */}
           <button
             type="button"
             id={`btn-edit-role-${user.uid}`}
@@ -166,34 +124,6 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
             title={isAdmin ? 'Đổi phân quyền tài khoản' : 'Nâng quyền lên Admin / Tùy chỉnh'}
           >
             <span className="material-symbols-outlined text-[18px]">manage_accounts</span>
-          </button>
-
-          {/* Toggle Lock / Unlock */}
-          <button
-            type="button"
-            id={`btn-toggle-lock-${user.uid}`}
-            data-testid={`admin-user-btn-lock-${user.id}`}
-            onClick={() => onToggleLock(user)}
-            className={`w-8 h-8 rounded-full hover:bg-surface-container-high flex items-center justify-center transition-colors cursor-pointer ${
-              isLocked ? 'text-error' : 'text-secondary hover:text-on-surface'
-            }`}
-            title={isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {isLocked ? 'lock_open' : 'lock'}
-            </span>
-          </button>
-
-          {/* View Security Log */}
-          <button
-            type="button"
-            id={`btn-security-log-${user.uid}`}
-            data-testid={`admin-user-btn-log-${user.id}`}
-            onClick={() => onViewSecurityLog(user)}
-            className="w-8 h-8 rounded-full hover:bg-surface-container-high flex items-center justify-center text-secondary hover:text-on-surface transition-colors cursor-pointer"
-            title="Truy xuất nhật ký bảo mật"
-          >
-            <span className="material-symbols-outlined text-[18px]">shield</span>
           </button>
         </div>
       </td>

@@ -18,6 +18,7 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [authorBio, setAuthorBio] = useState('');
+  const [authorImage, setAuthorImage] = useState('');
 
   // 2. Multi-select Categories
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
@@ -100,6 +101,7 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
       title: title.trim(),
       author: author.trim(),
       authorBio: authorBio.trim(),
+      authorImage: authorImage.trim(),
       category: selectedCategories.join(', '),
       categories: selectedCategories,
       isbn: isbn.trim() || `978-604${Math.floor(1000000 + Math.random() * 9000000)}`,
@@ -232,6 +234,34 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
                 placeholder="Ví dụ: Giáo sư Khoa học máy tính tại Đại học Cambridge, nhà nghiên cứu phân tán..."
                 className="w-full px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
+            </div>
+
+            {/* URL hình ảnh tác giả */}
+            <div>
+              <label htmlFor="input-book-author-image" className="block text-secondary font-medium mb-1">
+                URL hình ảnh tác giả
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="url"
+                  id="input-book-author-image"
+                  data-testid="admin-inventory-modal-add-input-author-image"
+                  value={authorImage}
+                  onChange={(e) => setAuthorImage(e.target.value)}
+                  placeholder="https://... URL hình ảnh chân dung tác giả"
+                  className="flex-1 px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                {authorImage && (
+                  <img
+                    src={authorImage}
+                    alt="Ảnh tác giả xem trước"
+                    className="w-9 h-9 rounded-full object-cover border border-outline-variant shrink-0 shadow-xs"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
 

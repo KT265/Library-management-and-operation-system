@@ -3,7 +3,6 @@ import '../components/admin-users/admin-users.css';
 import {
   AdminManagedUser,
   UserRole,
-  UserStatus,
   INITIAL_MANAGED_USERS,
   normalizeVietnamese,
 } from '../components/admin-users/types';
@@ -19,13 +18,11 @@ export const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<AdminManagedUser[]>(INITIAL_MANAGED_USERS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<'all' | UserRole>('all');
-  const [selectedStatus, setSelectedStatus] = useState<'all' | UserStatus>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminManagedUser | null>(null);
-  const [isCreateMode, setIsCreateMode] = useState(false);
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState('');
@@ -73,7 +70,7 @@ export const AdminUsers: React.FC = () => {
   const userKpiCount = currentUserInList + BASELINE_USER_OFFSET;
   const totalSystemCount = adminKpiCount + userKpiCount;
 
-  // Filter users based on search query, role and status
+  // Filter users based on search query and role
   const filteredUsers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const normalizedQuery = normalizeVietnamese(searchQuery);
@@ -81,11 +78,6 @@ export const AdminUsers: React.FC = () => {
     return users.filter((u) => {
       // Role filter
       if (selectedRole !== 'all' && u.role !== selectedRole) {
-        return false;
-      }
-
-      // Status filter
-      if (selectedStatus !== 'all' && u.status !== selectedStatus) {
         return false;
       }
 
@@ -117,33 +109,24 @@ export const AdminUsers: React.FC = () => {
 
       return true;
     });
-  }, [users, searchQuery, selectedRole, selectedStatus]);
+  }, [users, searchQuery, selectedRole]);
 
   // Handlers
   const handleRefresh = () => {
     setSearchQuery('');
     setSelectedRole('all');
-    setSelectedStatus('all');
     setCurrentPage(1);
     showToast('Đã làm mới dữ liệu người dùng thành công.');
   };
 
   const handleOpenEditUser = (user: AdminManagedUser) => {
     setEditingUser(user);
-    setIsCreateMode(false);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenCreateUser = () => {
-    setEditingUser(null);
-    setIsCreateMode(true);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingUser(null);
-    setIsCreateMode(false);
   };
 
   const handleSaveUser = (savedUser: AdminManagedUser) => {
@@ -160,50 +143,6 @@ export const AdminUsers: React.FC = () => {
     showToast(`Đã lưu thay đổi! Vai trò hiện tại: ${roleTitle}`);
   };
 
-  const handleToggleLock = (user: AdminManagedUser) => {
-    const willLock = user.status === 'active';
-    const actionText = willLock ? 'khóa' : 'mở khóa';
-
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === user.id ? { ...u, status: willLock ? 'locked' : 'active' } : u
-      )
-    );
-
-    showToast(`Đã ${actionText} tài khoản của "${user.name}" thành công!`);
-  };
-
-  const handleViewSecurityLog = (user: AdminManagedUser) => {
-    showToast(`Đang truy xuất nhật ký bảo mật của "${user.name}"...`);
-  };
-
-  const handleExportCSV = () => {
-    // Generate simple CSV payload for users
-    const headers = 'Mã UID,Họ và tên,Email,Số điện thoại,Vai trò,Trạng thái,Chi tiêu tích lũy\n';
-    const rows = users
-      .map(
-        (u) =>
-          `"${u.uid}","${u.name}","${u.email}","${u.phone}","${
-            u.role === 'admin' ? 'Quản trị viên' : 'Người dùng'
-          }","${u.status === 'active' ? 'Hoạt động' : 'Tạm khóa'}","${u.totalSpend}"`
-      )
-      .join('\n');
-
-    if (typeof window !== 'undefined' && typeof window.URL?.createObjectURL === 'function') {
-      const blob = new Blob(['\uFEFF' + headers + rows], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'bookverse-danh-sach-nguoi-dung.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
-
-    showToast('Đang tạo và tải xuống danh sách tài khoản (CSV)...');
-  };
-
   return (
     <div
       id="admin-users-page"
@@ -211,10 +150,7 @@ export const AdminUsers: React.FC = () => {
       className="flex flex-col w-full pb-margin-lg"
     >
       {/* Top Banner / Page Header */}
-      <UsersPermissionsHeader
-        onOpenCreateModal={handleOpenCreateUser}
-        onExportCSV={handleExportCSV}
-      />
+      <UsersPermissionsHeader />
 
       {/* KPI Metrics Grid */}
       <UsersKpisGrid adminCount={adminKpiCount} userCount={userKpiCount} />
@@ -231,11 +167,6 @@ export const AdminUsers: React.FC = () => {
           setSelectedRole(role);
           setCurrentPage(1);
         }}
-        selectedStatus={selectedStatus}
-        onStatusChange={(status) => {
-          setSelectedStatus(status);
-          setCurrentPage(1);
-        }}
         onRefresh={handleRefresh}
         totalCount={totalSystemCount}
         adminCount={adminKpiCount}
@@ -246,8 +177,6 @@ export const AdminUsers: React.FC = () => {
       <UsersTable
         users={filteredUsers}
         onEditRole={handleOpenEditUser}
-        onToggleLock={handleToggleLock}
-        onViewSecurityLog={handleViewSecurityLog}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         totalSystemCount={totalSystemCount}
@@ -258,7 +187,6 @@ export const AdminUsers: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         user={editingUser}
-        isCreateMode={isCreateMode}
         onSave={handleSaveUser}
       />
 

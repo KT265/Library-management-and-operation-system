@@ -5,8 +5,8 @@ import { UserTableRow } from './UserTableRow';
 interface UsersTableProps {
   users: AdminManagedUser[];
   onEditRole: (user: AdminManagedUser) => void;
-  onToggleLock: (user: AdminManagedUser) => void;
-  onViewSecurityLog: (user: AdminManagedUser) => void;
+  onToggleLock?: (user: AdminManagedUser) => void;
+  onViewSecurityLog?: (user: AdminManagedUser) => void;
   currentPage: number;
   onPageChange: (page: number) => void;
   totalSystemCount: number;
@@ -15,8 +15,6 @@ interface UsersTableProps {
 export const UsersTable: React.FC<UsersTableProps> = ({
   users,
   onEditRole,
-  onToggleLock,
-  onViewSecurityLog,
   currentPage,
   onPageChange,
   totalSystemCount,
@@ -68,9 +66,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
             <tr className="bg-surface-container-low text-secondary font-label-md text-label-md uppercase tracking-wider border-b border-surface-container">
               <th className="py-3.5 px-space-md font-semibold">Người dùng &amp; Tài khoản</th>
               <th className="py-3.5 px-space-md font-semibold">Số điện thoại</th>
-              <th className="py-3.5 px-space-md font-semibold">Chi tiêu tích lũy</th>
               <th className="py-3.5 px-space-md font-semibold">Vai trò phân quyền</th>
-              <th className="py-3.5 px-space-md font-semibold">Trạng thái</th>
               <th className="py-3.5 px-space-md font-semibold text-right">Thao tác</th>
             </tr>
           </thead>
@@ -85,8 +81,6 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   key={u.id}
                   user={u}
                   onEditRole={onEditRole}
-                  onToggleLock={onToggleLock}
-                  onViewSecurityLog={onViewSecurityLog}
                 />
               ))}
           </tbody>

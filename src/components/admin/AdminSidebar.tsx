@@ -2,6 +2,8 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 
+const systemLogo = new URL('../../Public/Logo.png', import.meta.url).href;
+
 interface NavItem {
   id: string;
   label: string;
@@ -82,8 +84,15 @@ export const AdminSidebar: React.FC = () => {
             className="flex items-center gap-space-sm text-primary group"
             data-path="admin-dashboard-overview"
           >
-            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-105 transition-transform shadow-sm">
-              <span className="material-symbols-outlined text-[22px]">menu_book</span>
+            <div
+              className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-105 transition-transform shadow-sm overflow-hidden"
+              data-icon="menu_book"
+            >
+              <img
+                src={systemLogo}
+                alt="BookVerse Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <span className="font-title-lg text-title-lg font-bold text-primary block leading-tight">

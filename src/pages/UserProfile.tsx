@@ -138,6 +138,9 @@ export const UserProfile: React.FC = () => {
     email: user?.email || 'minh.nguyen@example.com',
     phone: user?.phone || '0908 345 678',
     address: user?.address || 'Tòa nhà Tower 3, 65 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
+    city: user?.city || 'TP. Hồ Chí Minh',
+    district: user?.district || 'Quận 1',
+    detailedAddress: user?.detailedAddress || 'Tòa nhà Tower 3, 65 Đường Lê Lợi',
     bio: 'Độc giả đam mê kiến trúc phần mềm phân tán, hệ thống cơ sở dữ liệu và văn học kinh điển thế giới.',
   };
 
@@ -182,6 +185,9 @@ export const UserProfile: React.FC = () => {
       email: updated.email,
       phone: updated.phone,
       address: updated.address,
+      city: updated.city,
+      district: updated.district,
+      detailedAddress: updated.detailedAddress,
     });
     setIsEditModalOpen(false);
     showToast('Đã lưu thông tin tài khoản độc giả thành công.');

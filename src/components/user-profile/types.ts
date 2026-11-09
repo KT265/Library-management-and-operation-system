@@ -31,6 +31,9 @@ export interface PatronProfileData {
   email: string;
   phone: string;
   address: string;
+  city?: string;
+  district?: string;
+  detailedAddress?: string;
   bio: string;
 }
 

@@ -1,5 +1,7 @@
 import React from 'react';
 
+const systemLogo = new URL('../../Public/Logo.png', import.meta.url).href;
+
 export const AuthEditorialHero: React.FC = () => {
   return (
     <div
@@ -7,10 +9,15 @@ export const AuthEditorialHero: React.FC = () => {
       data-testid="auth-editorial-hero"
       className="flex flex-col items-center text-center mb-space-lg select-none"
     >
-      <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-md shadow-primary/20 mb-space-sm">
-        <span className="material-symbols-outlined text-[30px] fill">
-          auto_stories
-        </span>
+      <div
+        className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-md shadow-primary/20 mb-space-sm overflow-hidden"
+        data-icon="auto_stories"
+      >
+        <img
+          src={systemLogo}
+          alt="BookVerse Logo"
+          className="w-full h-full object-contain"
+        />
       </div>
       <h1 className="font-headline-md text-headline-md text-primary font-bold tracking-tight">
         BookVerse

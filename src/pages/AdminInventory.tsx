@@ -202,8 +202,11 @@ export const AdminInventory: React.FC = () => {
         book.author.toLowerCase().includes(q) ||
         book.isbn.toLowerCase().includes(q);
 
-      // 2. Category Filter
-      const matchesCategory = categoryFilter === 'all' || book.category === categoryFilter;
+      // 2. Category Filter (Supports single or multi-categories)
+      const matchesCategory =
+        categoryFilter === 'all' ||
+        book.category === categoryFilter ||
+        Boolean(book.categories && book.categories.includes(categoryFilter));
 
       // 3. Stock Level Filter
       let matchesStock = true;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PatronProfileData } from './types';
 
 export interface EditProfileModalProps {
@@ -14,13 +14,42 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const [formData, setFormData] = useState<PatronProfileData>(initialData);
+  const [formData, setFormData] = useState<PatronProfileData>(() => ({
+    ...initialData,
+    city: initialData.city || 'TP. Hồ Chí Minh',
+    district: initialData.district || 'Quận 1',
+    detailedAddress:
+      initialData.detailedAddress ||
+      (initialData.address ? initialData.address.split(',')[0].trim() : 'Tòa nhà Tower 3, 65 Đường Lê Lợi'),
+  }));
+
+  useEffect(() => {
+    setFormData({
+      ...initialData,
+      city: initialData.city || 'TP. Hồ Chí Minh',
+      district: initialData.district || 'Quận 1',
+      detailedAddress:
+        initialData.detailedAddress ||
+        (initialData.address ? initialData.address.split(',')[0].trim() : 'Tòa nhà Tower 3, 65 Đường Lê Lợi'),
+    });
+  }, [initialData]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    const city = (formData.city || '').trim();
+    const district = (formData.district || '').trim();
+    const detailed = (formData.detailedAddress || '').trim();
+    const fullAddress = [detailed, district, city].filter(Boolean).join(', ');
+
+    onSave({
+      ...formData,
+      city,
+      district,
+      detailedAddress: detailed,
+      address: fullAddress || formData.address,
+    });
   };
 
   return (
@@ -90,15 +119,54 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
           </div>
 
-          {/* Address */}
+          {/* New Address Fields: Thành phố, Quận/Huyện */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="input-profile-city" className="font-label-md text-label-md text-on-surface font-semibold">
+                Thành phố <span className="text-error">*</span>
+              </label>
+              <input
+                id="input-profile-city"
+                data-testid="user-profile-edit-input-city"
+                type="text"
+                required
+                value={formData.city || ''}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Ví dụ: TP. Hồ Chí Minh, Hà Nội..."
+                className="w-full h-11 px-3 bg-surface-container-low rounded-lg text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              />
+            </div>
+
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="input-profile-district" className="font-label-md text-label-md text-on-surface font-semibold">
+                Quận/Huyện <span className="text-error">*</span>
+              </label>
+              <input
+                id="input-profile-district"
+                data-testid="user-profile-edit-input-district"
+                type="text"
+                required
+                value={formData.district || ''}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                placeholder="Ví dụ: Quận 1, Quận Bình Thạnh..."
+                className="w-full h-11 px-3 bg-surface-container-low rounded-lg text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* New Address Field: Địa chỉ chi tiết */}
           <div className="flex flex-col space-y-1">
-            <label className="font-label-md text-label-md text-on-surface font-semibold">
-              Địa chỉ giao hàng mặc định
+            <label htmlFor="input-profile-detailed-address" className="font-label-md text-label-md text-on-surface font-semibold">
+              Địa chỉ chi tiết <span className="text-error">*</span>
             </label>
             <input
+              id="input-profile-detailed-address"
+              data-testid="user-profile-edit-input-detailed-address"
               type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              required
+              value={formData.detailedAddress || ''}
+              onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
+              placeholder="Ví dụ: Số 65 Đường Lê Lợi, Phường Bến Nghé, Tòa nhà Tower 3"
               className="w-full h-11 px-3 bg-surface-container-low rounded-lg text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
             />
           </div>

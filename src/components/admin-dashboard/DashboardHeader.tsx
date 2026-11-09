@@ -3,13 +3,11 @@ import React from 'react';
 interface DashboardHeaderProps {
   selectedRange: string;
   onRangeChange: (range: string) => void;
-  onExportReport: () => void;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   selectedRange,
   onRangeChange,
-  onExportReport,
 }) => {
   return (
     <div
@@ -34,7 +32,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </p>
       </div>
 
-      {/* Actions: Date Range Selector Pill & Export Button */}
+      {/* Actions: Date Range Selector Pill */}
       <div
         id="dashboard-header-actions"
         data-testid="admin-dashboard-header-actions"
@@ -64,19 +62,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             expand_more
           </span>
         </div>
-
-        {onExportReport && (
-          <button
-            type="button"
-            id="btn-export-dashboard"
-            data-testid="admin-dashboard-header-btn-export"
-            onClick={onExportReport}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-outline-variant/30 text-xs font-semibold text-secondary hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[16px]">download</span>
-            <span>Xuất báo cáo</span>
-          </button>
-        )}
       </div>
     </div>
   );

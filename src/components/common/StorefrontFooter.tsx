@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const systemLogo = new URL('../../Public/Logo.png', import.meta.url).href;
+
 export const StorefrontFooter: React.FC = () => {
   const navigate = useNavigate();
 
@@ -19,8 +21,15 @@ export const StorefrontFooter: React.FC = () => {
           className="space-y-space-sm md:col-span-1"
         >
           <div className="flex items-center gap-space-sm text-primary">
-            <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm">
-              <span className="material-symbols-outlined text-[18px]">menu_book</span>
+            <div
+              className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm overflow-hidden"
+              data-icon="menu_book"
+            >
+              <img
+                src={systemLogo}
+                alt="BookVerse Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="font-title-lg text-title-lg font-bold">BookVerse</span>
           </div>

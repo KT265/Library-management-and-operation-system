@@ -3,6 +3,8 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { ProfileDropdown } from './ProfileDropdown';
 
+const systemLogo = new URL('../../Public/Logo.png', import.meta.url).href;
+
 export const StorefrontHeader: React.FC = () => {
   const navigate = useNavigate();
   const {
@@ -57,8 +59,15 @@ export const StorefrontHeader: React.FC = () => {
             className="flex items-center gap-space-sm text-primary group"
             data-path="home"
           >
-            <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-105 transition-transform shadow-sm">
-              <span className="material-symbols-outlined text-[22px]">menu_book</span>
+            <div
+              className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container group-hover:scale-105 transition-transform shadow-sm overflow-hidden"
+              data-icon="menu_book"
+            >
+              <img
+                src={systemLogo}
+                alt="BookVerse Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="font-headline-sm text-headline-sm font-bold tracking-tight text-primary">
               BookVerse

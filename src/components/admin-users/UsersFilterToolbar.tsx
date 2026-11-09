@@ -6,8 +6,8 @@ interface UsersFilterToolbarProps {
   onSearchChange: (value: string) => void;
   selectedRole: 'all' | UserRole;
   onRoleSelect: (role: 'all' | UserRole) => void;
-  selectedStatus: 'all' | UserStatus;
-  onStatusChange: (status: 'all' | UserStatus) => void;
+  selectedStatus?: 'all' | UserStatus;
+  onStatusChange?: (status: 'all' | UserStatus) => void;
   onRefresh: () => void;
   totalCount: number;
   adminCount: number;
@@ -19,8 +19,6 @@ export const UsersFilterToolbar: React.FC<UsersFilterToolbarProps> = ({
   onSearchChange,
   selectedRole,
   onRoleSelect,
-  selectedStatus,
-  onStatusChange,
   onRefresh,
   totalCount,
   adminCount,
@@ -110,24 +108,6 @@ export const UsersFilterToolbar: React.FC<UsersFilterToolbarProps> = ({
             >
               Người dùng ({userCount.toLocaleString('vi-VN')})
             </button>
-          </div>
-
-          {/* Status Filter Dropdown */}
-          <div className="relative">
-            <select
-              id="statusFilter"
-              data-testid="admin-users-status-filter"
-              value={selectedStatus}
-              onChange={(e) => onStatusChange(e.target.value as 'all' | UserStatus)}
-              className="h-10 pl-4 pr-9 rounded-full bg-surface-container-low text-on-surface text-label-md font-label-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer border border-transparent hover:border-outline-variant/60 transition-colors"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="active">Đang hoạt động</option>
-              <option value="locked">Tạm khóa</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[18px]">
-              expand_more
-            </span>
           </div>
 
           {/* Refresh Button */}
