@@ -545,68 +545,74 @@ app.get("/api/admin/dashboard", verifyGoogleToken, verifyAdmin, (req, res) => {
   });
 });
 
-// Endpoint: POST /api/payment/create-link (Tạo link thanh toán QR PayOS - Protected)
-app.post("/api/payment/create-link", verifyGoogleToken, async (req, res) => {
-  try {
-    const { docId, totalPrice, ...restBody } = req.body || {};
+// Endpoint: POST /api/payment/create-link & /api/payment/create-payment-link (Tạo link thanh toán QR PayOS - Protected)
+app.post(
+  ["/api/payment/create-link", "/api/payment/create-payment-link"],
+  verifyGoogleToken,
+  async (req, res) => {
+    try {
+      const { docId, totalPrice, ...restBody } = req.body || {};
 
-    if (!docId || typeof docId !== "string" || !docId.trim()) {
-      return res.status(400).json({
-        error: "Bad Request",
-        message: "Thiếu mã đơn hàng docId hợp lệ!",
+      if (!docId || typeof docId !== "string" || !docId.trim()) {
+        return res.status(400).json({
+          error: "Bad Request",
+          message: "Thiếu mã đơn hàng docId hợp lệ!",
+        });
+      }
+
+      const trimmedDocId = docId.trim();
+      const parsedTotalPrice =
+        typeof totalPrice === "number" && !Number.isNaN(totalPrice)
+          ? totalPrice
+          : Number(totalPrice) || 0;
+
+      // Sinh số nguyên duy nhất (type number, tối đa 53-bit)
+      const orderCode = generateOrderCode();
+
+      // Cập nhật số orderCode vào document đơn hàng tương ứng trong Firestore collection "Order"
+      const orderRef = db.collection("Order").doc(trimmedDocId);
+      await orderRef.set(
+        {
+          orderCode,
+          updateAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Chuẩn bị dữ liệu gửi PayOS
+      const paymentLinkData = {
+        orderCode,
+        amount: parsedTotalPrice,
+        description: "Thanh toan mua sach",
+        cancelUrl: restBody.cancelUrl || "http://localhost:5173",
+        returnUrl: restBody.returnUrl || "http://localhost:5173",
+      };
+
+      const currentPayos = app.payos || payos;
+      const paymentLinkResponse = await currentPayos.createPaymentLink(paymentLinkData);
+      const resp =
+        paymentLinkResponse && typeof paymentLinkResponse === "object"
+          ? paymentLinkResponse
+          : {};
+      const checkoutUrl = resp.checkoutUrl || `https://pay.payos.vn/web/${orderCode}`;
+      const status = resp.status || "PENDING";
+
+      return res.status(200).json({
+        checkoutUrl,
+        orderCode,
+        paymentLinkId: resp.paymentLinkId || `mock_${orderCode}`,
+        status,
+        ...resp,
+      });
+    } catch (error) {
+      console.error("Lỗi khi tạo payment link PayOS:", error);
+      return res.status(500).json({
+        error: "Failed to create payment link",
+        message: error.message || "Internal Server Error",
       });
     }
-
-    const trimmedDocId = docId.trim();
-    const parsedTotalPrice =
-      typeof totalPrice === "number" && !Number.isNaN(totalPrice)
-        ? totalPrice
-        : Number(totalPrice) || 0;
-
-    // Sinh số nguyên duy nhất (type number, tối đa 53-bit)
-    const orderCode = generateOrderCode();
-
-    // Cập nhật số orderCode vào document đơn hàng tương ứng trong Firestore collection "Order"
-    const orderRef = db.collection("Order").doc(trimmedDocId);
-    await orderRef.set(
-      {
-        orderCode,
-        updateAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    // Chuẩn bị dữ liệu gửi PayOS
-    const paymentLinkData = {
-      orderCode,
-      amount: parsedTotalPrice,
-      description: "Thanh toan mua sach",
-      cancelUrl: restBody.cancelUrl || "http://localhost:5173",
-      returnUrl: restBody.returnUrl || "http://localhost:5173",
-    };
-
-    const currentPayos = app.payos || payos;
-    const paymentLinkResponse = await currentPayos.createPaymentLink(paymentLinkData);
-    const resp =
-      paymentLinkResponse && typeof paymentLinkResponse === "object"
-        ? paymentLinkResponse
-        : {};
-    const checkoutUrl = resp.checkoutUrl || `https://pay.payos.vn/web/${orderCode}`;
-
-    return res.status(200).json({
-      checkoutUrl,
-      orderCode,
-      paymentLinkId: resp.paymentLinkId || `mock_${orderCode}`,
-      ...resp,
-    });
-  } catch (error) {
-    console.error("Lỗi khi tạo payment link PayOS:", error);
-    return res.status(500).json({
-      error: "Failed to create payment link",
-      message: error.message || "Internal Server Error",
-    });
   }
-});
+);
 
 // Endpoint: POST /api/payment/webhook (Xử lý Webhook PayOS - Public)
 app.post("/api/payment/webhook", async (req, res) => {

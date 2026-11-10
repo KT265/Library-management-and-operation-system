@@ -1,6 +1,17 @@
 import React from 'react';
 
-export const ReadingStatsBento: React.FC = () => {
+interface ReadingStatsBentoProps {
+  completedOrdersCount?: number;
+  booksReadCount?: number;
+}
+
+export const ReadingStatsBento: React.FC<ReadingStatsBentoProps> = ({
+  completedOrdersCount,
+  booksReadCount,
+}) => {
+  const displayOrders = completedOrdersCount !== undefined ? completedOrdersCount : 18;
+  const displayBooks = booksReadCount !== undefined ? booksReadCount : 64;
+
   return (
     <div
       id="reading-stats-bento"
@@ -23,10 +34,10 @@ export const ReadingStatsBento: React.FC = () => {
         </div>
         <div>
           <span className="font-headline-md text-headline-md font-bold text-on-surface block num-tabular">
-            18
+            {displayOrders}
           </span>
           <span className="font-body-xs text-body-xs text-outline mt-0.5 block">
-            18 đơn hàng
+            {displayOrders} đơn hàng
           </span>
         </div>
       </div>
@@ -47,15 +58,13 @@ export const ReadingStatsBento: React.FC = () => {
         </div>
         <div>
           <span className="font-headline-md text-headline-md font-bold text-on-surface block num-tabular">
-            64
+            {displayBooks}
           </span>
           <span className="font-body-xs text-body-xs text-outline mt-0.5 block">
-            64 cuốn đã đọc
+            {displayBooks} cuốn đã đọc
           </span>
         </div>
       </div>
     </div>
   );
 };
-
-export default ReadingStatsBento;

@@ -1,7 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
 import { useStore } from '../store/useStore';
 import {
   OrderDisplay,
+  OrderItemDisplay,
   OrderFilterTab,
   PatronProfileData,
 } from '../components/user-profile/types';
@@ -13,108 +16,6 @@ import { WriteReviewModal } from '../components/user-profile/WriteReviewModal';
 import { OrderTrackingModal } from '../components/user-profile/OrderTrackingModal';
 import { VietQrModal } from '../components/user-profile/VietQrModal';
 
-// Canonical orders with authentic VND pricing
-const CANONICAL_ORDERS: OrderDisplay[] = [
-  {
-    id: 'ord-1',
-    orderNumber: '#BK-98421',
-    date: '24/10/2026',
-    total: 485000,
-    status: 'paid',
-    paymentMethod: 'VietQR',
-    carrier: 'BookVerse Express',
-    trackingNumber: 'BVE-98421-VN',
-    estimatedDelivery: '27/10/2026',
-    shippingNote: 'Đã giao cho đơn vị vận chuyển BookVerse Express',
-    items: [
-      {
-        bookId: 'book-4',
-        title: 'The Architecture of Silence',
-        author: 'Helena Cross',
-        format: 'Ấn bản tiêu chuẩn',
-        price: 240000,
-        quantity: 1,
-        coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAdt59T1h03vA_Uv0JHXvzevXxjlgCUqcl81eSzNIjPMWYxGlSWPRNZsQOMeCsSVJyobDSsvSLuUVlNA3Ka8CfjBdg_u6JJYXvAd1CN_21mWyFEGcIHxoBmB2eW_Arj_njKxG5zYZYvFtTyYDmXhUbcotMU4zyjQwRtFMfQkSymbAFX-pLI1xhxpabtkRdssaZh7D6FMYdkze3aqvrqu-ulRMuKL4ptvZhMDAKyIZaY',
-      },
-      {
-        bookId: 'book-5',
-        title: 'Echoes in the Pine Grove',
-        author: 'Marcus Thorne',
-        format: 'Ấn bản tiêu chuẩn',
-        price: 125000,
-        quantity: 1,
-        coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCQ4vs46dqeAxShFX6R-zB8inFT6LwlAkkAvQt6tlGMEldDPYd5TbhWqx6xx0gfBva-S1EnYfhAwms0hlrrHFe7lZUwCjfhDdcZgnSYQ1IiLjmj3ZvNy7kOYJFw_ZEc7BhJGqvbBavNSLcQKCHeO4vuw3-ku60kbUgTfanAKDH6qEZDIHouj8LCInK8tLcIVeeuKAUe2AK1JckrMCXzHiS6l4sZpOcHdHoK_bvXJoiU',
-      },
-      {
-        bookId: 'book-6',
-        title: 'Modernist Letterforms',
-        author: 'S. C. Bradley',
-        format: 'Ấn bản tiêu chuẩn',
-        price: 120000,
-        quantity: 1,
-        coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCWu85GoYVfISjiMZqE-sjPD-sqLUxYfEq9SOEI7ilazs6GuNLheWldbMt-UbgSQkt6H_ynunYWErXI7alfMwDPIbpPxtEaxDG02ER_Ee_wN59-KHs4YDAinhDPhBY86gp4Kv-BrYBmJz9LZ5sP0uGbp1KXbm5Beunb2Mk-DoFs-ffh0DOaJqzC3wDIKU-goX3buCMtI5CldQcraRe-HxyujnbT9E8PBS_OBNijxG-g',
-      },
-    ],
-  },
-  {
-    id: 'ord-2',
-    orderNumber: '#BK-97510',
-    date: '12/10/2026',
-    total: 320000,
-    status: 'delivered',
-    paymentMethod: 'COD',
-    deliveredDate: '16/10/2026',
-    shippingNote: 'Đã giao thành công vào ngày 16/10/2026',
-    items: [
-      {
-        bookId: 'book-7',
-        title: 'Cartographies of the Mind: Selected Works',
-        author: 'Prof. Julian A. Vance',
-        format: 'Ấn bản tiêu chuẩn',
-        price: 320000,
-        quantity: 1,
-        signedCopy: true,
-        coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAvptmmcAQ4LVa3kekNBl1AVHLagOoyKeBzRHPiugU9h3RzAkt7VOSzM4fYatpwbCx24NzdcQBoyScAuJpw7QtSkgzNR7Po7LCSCy_AFs2PPRPMwa_7k7p2COdbzWUrw0pLs-rdpWglwf982kEAgXE4kahKoHG_rCvZ76mb6maJto8m-ip04--NuxIk2SoNZ6Fx5g4SQMbSV-Zt5E0Vh2eX0ohQQcbdYv4zy58hEq8S',
-      },
-    ],
-  },
-  {
-    id: 'ord-3',
-    orderNumber: '#BK-96102',
-    date: '28/09/2026',
-    total: 360000,
-    status: 'pending',
-    paymentMethod: 'VietQR',
-    shippingNote: 'Kiện hàng 3 ấn phẩm • Đang chờ đối soát chuyển khoản ngân hàng',
-    items: [
-      {
-        bookId: 'book-8',
-        title: 'The Poetics of Space',
-        author: 'Gaston Bachelard',
-        format: 'Ấn bản tiêu chuẩn',
-        price: 180000,
-        quantity: 1,
-        coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDrWsVl9tJ4A0uh4f9SX7mrqJL4-1UcG2D4fSR0m8vPPT-hQrGvH-6KCWwWtlQwhwmPKcCOdv3kf6zeXI58S4kDXbHT2Y_TE5-avM0DKbUl3gyQaOgZODnUCX1jZVbw0ju2mknqvKAa3kPliMv4uLxkU_wNplv3zVsFkp2DTAtdGcABrCE_n9d6nraOzvUjv0PoCw-gH_10W8VUkACtvn9YFwEBPIlC_eySkC6Ta2vg',
-      },
-      {
-        bookId: 'book-9',
-        title: 'Typography Essentials',
-        author: 'Ina Saltz',
-        format: 'Ấn bản tiêu chuẩn',
-        price: 180000,
-        quantity: 1,
-        coverImage:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCWu85GoYVfISjiMZqE-sjPD-sqLUxYfEq9SOEI7ilazs6GuNLheWldbMt-UbgSQkt6H_ynunYWErXI7alfMwDPIbpPxtEaxDG02ER_Ee_wN59-KHs4YDAinhDPhBY86gp4Kv-BrYBmJz9LZ5sP0uGbp1KXbm5Beunb2Mk-DoFs-ffh0DOaJqzC3wDIKU-goX3buCMtI5CldQcraRe-HxyujnbT9E8PBS_OBNijxG-g',
-      },
-    ],
-  },
-];
-
 export const UserProfile: React.FC = () => {
   const { user, login, showToast } = useStore();
 
@@ -123,7 +24,17 @@ export const UserProfile: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Orders state
-  const [orders, setOrders] = useState<OrderDisplay[]>(CANONICAL_ORDERS);
+  const [orders, setOrders] = useState<OrderDisplay[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [readingStats, setReadingStats] = useState<{
+    completedOrders: number;
+    booksRead: number;
+  }>({
+    completedOrders: 18,
+    booksRead: 64,
+  });
 
   // Modals state
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
@@ -131,6 +42,109 @@ export const UserProfile: React.FC = () => {
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState<boolean>(false);
   const [isVietQrModalOpen, setIsVietQrModalOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderDisplay | null>(null);
+
+  const fetchUserData = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      setOrders([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch user orders from collection "Order"
+      const ordersQ = query(collection(db, 'Order'), where('idUser', '==', user.id));
+      const ordersSnap = await getDocs(ordersQ);
+      const mappedOrders: OrderDisplay[] = ordersSnap.docs.map((d) => {
+        const data = d.data();
+        const items = Array.isArray(data.items) ? data.items : [];
+        const mappedItems: OrderItemDisplay[] = items.map((it: any) => ({
+          bookId: it.bookId || it.idBook || 'book-1',
+          title: it.title || 'Ấn phẩm sách',
+          author: it.author || it.nameAuthor || 'Tác giả',
+          format: it.format || 'Ấn bản tiêu chuẩn',
+          price: it.price || 0,
+          quantity: it.quantity || 1,
+          coverImage: it.imgCover || it.coverImage || '',
+          signedCopy: Boolean(it.signedCopy),
+        }));
+
+        let dateStr = 'Hôm nay';
+        if (data.createAt?.toDate) {
+          dateStr = data.createAt.toDate().toLocaleDateString('vi-VN');
+        } else if (data.createdAt) {
+          dateStr = new Date(data.createdAt).toLocaleDateString('vi-VN');
+        }
+
+        const statusRaw = (data.statusOrder || data.status || 'PROCESSING').toLowerCase();
+        let status: OrderDisplay['status'] = 'processing';
+        if (statusRaw === 'delivered') status = 'delivered';
+        else if (statusRaw === 'cancelled') status = 'cancelled';
+        else if (statusRaw === 'pending') status = 'pending';
+        else if (data.statusPayment === 'PAID') status = 'paid';
+
+        return {
+          id: d.id,
+          orderNumber: data.codeOrder
+            ? data.codeOrder.startsWith('#')
+              ? data.codeOrder
+              : `#${data.codeOrder}`
+            : `#BK-${d.id.slice(0, 6)}`,
+          date: dateStr,
+          total: data.totalPrice || data.totalAmount || 0,
+          status,
+          paymentMethod: (data.methodPayment === 'COD' ? 'COD' : 'VietQR') as 'VietQR' | 'COD',
+          shippingNote:
+            data.shippingNote ||
+            (status === 'delivered' ? 'Đã giao thành công' : 'Đang xử lý kiện hàng'),
+          carrier: data.shipMethod?.method || 'BookVerse Express',
+          trackingNumber: data.orderCode ? `BVE-${data.orderCode}` : undefined,
+          items: mappedItems,
+        };
+      });
+      setOrders(mappedOrders);
+
+      // 2. Fetch patron reading stats from collection "Users"
+      const userDoc = await getDoc(doc(db, 'Users', user.id));
+      if (userDoc.exists()) {
+        const uData = userDoc.data();
+        const completedCount =
+          uData.compltOrderCount ??
+          uData.complOrderCount ??
+          mappedOrders.filter((o) => o.status === 'delivered' || o.status === 'paid').length;
+        const readCount =
+          uData.readBookCount ??
+          mappedOrders.reduce(
+            (sum, o) => sum + o.items.reduce((iSum, it) => iSum + it.quantity, 0),
+            0
+          );
+        setReadingStats({
+          completedOrders: completedCount,
+          booksRead: readCount,
+        });
+      } else {
+        setReadingStats({
+          completedOrders: mappedOrders.filter(
+            (o) => o.status === 'delivered' || o.status === 'paid'
+          ).length,
+          booksRead: mappedOrders.reduce(
+            (sum, o) => sum + o.items.reduce((iSum, it) => iSum + it.quantity, 0),
+            0
+          ),
+        });
+      }
+    } catch (err: any) {
+      console.error('[UserProfile] Error fetching user data:', err);
+      setError('Không thể tải lịch sử đơn hàng. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, [user?.id]);
 
   // Profile data for edit modal
   const profileData: PatronProfileData = {
@@ -190,12 +204,7 @@ export const UserProfile: React.FC = () => {
       detailedAddress: updated.detailedAddress,
     });
     setIsEditModalOpen(false);
-    showToast('Đã lưu thông tin tài khoản độc giả thành công.');
-  };
-
-  const handleOpenTracking = (order: OrderDisplay) => {
-    setSelectedOrder(order);
-    setIsTrackingModalOpen(true);
+    showToast('Đã lưu thông tin tài khoản thành công!');
   };
 
   const handleOpenReview = (order: OrderDisplay) => {
@@ -203,9 +212,9 @@ export const UserProfile: React.FC = () => {
     setIsReviewModalOpen(true);
   };
 
-  const handleSubmitReview = (rating: number, comment: string) => {
-    setIsReviewModalOpen(false);
-    showToast('Đã gửi đánh giá ' + rating + ' sao (' + comment.slice(0, 15) + '...) thành công!');
+  const handleOpenTracking = (order: OrderDisplay) => {
+    setSelectedOrder(order);
+    setIsTrackingModalOpen(true);
   };
 
   const handleOpenVietQr = (order: OrderDisplay) => {
@@ -213,83 +222,118 @@ export const UserProfile: React.FC = () => {
     setIsVietQrModalOpen(true);
   };
 
-  const handleConfirmPaid = (order: OrderDisplay) => {
+  const handleCancelOrder = (orderId: string) => {
     setOrders((prev) =>
-      prev.map((o) => (o.id === order.id ? { ...o, status: 'paid' as const } : o))
+      prev.map((o) => {
+        if (o.id === orderId) {
+          return {
+            ...o,
+            status: 'cancelled',
+            shippingNote: 'Đơn hàng đã được độc giả hủy yêu cầu',
+          };
+        }
+        return o;
+      })
     );
-    setIsVietQrModalOpen(false);
-    showToast('Xác nhận thanh toán thành công! Đơn hàng đang được đóng gói.');
-  };
-
-  const handleReorder = (order: OrderDisplay) => {
-    showToast('Đã thêm các ấn phẩm từ đơn ' + order.orderNumber + ' vào giỏ hàng.');
-  };
-
-  const handleCancelOrder = (order: OrderDisplay) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === order.id ? { ...o, status: 'cancelled' as const } : o))
-    );
-    showToast('Đã hủy đơn hàng ' + order.orderNumber + ' thành công.');
+    showToast('Đã hủy đơn hàng thành công!');
   };
 
   return (
     <div
-      id="user-profile-page"
-      data-testid="user-profile-page"
-      className="bg-surface font-body-md text-on-surface antialiased min-h-screen py-space-lg px-gutter-sm sm:px-gutter"
+      id="user-profile-page-root"
+      data-testid="user-profile-page-coordinator"
+      className="flex flex-col w-full bg-surface text-primary font-body-md"
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto px-gutter-sm md:px-gutter-lg py-space-xl">
         {/* 1. Patron Header Card */}
         <PatronHeaderCard user={user} onEditProfile={handleOpenEditProfile} />
 
         {/* 2. Reading Stats Bento */}
-        <ReadingStatsBento />
-
-        {/* 4. Order History Section & 5. Order History Cards */}
-        <OrderHistorySection
-          orders={filteredOrders}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onOpenTracking={handleOpenTracking}
-          onOpenReview={handleOpenReview}
-          onOpenVietQr={handleOpenVietQr}
-          onReorder={handleReorder}
-          onCancelOrder={handleCancelOrder}
+        <ReadingStatsBento
+          completedOrdersCount={readingStats.completedOrders}
+          booksReadCount={readingStats.booksRead}
         />
 
-        {/* 6. Edit Profile Modal */}
-        <EditProfileModal
-          isOpen={isEditModalOpen}
-          initialData={profileData}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleSaveProfile}
-        />
-
-        {/* 7. Write Review Modal */}
-        <WriteReviewModal
-          isOpen={isReviewModalOpen}
-          order={selectedOrder}
-          onClose={() => setIsReviewModalOpen(false)}
-          onSubmit={handleSubmitReview}
-        />
-
-        {/* 8. Order Tracking Modal */}
-        <OrderTrackingModal
-          isOpen={isTrackingModalOpen}
-          order={selectedOrder}
-          onClose={() => setIsTrackingModalOpen(false)}
-        />
-
-        {/* 9. VietQR Modal */}
-        <VietQrModal
-          isOpen={isVietQrModalOpen}
-          order={selectedOrder}
-          onClose={() => setIsVietQrModalOpen(false)}
-          onConfirmPaid={handleConfirmPaid}
-        />
+        {/* Loading & Error States */}
+        {loading ? (
+          <div
+            id="user-profile-loading"
+            data-testid="user-profile-loading-spinner"
+            className="flex flex-col items-center justify-center py-16 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 my-4"
+          >
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+            <p className="text-secondary font-medium text-body-md">Đang tải lịch sử đơn hàng từ Firestore...</p>
+          </div>
+        ) : error ? (
+          <div
+            id="user-profile-error"
+            data-testid="user-profile-error-state"
+            className="flex flex-col items-center justify-center p-8 bg-error/5 border border-error/20 rounded-2xl text-center my-4"
+          >
+            <span className="material-symbols-outlined text-4xl text-error mb-2">error</span>
+            <p className="text-error font-medium mb-4">{error}</p>
+            <button
+              onClick={fetchUserData}
+              className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+            >
+              Thử lại
+            </button>
+          </div>
+        ) : (
+          /* 3. Order History Section */
+          <OrderHistorySection
+            orders={filteredOrders}
+            activeTab={activeTab}
+            searchQuery={searchQuery}
+            setActiveTab={setActiveTab}
+            setSearchQuery={setSearchQuery}
+            onOpenReview={handleOpenReview}
+            onOpenTracking={handleOpenTracking}
+            onOpenVietQr={handleOpenVietQr}
+            onReorder={(order) => {
+              showToast(`Đã thêm lại các sách từ đơn ${order.orderNumber} vào giỏ hàng!`);
+            }}
+            onCancelOrder={(order) => handleCancelOrder(order.id)}
+          />
+        )}
       </div>
+
+      {/* 4. Modals */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        initialData={profileData}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleSaveProfile}
+      />
+
+      <WriteReviewModal
+        isOpen={isReviewModalOpen}
+        order={selectedOrder}
+        onClose={() => setIsReviewModalOpen(false)}
+        onSubmit={(rating: number, _comment: string) => {
+          setIsReviewModalOpen(false);
+          showToast(`Cảm ơn bạn đã đánh giá ${rating} sao cho ấn phẩm!`);
+        }}
+      />
+
+      <OrderTrackingModal
+        isOpen={isTrackingModalOpen}
+        order={selectedOrder}
+        onClose={() => setIsTrackingModalOpen(false)}
+      />
+
+      <VietQrModal
+        isOpen={isVietQrModalOpen}
+        order={selectedOrder}
+        onClose={() => setIsVietQrModalOpen(false)}
+        onConfirmPaid={(order) => {
+          setOrders((prev) =>
+            prev.map((o) => (o.id === order.id ? { ...o, status: 'paid' } : o))
+          );
+          setIsVietQrModalOpen(false);
+          showToast('Xác thực thanh toán VietQR thành công!');
+        }}
+      />
     </div>
   );
 };

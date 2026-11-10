@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { db, mapFirestoreBookToInventoryBook } from '../services/firebase';
 import { useStore } from '../store/useStore';
 import { InventoryBook, StockFilterType, SortOptionType } from '../components/admin-inventory/types';
 import { InventoryHeader } from '../components/admin-inventory/InventoryHeader';
@@ -8,142 +10,6 @@ import { InventoryPagination } from '../components/admin-inventory/InventoryPagi
 import { AddBookModal } from '../components/admin-inventory/AddBookModal';
 import { EditBookModal } from '../components/admin-inventory/EditBookModal';
 import { DeleteConfirmDialog } from '../components/admin-inventory/DeleteConfirmDialog';
-
-// 6 Core Canonical Reference Volumes in VND
-const INITIAL_INVENTORY_ITEMS: InventoryBook[] = [
-  {
-    id: 'inv-1',
-    title: 'Designing Data-Intensive Applications',
-    author: 'Martin Kleppmann',
-    category: 'Khoa học máy tính',
-    isbn: '978-1449373320',
-    totalUnits: 50,
-    availableUnits: 38,
-    price: 360000,
-    publisher: 'NXB Trẻ',
-    publishYear: 2023,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDhuiJbYjbBTNMTSvNzEOg0hozusRe0q75o0ImjGvjVudqogCGSYo3jJLRBS8ZVmsTON6QJOHmdeDyM6BfxokKEKvyigGVOKC5-eDhUofXube4SHqMDasP3KQFHyMqMJlJnUu3l2QrryaaIe560_q3WYcQTijSeTCVyTTVqKdcmFKksLxo0Cq-MxOSu5smoTEvpjGY4CyLj-IM7hoZ-y_PymBmlL3kHimWDU9snqQEr',
-    coverAlt:
-      'Bìa sách Designing Data-Intensive Applications - Martin Kleppmann',
-  },
-  {
-    id: 'inv-2',
-    title: 'Atomic Habits',
-    author: 'James Clear',
-    category: 'Phát triển bản thân',
-    isbn: '978-0735211292',
-    totalUnits: 120,
-    availableUnits: 48,
-    price: 169000,
-    publisher: 'NXB Thế Giới',
-    publishYear: 2022,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBWUStideZHq6BmOKiYu7mgtlQihp3F4Y2Wn3RED25OX9mUHfLms37LzaG3-Fn2_xSKVsRSfqoLs-9dG4mio3HNWA7yhx6SEb3lkCvfXsAyb_pr17ZO1DDNTpqO_8BaXXVSrmZ1wO_eUpOmk6obkeDZwNCIrh-1r3wsbaGujhdRgevosIlGwN64gmq_vA1XzYg_WbRRwYz5cq0XGsAoXw1zKe_JmABYP5hqgqokiYki',
-    coverAlt:
-      'Bìa sách Atomic Habits - James Clear',
-  },
-  {
-    id: 'inv-3',
-    title: 'Klara and the Sun',
-    author: 'Kazuo Ishiguro',
-    category: 'Văn học cổ điển',
-    isbn: '978-0593318171',
-    totalUnits: 30,
-    availableUnits: 15,
-    price: 185000,
-    publisher: 'NXB Hội Nhà Văn',
-    publishYear: 2021,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBYTQ_WwYkQvYn3nrOUA5Gd69WYH8f-tnmZKz9f8hY-0Wa4Vuhx5O9MtUDdQb6UXxCrIX5foekfPKWqgYRFVz92N0n9WDLSJ0r61pjmxpDkBZB1fbS48c4ZYcyJ9m3DrOlqVq16Z6aoday_uVEyKcYnnt7pKIh6EbEMmdY4uzg1s-Vt1yZLWjmjvRFYiG70iTueQTUPDp5F08pjWXtNmTRNLXE3MVEvDIhDjFr-w5nJ',
-    coverAlt:
-      'Bìa sách Klara and the Sun - Kazuo Ishiguro',
-  },
-  {
-    id: 'inv-4',
-    title: 'The Pragmatic Programmer',
-    author: 'David Thomas & Andy Hunt',
-    category: 'Khoa học máy tính',
-    isbn: '978-0135957059',
-    totalUnits: 40,
-    availableUnits: 3,
-    price: 320000,
-    publisher: 'NXB Tổng hợp TP.HCM',
-    publishYear: 2023,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAtcRj3ztsntN5PnK6PR6R-sSTO1NuppR4punJz6oZTNQbWZ7gheS0b4E-J7dB4IIkG7bLA5J6wAjFE1hNQ7Jh-Vs0H-lojI_4btNfJEbaRySiyaqA_Xj2hmEnv0sA9XlxzBN9zVfkD9MndFwbrYc5eNg7_6Z9qXIHFGPRXXvgJmKUiZpAmRyZSAnTZYHOSc_xz5_msBcpIQY-eLAC8pnT7h8QD0KlEJybFj29UxU_B',
-    coverAlt:
-      'Bìa sách The Pragmatic Programmer 20th Anniversary Edition',
-  },
-  {
-    id: 'inv-5',
-    title: 'Clean Architecture',
-    author: 'Robert C. Martin',
-    category: 'Khoa học máy tính',
-    isbn: '978-0134494166',
-    totalUnits: 25,
-    availableUnits: 19,
-    price: 280000,
-    publisher: 'NXB Trẻ',
-    publishYear: 2022,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvxAwJheM7Qa0JWNH-udcIwmFxnwm9HdQNbYHUdGB4lm39CbVjmMyF5MiMkq_AI6TSxqE67I871L0GsWzjGHN50XfoHYauYGlrYsSJ9amFSHesg7s90tMH5GWOahDSFai3IYFzyTC4n9wWtXowDI30PGR7Ie95fe-UpXjGNe8hfEHmvWuquv5LtRnLrlTuYFXoa7ewQuMb9E73MHQbYz4sL9i1twIp7PJ_jAW2oPb',
-    coverAlt:
-      'Bìa sách Clean Architecture - Robert C. Martin',
-  },
-  {
-    id: 'inv-6',
-    title: 'Norwegian Wood',
-    author: 'Haruki Murakami',
-    category: 'Tiểu thuyết',
-    isbn: '978-0375704024',
-    totalUnits: 15,
-    availableUnits: 2,
-    price: 210000,
-    publisher: 'NXB Hội Nhà Văn',
-    publishYear: 2020,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuCSqcasNMn6kZQtsQ6QM49MI2d5LAsUgaJWddcG1Ch-Civ0bCD4Obg4VJCnCutKW267lUIbt6MQiiR4t-8dWzEyIair1fPm4p-NKqU1Wm2vIbk8zdwqaltEAKVnviwoHpfBS_DPEyeMNC2TRygQja8JmFOba8ZVS2xVUlcozqBaaBdO37GqmjhHnD5FXan1usZKqSzY-Q0TdhGvV4pExQ0G7Pyxu_3oeGzvcxCcAWz1',
-    coverAlt:
-      'Bìa sách Norwegian Wood (Rừng Na Uy) - Haruki Murakami',
-  },
-];
-
-// Generate complementary dataset to accurately total 48 items matching Stitch pagination indicator
-const COMPLEMENTARY_ITEMS: InventoryBook[] = Array.from({ length: 42 }, (_, i) => {
-  const index = i + 7;
-  const categories = ['Khoa học máy tính', 'Phát triển bản thân', 'Văn học cổ điển', 'Tiểu thuyết', 'Tâm lý học'];
-  const cat = categories[i % categories.length];
-  const total = 20 + ((i * 7) % 80);
-  const avail = Math.max(0, total - ((i * 5) % total));
-  return {
-    id: `inv-${index}`,
-    title: `Tuyển tập Ấn bản ${index}: Chuyên đề Đặc biệt`,
-    author: `Tác giả Tinh hoa ${index}`,
-    category: cat,
-    isbn: `978-013${String(index).padStart(4, '0')}7059`,
-    totalUnits: total,
-    availableUnits: avail,
-    price: 185000 + (i % 6) * 35000,
-    publisher: 'NXB BookVerse Guild',
-    publishYear: 2023,
-    formatVi: 'Ấn bản tiêu chuẩn',
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDhuiJbYjbBTNMTSvNzEOg0hozusRe0q75o0ImjGvjVudqogCGSYo3jJLRBS8ZVmsTON6QJOHmdeDyM6BfxokKEKvyigGVOKC5-eDhUofXube4SHqMDasP3KQFHyMqMJlJnUu3l2QrryaaIe560_q3WYcQTijSeTCVyTTVqKdcmFKksLxo0Cq-MxOSu5smoTEvpjGY4CyLj-IM7hoZ-y_PymBmlL3kHimWDU9snqQEr',
-    coverAlt: `Bìa tác phẩm Tuyển tập Ấn bản ${index}`,
-  };
-});
-
-const COMPLETE_INVENTORY_CATALOG: InventoryBook[] = [
-  ...INITIAL_INVENTORY_ITEMS,
-  ...COMPLEMENTARY_ITEMS,
-];
 
 const INVENTORY_CATEGORIES = [
   'Khoa học máy tính',
@@ -156,8 +22,12 @@ const INVENTORY_CATEGORIES = [
 export const AdminInventory: React.FC = () => {
   const globalShowToast = useStore((state) => state.showToast);
 
+  // Firestore Data State
+  const [books, setBooks] = useState<InventoryBook[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Component state
-  const [books, setBooks] = useState<InventoryBook[]>(COMPLETE_INVENTORY_CATALOG);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [stockFilter, setStockFilter] = useState<StockFilterType>('all');
@@ -173,7 +43,7 @@ export const AdminInventory: React.FC = () => {
   const [deletingBook, setDeletingBook] = useState<InventoryBook | null>(null);
 
   // Dedicated toast notification state (preserves #toastNotification and #toastMessage)
-  const [toastMessage, setToastMessage] = useState<string>('Đang xuất tệp dữ liệu CSV tồn kho ấn phẩm...');
+  const [toastMessage, setToastMessage] = useState<string>('');
   const [isToastVisible, setIsToastVisible] = useState<boolean>(false);
 
   const displayToast = (msg: string) => {
@@ -190,6 +60,28 @@ export const AdminInventory: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isToastVisible]);
+
+  // Real Firestore Query
+  const fetchInventory = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const booksSnap = await getDocs(collection(db, 'Books'));
+      const fetchedBooks: InventoryBook[] = booksSnap.docs.map((docSnap) =>
+        mapFirestoreBookToInventoryBook(docSnap.data(), docSnap.id)
+      );
+      setBooks(fetchedBooks);
+    } catch (err: any) {
+      console.error('[AdminInventory] Error querying Firestore "Books":', err);
+      setError('Không thể kết nối đến máy chủ cơ sở dữ liệu kho sách. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
   // Filtering Logic
   const filteredBooks = useMemo(() => {
@@ -239,24 +131,59 @@ export const AdminInventory: React.FC = () => {
   }, [filteredBooks, currentPage, rowsPerPage]);
 
   // Handlers
-  const handleAddBook = (newBookData: Omit<InventoryBook, 'id'>) => {
-    const newBook: InventoryBook = {
-      ...newBookData,
-      id: `inv-${Date.now()}`,
-    };
-    setBooks((prev) => [newBook, ...prev]);
-    displayToast(`Đã thêm thành công ấn phẩm “${newBook.title}” vào kho sách.`);
+  const handleAddBook = async (newBookData: Omit<InventoryBook, 'id'>) => {
+    try {
+      const docRef = await addDoc(collection(db, 'Books'), {
+        title: newBookData.title,
+        nameAuthor: newBookData.author,
+        categories: [{ id: 'cat-gen', nameCategories: newBookData.category }],
+        ISBN12: newBookData.isbn,
+        stockQuantity: newBookData.availableUnits,
+        originalPrice: newBookData.price,
+        salePrice: newBookData.price,
+        imgCoverPage: newBookData.coverImage,
+        description: newBookData.description || '',
+        specifications: {
+          publisher: newBookData.publisher,
+          releaseDate: `${newBookData.publishYear || 2026}-01-01`,
+        },
+      });
+      const newBook: InventoryBook = { ...newBookData, id: docRef.id };
+      setBooks((prev) => [newBook, ...prev]);
+      displayToast(`Đã thêm thành công ấn phẩm “${newBook.title}” vào kho sách.`);
+    } catch (e) {
+      console.error('[AdminInventory] Error adding book to Firestore:', e);
+      displayToast('Lỗi khi lưu ấn phẩm lên cơ sở dữ liệu.');
+    }
   };
 
-  const handleSaveEditBook = (updated: InventoryBook) => {
-    setBooks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
-    displayToast(`Đã cập nhật thông tin ấn phẩm “${updated.title}”.`);
+  const handleSaveEditBook = async (updated: InventoryBook) => {
+    try {
+      await updateDoc(doc(db, 'Books', updated.id), {
+        title: updated.title,
+        nameAuthor: updated.author,
+        stockQuantity: updated.availableUnits,
+        salePrice: updated.price,
+        ISBN12: updated.isbn,
+      });
+      setBooks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      displayToast(`Đã cập nhật thông tin ấn phẩm “${updated.title}”.`);
+    } catch (e) {
+      console.error('[AdminInventory] Error updating book:', e);
+      displayToast('Lỗi khi cập nhật ấn phẩm.');
+    }
   };
 
-  const handleConfirmDelete = (bookId: string) => {
+  const handleConfirmDelete = async (bookId: string) => {
     const bookToDelete = books.find((b) => b.id === bookId);
-    setBooks((prev) => prev.filter((b) => b.id !== bookId));
-    displayToast(`Đã xóa ấn phẩm “${bookToDelete?.title || bookId}” khỏi danh mục kho sách.`);
+    try {
+      await deleteDoc(doc(db, 'Books', bookId));
+      setBooks((prev) => prev.filter((b) => b.id !== bookId));
+      displayToast(`Đã xóa ấn phẩm “${bookToDelete?.title || bookId}” khỏi danh mục kho sách.`);
+    } catch (e) {
+      console.error('[AdminInventory] Error deleting book:', e);
+      displayToast('Lỗi khi xóa ấn phẩm khỏi cơ sở dữ liệu.');
+    }
   };
 
   const handleExportCsv = () => {
@@ -298,25 +225,54 @@ export const AdminInventory: React.FC = () => {
         onExportCsv={handleExportCsv}
       />
 
-      {/* 3. 8-Column Data Table */}
-      <InventoryTable
-        books={paginatedBooks}
-        onEditBook={(book) => setEditingBook(book)}
-        onDeleteBook={(book) => setDeletingBook(book)}
-      />
+      {/* Loading & Error States */}
+      {loading ? (
+        <div
+          id="admin-inventory-loading"
+          data-testid="admin-inventory-loading-spinner"
+          className="flex flex-col items-center justify-center py-20 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30"
+        >
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+          <p className="text-secondary font-medium text-body-md">Đang đồng bộ dữ liệu kho sách từ Firestore...</p>
+        </div>
+      ) : error ? (
+        <div
+          id="admin-inventory-error"
+          data-testid="admin-inventory-error-state"
+          className="flex flex-col items-center justify-center p-8 bg-error/5 border border-error/20 rounded-2xl text-center"
+        >
+          <span className="material-symbols-outlined text-4xl text-error mb-2">error</span>
+          <p className="text-error font-medium mb-4">{error}</p>
+          <button
+            onClick={fetchInventory}
+            className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : (
+        /* 3. 8-Column Data Table */
+        <InventoryTable
+          books={paginatedBooks}
+          onEditBook={(book) => setEditingBook(book)}
+          onDeleteBook={(book) => setDeletingBook(book)}
+        />
+      )}
 
       {/* 4. Pagination Controls */}
-      <InventoryPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredBooks.length}
-        rowsPerPage={rowsPerPage}
-        onPageChange={setCurrentPage}
-        onRowsPerPageChange={(rows) => {
-          setRowsPerPage(rows);
-          setCurrentPage(1);
-        }}
-      />
+      {!loading && !error && (
+        <InventoryPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredBooks.length}
+          rowsPerPage={rowsPerPage}
+          onPageChange={setCurrentPage}
+          onRowsPerPageChange={(rows) => {
+            setRowsPerPage(rows);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       {/* 5. Add Book Modal */}
       <AddBookModal

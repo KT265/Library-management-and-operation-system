@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_BOOKS } from '../data/mockData';
 import { Book } from '../types';
 import { useStore } from '../store/useStore';
+import { fetchBooksFromFirestore } from '../services/firebase';
 import { CatalogBreadcrumbs } from '../components/catalog/CatalogBreadcrumbs';
 import { CatalogSearchSortBar, CatalogSortOption } from '../components/catalog/CatalogSearchSortBar';
 import { CategoryChipsBar } from '../components/catalog/CategoryChipsBar';
@@ -13,53 +13,30 @@ import { CatalogEmptyState } from '../components/catalog/CatalogEmptyState';
 import { CatalogPagination } from '../components/catalog/CatalogPagination';
 import { EditorialShowcaseBanner } from '../components/catalog/EditorialShowcaseBanner';
 
-// DevTools Traceability: FilterSidebar renders id="clearSearchBtn" with cancel icon
-
-const CATALOG_BOOKS: Book[] = (() => {
-  const hasDesignSystems = MOCK_BOOKS.some((b) => b.title.includes('Design Systems'));
-  if (hasDesignSystems) return MOCK_BOOKS;
-  const designSystemsBook: Book = {
-    id: 'book-13',
-    title: 'Design Systems: Principles',
-    subtitle: 'Cẩm nang thực hành xây dựng ngôn ngữ thiết kế cho sản phẩm số',
-    author: 'Alla Kholmatova',
-    authorBio: 'Alla Kholmatova là nhà thiết kế UX chuyên sâu về các hệ thống thiết kế theo thành phần.',
-    publisher: 'Smashing Media',
-    price: 285000,
-    originalPrice: 360000,
-    rating: 4.9,
-    reviewCount: 340,
-    inStock: true,
-    stockCount: 8,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDrWsVl9tJ4A0uh4f9SX7mrqJL4-1UcG2D4fSR0m8vPPT-hQrGvH-6KCWwWtlQwhwmPKcCOdv3kf6zeXI58S4kDXbHT2Y_TE5-avM0DKbUl3gyQaOgZODnUCX1jZVbw0ju2mknqvKAa3kPliMv4uLxkU_wNplv3zVsFkp2DTAtdGcABrCE_n9d6nraOzvUjv0PoCw-gH_10W8VUkACtvn9YFwEBPIlC_eySkC6Ta2vg',
-    genre: 'Graphic Novels',
-    format: 'Standard',
-    description:
-      'Design Systems là cuốn cẩm nang toàn diện khám phá các nguyên tắc nền tảng và mô hình thiết kế giao diện có khả năng mở rộng cao.',
-    featured: true,
-    isBestseller: false,
-    specs: {
-      isbn: '978-3945749586',
-      format: 'Standard',
-      pages: 288,
-      language: 'English',
-      publisher: 'Smashing Media',
-      dimensions: '16.5 x 2.0 x 22.8 cm',
-      weight: '550 g',
-      publicationYear: 2017,
-    },
-  };
-  return [...MOCK_BOOKS, designSystemsBook];
-})();
-
+// Category mapping supporting both English genres and Firestore Vietnamese categories
 const CATEGORY_MAPPINGS: Record<string, string[]> = {
-  'Computer Science': ['Distributed Systems', 'Computer Science', 'Tech & Coding'],
-  'Psychology & Habits': ['Self-Growth', 'History & Mind'],
-  'Literary Fiction': ['Literary Fiction'],
-  'Sci-Fi & Speculative': ['Sci-Fi & Fantasy'],
-  'Business & Strategy': ['Tech & Coding', 'Business'],
-  'Design & Visual Arts': ['Graphic Novels', 'Design & UI'],
+  'Computer Science': [
+    'Distributed Systems',
+    'Computer Science',
+    'Tech & Coding',
+    'Công nghệ thông tin & Lập trình',
+    'Công nghệ thông tin',
+  ],
+  'Psychology & Habits': [
+    'Self-Growth',
+    'History & Mind',
+    'Kỹ năng sống & Phát triển bản thân',
+    'Kỹ năng sống',
+  ],
+  'Literary Fiction': [
+    'Literary Fiction',
+    'Văn học Việt Nam',
+    'Tiểu thuyết lãng mạn',
+    'Văn học',
+  ],
+  'Sci-Fi & Speculative': ['Sci-Fi & Fantasy', 'Khoa học viễn tưởng'],
+  'Business & Strategy': ['Tech & Coding', 'Business', 'Kinh doanh & Chiến lược'],
+  'Design & Visual Arts': ['Graphic Novels', 'Design & UI', 'Thiết kế & Nghệ thuật'],
 };
 
 const CHIP_CATEGORIES = [
@@ -71,31 +48,43 @@ const CHIP_CATEGORIES = [
   { id: 'design', labelVi: 'Thiết kế & Nghệ thuật', englishName: 'Design & Visual Arts' },
 ];
 
-const GENRE_TAG_MAPPING: Record<string, string> = {
-  'book-1': 'Distributed Systems',
-  'book-2': 'Literary Fiction',
-  'book-3': 'Behavioral Science',
-  'book-4': 'Software Mastery',
-  'book-5': 'Engineering',
-  'book-6': 'Hard Sci-Fi',
-  'book-7': 'Cognitive Science',
-  'book-13': 'Design & UI',
-};
-
 export const Catalog: React.FC = () => {
   const navigate = useNavigate();
   const { searchQuery, setSearchQuery, addToCart } = useStore();
 
-  // State
+  // Data fetching state
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Filter state
   const [filterQuery, setFilterQuery] = useState(searchQuery);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [pricePreset, setPricePreset] = useState<'0-20' | '20-50' | '50+' | null>('50+');
-  const [selectedRating, setSelectedRating] = useState<number | null>(4.0);
+  const [pricePreset, setPricePreset] = useState<'0-20' | '20-50' | '50+' | null>(null);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<CatalogSortOption>('featured');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [addedBookIds, setAddedBookIds] = useState<Record<string, boolean>>({});
+
+  const loadBooks = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchBooksFromFirestore();
+      setBooks(data);
+    } catch (err: any) {
+      console.error('[Catalog] Error fetching books from Firestore:', err);
+      setError(err?.message || 'Không thể tải danh mục sách. Vui lòng thử lại sau.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBooks();
+  }, []);
 
   useEffect(() => {
     setFilterQuery(searchQuery);
@@ -144,45 +133,48 @@ export const Catalog: React.FC = () => {
   };
 
   const filteredBooks = useMemo(() => {
-    return CATALOG_BOOKS.filter((book) => {
-      const activeSearch = filterQuery.trim().toLowerCase();
-      if (activeSearch) {
-        const matchesTitle = book.title.toLowerCase().includes(activeSearch);
-        const matchesAuthor = book.author.toLowerCase().includes(activeSearch);
-        const matchesGenre = book.genre.toLowerCase().includes(activeSearch);
-        const matchesDesc = book.description?.toLowerCase().includes(activeSearch);
-        if (!matchesTitle && !matchesAuthor && !matchesGenre && !matchesDesc) return false;
-      }
+    return books
+      .filter((book) => {
+        const activeSearch = filterQuery.trim().toLowerCase();
+        if (activeSearch) {
+          const matchesTitle = book.title?.toLowerCase().includes(activeSearch);
+          const matchesAuthor = book.author?.toLowerCase().includes(activeSearch);
+          const matchesGenre = book.genre?.toLowerCase().includes(activeSearch);
+          const matchesDesc = book.description?.toLowerCase().includes(activeSearch);
+          if (!matchesTitle && !matchesAuthor && !matchesGenre && !matchesDesc) return false;
+        }
 
-      if (selectedCategories.length > 0) {
-        const matchesAnyCat = selectedCategories.some((cat) => {
-          const allowedGenres = CATEGORY_MAPPINGS[cat] || [cat];
-          return (
-            allowedGenres.includes(book.genre) ||
-            book.title.toLowerCase().includes(cat.toLowerCase())
-          );
-        });
-        if (!matchesAnyCat) return false;
-      }
+        if (selectedCategories.length > 0) {
+          const matchesAnyCat = selectedCategories.some((cat) => {
+            const allowedGenres = CATEGORY_MAPPINGS[cat] || [cat];
+            return (
+              allowedGenres.some((g) => book.genre?.toLowerCase().includes(g.toLowerCase())) ||
+              book.title?.toLowerCase().includes(cat.toLowerCase())
+            );
+          });
+          if (!matchesAnyCat) return false;
+        }
 
-      if (pricePreset === '0-20' && book.price > 200000) return false;
-      if (pricePreset === '20-50' && (book.price < 200000 || book.price > 350000)) return false;
+        if (pricePreset === '0-20' && book.price > 100000) return false;
+        if (pricePreset === '20-50' && (book.price < 100000 || book.price > 300000)) return false;
+        if (pricePreset === '50+' && book.price <= 300000) return false;
 
-      if (selectedRating !== null && book.rating < selectedRating) {
-        return false;
-      }
+        if (selectedRating !== null && book.rating < selectedRating) {
+          return false;
+        }
 
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === 'price-low') return a.price - b.price;
-      if (sortBy === 'price-high') return b.price - a.price;
-      if (sortBy === 'rated') return b.rating - a.rating;
-      if (sortBy === 'newest') {
-        return (b.specs?.publicationYear || 0) - (a.specs?.publicationYear || 0);
-      }
-      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
-    });
-  }, [filterQuery, selectedCategories, pricePreset, selectedRating, sortBy]);
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'price-low') return a.price - b.price;
+        if (sortBy === 'price-high') return b.price - a.price;
+        if (sortBy === 'rated') return b.rating - a.rating;
+        if (sortBy === 'newest') {
+          return (b.specs?.publicationYear || 0) - (a.specs?.publicationYear || 0);
+        }
+        return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+      });
+  }, [books, filterQuery, selectedCategories, pricePreset, selectedRating, sortBy]);
 
   const totalItems = filteredBooks.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -261,31 +253,58 @@ export const Catalog: React.FC = () => {
                 }}
               />
 
-              {/* Book Results Grid / Empty State */}
-              {displayedBooks.length === 0 ? (
+              {/* Book Results Grid / Loading Spinner / Error State / Empty State */}
+              {isLoading ? (
+                <div
+                  id="catalog-loading-state"
+                  data-testid="catalog-loading-spinner"
+                  className="flex flex-col items-center justify-center py-24 min-h-[400px] w-full"
+                >
+                  <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+                  <p className="text-secondary font-medium text-body-md">Đang tải danh mục ấn phẩm...</p>
+                </div>
+              ) : error ? (
+                <div
+                  id="catalog-error-state"
+                  data-testid="catalog-error-state"
+                  className="flex flex-col items-center justify-center p-8 bg-error/5 border border-error/20 rounded-2xl my-6 text-center w-full"
+                >
+                  <span className="material-symbols-outlined text-4xl text-error mb-2">error</span>
+                  <h3 className="font-headline-sm text-on-surface mb-2 font-bold">Không thể tải danh mục sách</h3>
+                  <p className="text-secondary mb-4 max-w-md">{error}</p>
+                  <button
+                    onClick={loadBooks}
+                    className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+                  >
+                    Thử lại
+                  </button>
+                </div>
+              ) : displayedBooks.length === 0 ? (
                 <CatalogEmptyState onResetFilters={handleResetFilters} />
               ) : (
                 <CatalogBookGrid
                   books={displayedBooks}
                   addedBookIds={addedBookIds}
-                  genreTagMapping={GENRE_TAG_MAPPING}
+                  genreTagMapping={{}}
                   onAddToCart={handleAddToCart}
                   onBuyNow={handleBuyNow}
                 />
               )}
 
               {/* Pagination */}
-              <CatalogPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageSize={pageSize}
-                totalItems={totalItems}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={(size) => {
-                  setPageSize(size);
-                  setCurrentPage(1);
-                }}
-              />
+              {!isLoading && !error && displayedBooks.length > 0 && (
+                <CatalogPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalItems={totalItems}
+                  onPageChange={setCurrentPage}
+                  onPageSizeChange={(size) => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                />
+              )}
 
               {/* Bottom Editorial Showcase */}
               <EditorialShowcaseBanner />

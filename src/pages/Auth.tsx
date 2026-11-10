@@ -6,6 +6,16 @@ import { AuthSegmentedToggle } from '../components/auth/AuthSegmentedToggle';
 import { SignInForm } from '../components/auth/SignInForm';
 import { RegisterForm } from '../components/auth/RegisterForm';
 import { SocialOAuthDivider } from '../components/auth/SocialOAuthDivider';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  auth,
+  db,
+  googleProvider,
+  lookupUserRoleAndProfile,
+  mapFirebaseUserToUser,
+  syncUserProfileToFirestore,
+} from '../services/firebase';
 
 const systemLogo = new URL('../Public/Logo.png', import.meta.url).href;
 
@@ -41,10 +51,14 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
+  // Google OAuth Loading State
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
   // Redirect destination helper
   const getRedirectPath = (isAdmin: boolean) => {
     if (isAdmin) return '/admin';
-    const state = location.state as { from?: { pathname?: string } } | undefined;
+    const state = location.state as { from?: { pathname?: string } | string } | undefined;
+    if (typeof state?.from === 'string') return state.from || '/';
     return state?.from?.pathname || '/';
   };
 
@@ -101,18 +115,64 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
 
     const safeName = regName.trim();
     showToast('Chào mừng ' + safeName + ' đến với BookVerse! Tài khoản độc giả đã được tạo thành công.');
-    navigate('/');
+    navigate(getRedirectPath(false));
   };
 
-  // Google OAuth Stub
-  const handleGoogleAuth = () => {
-    login({
-      name: 'Google Patron',
-      email: 'patron.google@bookverse.vn',
-      role: 'customer',
-    });
-    showToast('Đăng nhập thành công với tài khoản Google.');
-    navigate('/');
+  // Google OAuth Handler (lifted from SocialOAuthDivider, replaces handleGoogleAuth)
+  const handleGoogleLogin = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const provider = googleProvider || new GoogleAuthProvider();
+      const currentAuth = auth || getAuth();
+      if (!currentAuth || !provider) {
+        throw new Error('Firebase Auth hoặc GoogleAuthProvider chưa được khởi tạo');
+      }
+
+      // Execute signInWithPopup(auth, googleProvider)
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const fbUser = user;
+
+      // Check if user document exists in Firestore "users" collection
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          name: user.displayName || '',
+          email: user.email || '',
+          avatar: user.photoURL || '',
+          role: 'customer',
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      const idToken = await fbUser.getIdToken();
+      const { role, firestoreData } = await lookupUserRoleAndProfile(fbUser.uid, fbUser.email);
+      const mappedUser = mapFirebaseUserToUser(fbUser, role, firestoreData);
+
+      // Best-effort Firestore sync
+      syncUserProfileToFirestore(fbUser, role).catch((err) => {
+        console.warn('[Firestore] Profile sync notice:', err);
+      });
+
+      login(mappedUser, idToken);
+      showToast('Đăng nhập thành công với tài khoản Google.');
+      navigate(getRedirectPath(mappedUser.role === 'admin'));
+    } catch (error: any) {
+      if (
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request'
+      ) {
+        showToast('Đăng nhập Google đã bị hủy.');
+      } else {
+        console.error('[GoogleAuth] Error during popup login:', error);
+        showToast(error.message || 'Không thể đăng nhập bằng Google. Vui lòng thử lại.');
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   // Forgot Password Stub
@@ -237,8 +297,9 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
 
                 {/* 5. Social OAuth & Guest Exploration */}
                 <SocialOAuthDivider
-                  onGoogleAuth={handleGoogleAuth}
+                  onGoogleAuth={handleGoogleLogin}
                   dividerText={mode === 'signin' ? 'hoặc tiếp tục với' : 'hoặc đăng ký bằng'}
+                  isLoading={isGoogleLoading}
                 />
               </div>
 

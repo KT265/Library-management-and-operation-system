@@ -1,6 +1,88 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
+import { formatVND } from '../../utils/currency';
 
-export const KpiMetricsBento: React.FC = () => {
+export interface KpiMetricsBentoProps {
+  revenue?: number;
+  ordersCount?: number;
+  booksCount?: number;
+  patronsCount?: number;
+  loading?: boolean;
+}
+
+export const KpiMetricsBento: React.FC<KpiMetricsBentoProps> = ({
+  revenue,
+  ordersCount,
+  booksCount,
+  patronsCount,
+  loading = false,
+}) => {
+  const [internalMetrics, setInternalMetrics] = useState({
+    revenue: 0,
+    ordersCount: 0,
+    booksCount: 0,
+    patronsCount: 0,
+  });
+  const [internalLoading, setInternalLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (
+      revenue !== undefined &&
+      ordersCount !== undefined &&
+      booksCount !== undefined &&
+      patronsCount !== undefined
+    ) {
+      return;
+    }
+
+    let isMounted = true;
+    setInternalLoading(true);
+
+    Promise.all([
+      getDocs(collection(db, FIRESTORE_COLLECTIONS.ORDER)),
+      getDocs(collection(db, FIRESTORE_COLLECTIONS.BOOKS)),
+      getDocs(collection(db, FIRESTORE_COLLECTIONS.USERS)),
+    ])
+      .then(([ordersSnap, booksSnap, usersSnap]) => {
+        if (!isMounted) return;
+
+        const rawOrders = ordersSnap.docs.map((d) => d.data());
+        const totalRevenue = rawOrders
+          .filter((o: any) => String(o.statusPayment || o.paymentStatus || '').toUpperCase() === 'PAID')
+          .reduce((sum: number, o: any) => sum + (o.totalPrice ?? o.totalAmount ?? 0), 0);
+
+        const successfulOrders = rawOrders.filter((o: any) => {
+          const pay = String(o.statusPayment || o.paymentStatus || '').toUpperCase();
+          const stat = String(o.statusOrder || o.status || '').toUpperCase();
+          return pay === 'PAID' || stat === 'DELIVERED';
+        }).length;
+
+        setInternalMetrics({
+          revenue: totalRevenue,
+          ordersCount: successfulOrders,
+          booksCount: booksSnap.size,
+          patronsCount: usersSnap.size,
+        });
+      })
+      .catch((err) => {
+        console.error('[KpiMetricsBento] Error querying Firestore collections:', err);
+      })
+      .finally(() => {
+        if (isMounted) setInternalLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [revenue, ordersCount, booksCount, patronsCount]);
+
+  const activeRevenue = revenue !== undefined ? revenue : internalMetrics.revenue;
+  const activeOrdersCount = ordersCount !== undefined ? ordersCount : internalMetrics.ordersCount;
+  const activeBooksCount = booksCount !== undefined ? booksCount : internalMetrics.booksCount;
+  const activePatronsCount = patronsCount !== undefined ? patronsCount : internalMetrics.patronsCount;
+  const isBentoLoading = loading || (revenue === undefined && internalLoading);
+
   return (
     <div
       id="dashboard-kpi-grid"
@@ -29,7 +111,7 @@ export const KpiMetricsBento: React.FC = () => {
               data-testid="admin-dashboard-kpi-value-revenue"
               className="font-display-md text-display-md font-bold text-primary tracking-tight num-tabular"
             >
-              1.225.000.000 ₫
+              {isBentoLoading ? '...' : formatVND(activeRevenue)}
             </span>
           </div>
         </div>
@@ -56,14 +138,14 @@ export const KpiMetricsBento: React.FC = () => {
               data-testid="admin-dashboard-kpi-value-orders"
               className="font-display-md text-display-md font-bold text-primary tracking-tight num-tabular"
             >
-              1.482
+              {isBentoLoading ? '...' : activeOrdersCount.toLocaleString('vi-VN')}
             </span>
             <span className="text-secondary font-title-sm text-title-sm">đơn</span>
           </div>
         </div>
       </div>
 
-      {/* Card 3: Sách tồn kho */}
+      {/* Card 3: Sách tồn kho / Tổng đầu sách */}
       <div
         id="circulationMetric"
         data-testid="admin-dashboard-kpi-card-circulation"
@@ -84,7 +166,7 @@ export const KpiMetricsBento: React.FC = () => {
               data-testid="admin-dashboard-kpi-value-circulation"
               className="font-display-md text-display-md font-bold text-tertiary tracking-tight num-tabular"
             >
-              324
+              {isBentoLoading ? '...' : activeBooksCount.toLocaleString('vi-VN')}
             </span>
             <span className="text-tertiary font-title-sm text-title-sm">cuốn</span>
           </div>          
@@ -112,7 +194,7 @@ export const KpiMetricsBento: React.FC = () => {
               data-testid="admin-dashboard-kpi-value-patrons"
               className="font-display-md text-display-md font-bold text-primary tracking-tight num-tabular"
             >
-              8.920
+              {isBentoLoading ? '...' : activePatronsCount.toLocaleString('vi-VN')}
             </span>
             <span className="text-secondary font-title-sm text-title-sm">thành viên</span>
           </div>       
@@ -121,3 +203,5 @@ export const KpiMetricsBento: React.FC = () => {
     </div>
   );
 };
+
+export default KpiMetricsBento;
