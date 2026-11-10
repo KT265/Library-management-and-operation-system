@@ -1,0 +1,54 @@
+{
+  "name": "library-management-system",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "server": "node server.cjs",
+    "test": "node scripts/run-e2e-tests.mjs"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@mui/icons-material": "^5.16.12",
+    "@mui/material": "^5.16.12",
+    "@payos/node": "^2.0.5",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "firebase": "^13.2.0",
+    "firebase-admin": "^14.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.1"
+  },
+  "description": "",
+  "main": "postcss.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KT265/Library-management-and-operation-system.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/KT265/Library-management-and-operation-system/issues"
+  },
+  "homepage": "https://github.com/KT265/Library-management-and-operation-system#readme"
+}

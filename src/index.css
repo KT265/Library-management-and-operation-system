@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  body {
+    overscroll-behavior: none;
+  }
+
+  main > :first-child {
+    margin-top: 0 !important;
+  }
+
+  main > :last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+@layer components {
+  /* Star Icon Filled State */
+  .icon-fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* Cart Drawer 10-Item Maximum Viewport Height */
+  .cart-drawer-scroll-limit {
+    max-height: calc(10 * 74px);
+    overflow-y: auto;
+  }
+
+  /* Tabular Numerals for Currency & ISBNs */
+  .num-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Material Symbols Outlined Icon Styling */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Star Rating and Filled Icon Variations */
+.material-symbols-outlined.fill,
+.material-symbols-outlined[style*="'FILL' 1"],
+.material-symbols-outlined[style*='"FILL" 1'],
+.material-symbols-outlined[style*="font-variation-settings: 'FILL' 1"],
+.material-symbols-outlined[style*="font-variation-settings: 'FILL' 1;"] {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Tabular Numerals for Prices, ISBNs, Stock Counts */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide webkit scrollbars per Stitch design */
+::-webkit-scrollbar {
+  display: none;
+}
