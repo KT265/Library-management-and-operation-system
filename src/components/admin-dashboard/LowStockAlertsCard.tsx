@@ -1,54 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { collection, getDocs } from 'firebase/firestore';
+import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
 import { StockAlertItem } from './types';
 
-const STOCK_ALERTS: StockAlertItem[] = [
-  {
-    id: 'alert-1',
-    title: 'Norwegian Wood (Rừng Na Uy)',
-    author: 'Haruki Murakami',
-    isbn: '978-0307744661',
-    copiesLeft: 2,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuB-tjGNFabNIRWPpQbea61qHTfRUKjfJEjhnYgcttODLs43injb6bB0vOv9AuOw3ZJTNRbBSk5TBGZibQeuILerlB893SFDBWXF5HOPgUsm-OXOSxXsvLwvBLqc8Yfd13PrZZc_OOWLUUOUACwa39gmzHewA_aE3bbC_uRw4uwvFmpSaHKT34WIQPoIQ_xm4QbeM7LCvZ2qsyu09PsdFgntn1m1kRW4CWGw8ovUKfYM',
-    coverAlt:
-      'Bìa sách Rừng Na Uy - Haruki Murakami',
-    dotColor: 'bg-error',
-    alertText: 'Chỉ còn 2 bản trong kho',
-    alertClasses: 'font-label-sm text-label-sm font-bold text-error',
-  },
-  {
-    id: 'alert-2',
-    title: 'Piranesi',
-    author: 'Susanna Clarke',
-    isbn: '978-1635575637',
-    copiesLeft: 3,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBDo6MYjfBSW8u2ZoP0V4pVcL5OK8JTBdAh4ur7rJGR7ue_wLPUOnBvm48p9C6Rk74cwdhRrJjY81M8H7Waxq89dbY0p_wZE4cl9opT1oBoHetjHOAfnkd3SYWG3lVA-E75JmByOBpPBRE7CQzpMchT6O0lpimsBG1-xe84T-N69SQ7FMF9IValngwU1yyQzg6X9vrjwByV3RVXH4K26CFayXZeB6lZ7sntAkbQvTpY',
-    coverAlt:
-      'Bìa sách Piranesi - Susanna Clarke',
-    dotColor: 'bg-tertiary',
-    alertText: 'Còn 3 bản trong kho',
-    alertClasses: 'font-label-sm text-label-sm font-bold text-tertiary',
-  },
-  {
-    id: 'alert-3',
-    title: 'Invisible Cities (Những thành phố vô hình)',
-    author: 'Italo Calvino',
-    isbn: '978-0156453806',
-    copiesLeft: 1,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAorltsVX6b6skd2IsRHxQdS7tiTHKpvJQKV98W28tWjOIgmGrAHrfa3URQKnL52FCaUhzon6wtWG5tsxhhvozflN7ePtw_STOwj8Og2Y6WCbQxbnSKts31gJo9oZnLPqIpz9y5UCKI0VkAmJnoik6NSlYbPs1cd3-DbNd_ay26BiuvAMmb_DzUzMqhk5gHER9zqLM0RgwZvBzjR700VdftEQzRsyvUkEkeLa9jb1aQ',
-    coverAlt:
-      'Bìa sách Những thành phố vô hình - Italo Calvino',
-    dotColor: 'bg-error',
-    alertText: 'Chỉ còn 1 bản trong kho',
-    alertClasses: 'font-label-sm text-label-sm font-bold text-error',
-  },
-];
+export interface LowStockAlertsCardProps {
+  alerts?: StockAlertItem[];
+  loading?: boolean;
+}
 
-export const LowStockAlertsCard: React.FC = () => {
+export const LowStockAlertsCard: React.FC<LowStockAlertsCardProps> = ({
+  alerts,
+  loading = false,
+}) => {
   const navigate = useNavigate();
+  const [internalAlerts, setInternalAlerts] = useState<StockAlertItem[]>([]);
+  const [internalLoading, setInternalLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (alerts !== undefined) return;
+    let isMounted = true;
+    setInternalLoading(true);
+
+    getDocs(collection(db, FIRESTORE_COLLECTIONS.BOOKS))
+      .then((booksSnap) => {
+        if (!isMounted) return;
+        const booksData = booksSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const lowStock: StockAlertItem[] = booksData
+          .filter((b: any) => (b.stockQuantity ?? b.stockCount ?? 0) < 10)
+          .map((b: any) => {
+            const copiesLeft = b.stockQuantity ?? b.stockCount ?? 0;
+            return {
+              id: b.id,
+              title: b.title || 'Chưa có tiêu đề',
+              author: b.nameAuthor || b.author || 'Tác giả',
+              isbn: b.ISBN12 || b.specifications?.isbn || 'N/A',
+              copiesLeft,
+              coverImage:
+                b.imgCoverPage ||
+                b.coverImage ||
+                'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800',
+              coverAlt: `Bìa sách ${b.title || ''}`,
+              dotColor: copiesLeft <= 2 ? 'bg-error' : 'bg-tertiary',
+              alertText:
+                copiesLeft === 0
+                  ? 'Đã hết hàng trong kho'
+                  : copiesLeft <= 2
+                  ? `Chỉ còn ${copiesLeft} bản trong kho`
+                  : `Còn ${copiesLeft} bản trong kho`,
+              alertClasses:
+                copiesLeft <= 2
+                  ? 'font-label-sm text-label-sm font-bold text-error'
+                  : 'font-label-sm text-label-sm font-bold text-tertiary',
+            };
+          });
+        setInternalAlerts(lowStock);
+      })
+      .catch((err) => {
+        console.error('[LowStockAlertsCard] Error querying Books from Firestore:', err);
+      })
+      .finally(() => {
+        if (isMounted) setInternalLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [alerts]);
+
+  const activeAlerts = alerts !== undefined ? alerts : internalAlerts;
+  const isCardLoading = loading || (alerts === undefined && internalLoading);
 
   return (
     <div
@@ -80,57 +101,76 @@ export const LowStockAlertsCard: React.FC = () => {
             data-testid="admin-dashboard-low-stock-badge-count"
             className="bg-tertiary text-on-tertiary font-label-sm text-label-sm font-bold px-2.5 py-1 rounded-full"
           >
-            3 Cần nhập
+            {activeAlerts.length} Cần nhập
           </span>
         </div>
 
-        {/* Stock List */}
-        <div
-          id="stock-alerts-list"
-          data-testid="admin-dashboard-low-stock-list"
-          className="space-y-space-sm"
-        >
-          {STOCK_ALERTS.map((alert) => (
-            <div
-              key={alert.id}
-              id={`stock-alert-item-${alert.id}`}
-              data-testid={`admin-dashboard-low-stock-item-${alert.id}`}
-              className="p-space-md rounded-2xl bg-surface hover:bg-surface-container/60 transition-colors flex items-center justify-between gap-space-md border border-outline-variant/20"
-            >
-              <div className="flex items-center gap-space-sm min-w-0">
-                <img
-                  className="w-12 h-16 rounded-md object-cover flex-shrink-0 shadow-sm"
-                  src={alert.coverImage}
-                  alt={alert.coverAlt}
-                  data-alt={alert.coverAlt}
-                />
-                <div className="min-w-0">
-                  <h4 className="font-title-sm text-title-sm font-semibold text-primary truncate">
-                    {alert.title}
-                  </h4>
-                  <p className="font-body-sm text-body-sm text-outline truncate">
-                    {alert.author} • ISBN {alert.isbn}
-                  </p>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${alert.dotColor}`}></span>
-                    <span className={alert.alertClasses}>{alert.alertText}</span>
+        {/* Stock List / Empty State */}
+        {isCardLoading ? (
+          <div className="py-8 text-center text-secondary font-label-md flex flex-col items-center justify-center">
+            <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin mb-2" />
+            <p>Đang kiểm tra tồn kho...</p>
+          </div>
+        ) : activeAlerts.length === 0 ? (
+          <div
+            id="stock-alerts-empty-state"
+            data-testid="admin-dashboard-low-stock-empty"
+            className="p-space-lg text-center bg-surface rounded-2xl border border-outline-variant/20 py-8"
+          >
+            <span className="material-symbols-outlined text-4xl text-secondary mb-2">check_circle</span>
+            <p className="font-title-sm font-semibold text-primary">Tồn kho an toàn</p>
+            <p className="font-body-sm text-secondary mt-1">
+              Tất cả ấn phẩm trong kho sách đều đạt định mức tồn an toàn (&ge; 10 cuốn).
+            </p>
+          </div>
+        ) : (
+          <div
+            id="stock-alerts-list"
+            data-testid="admin-dashboard-low-stock-list"
+            className="space-y-space-sm"
+          >
+            {activeAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                id={`stock-alert-item-${alert.id}`}
+                data-testid={`admin-dashboard-low-stock-item-${alert.id}`}
+                className="p-space-md rounded-2xl bg-surface hover:bg-surface-container/60 transition-colors flex items-center justify-between gap-space-md border border-outline-variant/20"
+              >
+                <div className="flex items-center gap-space-sm min-w-0">
+                  <img
+                    className="w-12 h-16 rounded-md object-cover flex-shrink-0 shadow-sm"
+                    src={alert.coverImage}
+                    alt={alert.coverAlt}
+                    data-alt={alert.coverAlt}
+                  />
+                  <div className="min-w-0">
+                    <h4 className="font-title-sm text-title-sm font-semibold text-primary truncate">
+                      {alert.title}
+                    </h4>
+                    <p className="font-body-sm text-body-sm text-outline truncate">
+                      {alert.author} • ISBN {alert.isbn}
+                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${alert.dotColor}`}></span>
+                      <span className={alert.alertClasses}>{alert.alertText}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                id={`btn-restock-${alert.id}`}
-                data-testid={`admin-dashboard-low-stock-btn-restock-${alert.id}`}
-                onClick={() => navigate('/admin/inventory')}
-                className="shrink-0 text-xs text-primary font-semibold hover:underline hidden sm:inline-flex items-center gap-0.5 cursor-pointer bg-surface-container px-3 py-1.5 rounded-full hover:bg-surface-container-high transition-colors"
-              >
-                <span>Nhập kho</span>
-                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-              </button>
-            </div>
-          ))}
-        </div>
+                <button
+                  type="button"
+                  id={`btn-restock-${alert.id}`}
+                  data-testid={`admin-dashboard-low-stock-btn-restock-${alert.id}`}
+                  onClick={() => navigate('/admin/inventory')}
+                  className="shrink-0 text-xs text-primary font-semibold hover:underline hidden sm:inline-flex items-center gap-0.5 cursor-pointer bg-surface-container px-3 py-1.5 rounded-full hover:bg-surface-container-high transition-colors"
+                >
+                  <span>Nhập kho</span>
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-space-md pt-space-sm text-center">
@@ -148,3 +188,5 @@ export const LowStockAlertsCard: React.FC = () => {
     </div>
   );
 };
+
+export default LowStockAlertsCard;

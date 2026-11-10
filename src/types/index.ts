@@ -11,6 +11,7 @@ export interface User {
   city?: string;
   district?: string;
   detailedAddress?: string;
+  _isSimulated?: boolean;
 }
 
 export type BookGenre =

@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db, mapFirestoreVoucherToAdminVoucher } from '../services/firebase';
 import { useStore } from '../store/useStore';
 import {
   AdminVoucher,
@@ -10,109 +12,13 @@ import { VoucherToolbar } from '../components/admin-vouchers/VoucherToolbar';
 import { VouchersTable } from '../components/admin-vouchers/VouchersTable';
 import { CreateVoucherModal } from '../components/admin-vouchers/CreateVoucherModal';
 
-const DEFAULT_VOUCHERS: AdminVoucher[] = [
-  {
-    id: 'v-1',
-    code: 'BIBLIO10',
-    campaign: 'Đặc quyền Hội viên BookVerse Guild',
-    description: 'Ưu đãi tích lũy định kỳ quý cho độc giả tinh hoa',
-    discountType: 'fixed',
-    discountValue: 50000,
-    discountLabel: 'Giảm 50.000 ₫',
-    conditionNote: 'Đơn hàng tối thiểu từ 300.000 ₫',
-    usedCount: 342,
-    totalUsageLimit: 500,
-    expiryDate: '15 Thg 11, 2026',
-    expiryNote: 'Còn 18 ngày hiệu lực',
-    status: 'active',
-    minSpend: 300000,
-  },
-  {
-    id: 'v-2',
-    code: 'AUTUMN20',
-    campaign: 'Lễ hội Mùa thu Toàn hệ thống',
-    description: 'Khuyến mại theo mùa cho ấn bản sách tiêu chuẩn và bộ sưu tập',
-    discountType: 'percent',
-    discountValue: 20,
-    discountLabel: 'Giảm 20%',
-    conditionNote: 'Không giới hạn đơn tối thiểu',
-    usedCount: 890,
-    totalUsageLimit: 1000,
-    expiryDate: '31 Thg 10, 2026',
-    expiryNote: 'Còn 3 ngày (Sắp hết hạn)',
-    status: 'expiring',
-    minSpend: 0,
-  },
-  {
-    id: 'v-3',
-    code: 'WELCOME10',
-    campaign: 'Chào mừng Độc giả Mới',
-    description: 'Mã ưu đãi tự động kích hoạt cho độc giả tạo tài khoản lần đầu',
-    discountType: 'fixed',
-    discountValue: 50000,
-    discountLabel: 'Giảm 50.000 ₫',
-    conditionNote: 'Đơn hàng tối thiểu từ 250.000 ₫',
-    usedCount: 120,
-    totalUsageLimit: 200,
-    expiryDate: '31 Thg 12, 2026',
-    expiryNote: 'Còn 64 ngày hiệu lực',
-    status: 'active',
-    minSpend: 250000,
-  },
-  {
-    id: 'v-4',
-    code: 'FREESHIP',
-    campaign: 'Miễn phí Giao hàng Tiêu chuẩn',
-    description: 'Hỗ trợ cước bưu chính hỏa tốc và tiêu chuẩn toàn quốc',
-    discountType: 'shipping',
-    discountValue: 30000,
-    discountLabel: 'Miễn phí vận chuyển (Freeship)',
-    conditionNote: 'Đơn hàng tối thiểu từ 200.000 ₫',
-    usedCount: 620,
-    totalUsageLimit: 750,
-    expiryDate: '28 Thg 11, 2026',
-    expiryNote: 'Còn 31 ngày hiệu lực',
-    status: 'active',
-    minSpend: 200000,
-  },
-  {
-    id: 'v-5',
-    code: 'BOOKWORM15',
-    campaign: 'Câu lạc bộ Độc giả Hàng tháng',
-    description: 'Ưu đãi chọn lọc tác phẩm văn học kinh điển và hiện đại',
-    discountType: 'percent',
-    discountValue: 15,
-    discountLabel: 'Giảm 15%',
-    conditionNote: 'Đơn hàng tối thiểu từ 200.000 ₫',
-    usedCount: 295,
-    totalUsageLimit: 300,
-    expiryDate: '02 Thg 11, 2026',
-    expiryNote: 'Còn 5 ngày (Gần hết lượt dùng)',
-    status: 'expiring',
-    minSpend: 200000,
-  },
-  {
-    id: 'v-6',
-    code: 'SUMMERREADS',
-    campaign: 'Đại hội Sách Hè BookVerse',
-    description: 'Danh mục ấn phẩm du lịch và giải trí mùa hạ',
-    discountType: 'fixed',
-    discountValue: 70000,
-    discountLabel: 'Giảm 70.000 ₫',
-    conditionNote: 'Đơn hàng tối thiểu từ 350.000 ₫',
-    usedCount: 500,
-    totalUsageLimit: 500,
-    expiryDate: '30 Thg 09, 2026',
-    expiryNote: 'Đã kết thúc chương trình 28 ngày trước',
-    status: 'expired',
-    minSpend: 350000,
-  },
-];
-
 export const AdminVouchers: React.FC = () => {
   const showToast = useStore((state) => state.showToast);
 
-  const [vouchers, setVouchers] = useState<AdminVoucher[]>(DEFAULT_VOUCHERS);
+  const [vouchers, setVouchers] = useState<AdminVoucher[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [filterOptions, setFilterOptions] = useState<VoucherFilterOptions>({
     searchTerm: '',
     statusFilter: 'all',
@@ -123,6 +29,25 @@ export const AdminVouchers: React.FC = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingVoucher, setEditingVoucher] = useState<AdminVoucher | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const fetchVouchers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const snap = await getDocs(collection(db, 'Vouchers'));
+      const fetched = snap.docs.map((d) => mapFirestoreVoucherToAdminVoucher(d.data(), d.id));
+      setVouchers(fetched);
+    } catch (err: any) {
+      console.error('[AdminVouchers] Error querying "Vouchers":', err);
+      setError('Không thể tải danh sách mã voucher từ Firestore.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVouchers();
+  }, []);
 
   // Filtered list
   const filteredVouchers = useMemo(() => {
@@ -180,39 +105,37 @@ export const AdminVouchers: React.FC = () => {
       status: 'active',
     };
     setVouchers((prev) => [duplicated, ...prev]);
-    showToast?.(`Đã nhân bản quy tắc voucher “${voucher.code}” thành công.`);
+    showToast?.(`Đã nhân bản voucher “${voucher.code}” thành công.`);
+  };
+
+  const handleDeleteVoucher = (voucherId: string) => {
+    setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
+    showToast?.('Đã xóa mã voucher khỏi hệ thống khuyến mại.');
   };
 
   const handleToggleStatus = (voucher: AdminVoucher) => {
-    const newStatus = voucher.status === 'active' ? 'expired' : 'active';
     setVouchers((prev) =>
-      prev.map((v) => (v.id === voucher.id ? { ...v, status: newStatus } : v))
+      prev.map((v) =>
+        v.id === voucher.id
+          ? { ...v, status: v.status === 'active' ? 'expired' : 'active' }
+          : v
+      )
     );
-    showToast?.(`Đã cập nhật trạng thái voucher “${voucher.code}”.`);
+    showToast?.(`Đã thay đổi trạng thái mã “${voucher.code}”.`);
   };
 
-  const handleArchiveVoucher = (voucherId: string) => {
-    setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
-    showToast?.('Đã lưu trữ và xóa mã ưu đãi khỏi danh sách hiển thị.');
-  };
-
-  const handleSaveVoucher = (savedVoucher: AdminVoucher) => {
+  const handleSaveVoucher = (voucher: AdminVoucher) => {
     if (modalMode === 'create') {
-      setVouchers((prev) => [savedVoucher, ...prev]);
-      showToast?.(`Đã phát hành thành công mã voucher “${savedVoucher.code}”.`);
+      setVouchers((prev) => [voucher, ...prev]);
+      showToast?.(`Đã kích hoạt mã ưu đãi mới “${voucher.code}”.`);
     } else {
       setVouchers((prev) =>
-        prev.map((v) => (v.id === savedVoucher.id ? savedVoucher : v))
+        prev.map((v) => (v.id === voucher.id ? voucher : v))
       );
-      showToast?.(`Đã cập nhật quy tắc voucher “${savedVoucher.code}”.`);
+      showToast?.(`Đã cập nhật mã ưu đãi “${voucher.code}”.`);
     }
+    setIsModalOpen(false);
   };
-
-  const handleRefresh = () => {
-    showToast?.('Đã làm mới dữ liệu voucher và tỷ lệ quy đổi thời gian thực.');
-  };
-
-  const activeCount = vouchers.filter((v) => v.status === 'active').length;
 
   return (
     <div
@@ -220,35 +143,60 @@ export const AdminVouchers: React.FC = () => {
       data-testid="admin-vouchers-page-root"
       className="flex flex-col w-full pb-space-xxl space-y-space-lg"
     >
-      {/* 1. Header with Active Count Badge and Create Voucher CTA */}
+      {/* 1. Header with Title & Add Voucher CTA */}
       <VouchersHeader
-        activeCount={activeCount}
+        activeCount={vouchers.filter((v) => v.status === 'active').length}
         onOpenCreateModal={handleOpenCreateModal}
       />
 
-      {/* 2. Bento KPI Metric Cards */}
+      {/* 2. 4-Card Bento Metrics Grid */}
       <VoucherKpisBento />
 
-      {/* 3. Toolbar with Search, Status / Discount Type Dropdowns, Refresh */}
+      {/* 3. Search and Multi-Filter Toolbar */}
       <VoucherToolbar
         filterOptions={filterOptions}
-        onFilterChange={(updates) =>
-          setFilterOptions((prev) => ({ ...prev, ...updates }))
-        }
-        onRefresh={handleRefresh}
+        onFilterChange={(updates) => setFilterOptions((prev) => ({ ...prev, ...updates }))}
+        onRefresh={fetchVouchers}
         matchCount={filteredVouchers.length}
       />
 
-      {/* 4. 7-Column Vouchers Data Table */}
-      <VouchersTable
-        vouchers={filteredVouchers}
-        copiedCode={copiedCode}
-        onCopyCode={handleCopyCode}
-        onEdit={handleEditVoucher}
-        onDuplicate={handleDuplicateVoucher}
-        onToggleStatus={handleToggleStatus}
-        onArchive={handleArchiveVoucher}
-      />
+      {/* Loading & Error States */}
+      {loading ? (
+        <div
+          id="admin-vouchers-loading"
+          data-testid="admin-vouchers-loading-spinner"
+          className="flex flex-col items-center justify-center py-20 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30"
+        >
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+          <p className="text-secondary font-medium text-body-md">Đang đồng bộ danh sách voucher từ Firestore...</p>
+        </div>
+      ) : error ? (
+        <div
+          id="admin-vouchers-error"
+          data-testid="admin-vouchers-error-state"
+          className="flex flex-col items-center justify-center p-8 bg-error/5 border border-error/20 rounded-2xl text-center"
+        >
+          <span className="material-symbols-outlined text-4xl text-error mb-2">error</span>
+          <p className="text-error font-medium mb-4">{error}</p>
+          <button
+            onClick={fetchVouchers}
+            className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : (
+        /* 4. 7-Column Vouchers Data Table */
+        <VouchersTable
+          vouchers={filteredVouchers}
+          onCopyCode={handleCopyCode}
+          copiedCode={copiedCode}
+          onEdit={handleEditVoucher}
+          onDuplicate={handleDuplicateVoucher}
+          onToggleStatus={handleToggleStatus}
+          onArchive={handleDeleteVoucher}
+        />
+      )}
 
       {/* 5. Create / Edit Voucher Modal */}
       <CreateVoucherModal

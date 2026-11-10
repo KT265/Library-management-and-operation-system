@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_BOOKS } from '../data/mockData';
 import { useStore } from '../store/useStore';
 import { Book } from '../types';
+import { fetchBookByIdFromFirestore } from '../services/firebase';
 import { BookBreadcrumbs } from '../components/book-details/BookBreadcrumbs';
 import { CoverGallery, GalleryThumbnail } from '../components/book-details/CoverGallery';
 import { BookHeroInfo } from '../components/book-details/BookHeroInfo';
@@ -11,48 +11,14 @@ import { TrustBadgesBar } from '../components/book-details/TrustBadgesBar';
 import { BookTabsSection, BookTabId } from '../components/book-details/BookTabsSection';
 import { RelatedBooksCarousel } from '../components/book-details/RelatedBooksCarousel';
 
-/**
- * Publishing metadata dimensions index (delegated to SpecificationsTab):
- * 'ISBN-13', 'ISBN-10', 'Print Length', 'Language', 'Dimensions', 'Shipping Weight', 'Publication Date', 'Publisher', 'Inventory Classification'
- */
-
-const GALLERY_THUMBNAILS: GalleryThumbnail[] = [
-  {
-    id: 'front',
-    label: 'Front Cover Original',
-    labelVi: 'Bìa trước nguyên bản',
-    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDTvQXFI2eOxiw-mX5BtGITzJqbrTJRfdtnITBPipyoBiaNzug3GmDkPW_SqqkMir_LUc2CXLuiGFtzMkyBZq9OHvRZxIPcG6w5fvU3GELlXnOE594wVUJ0yYMtr8-J1U-8hMhtqYmOSKmUJjeCETCp9Yul7Hbj_hUwO-UtdogSUQb6NJ6q9-ITwWwwwCr-EEySb8EgXEPQtAEEQos9_ydaRQrgt2j7tb3EHhO_Vj8C',
-    alt: 'Ảnh bìa trước ấn phẩm chuyên khảo kỹ thuật rõ nét và trang nhã',
-  },
-  {
-    id: 'toc',
-    label: 'Index & Chapter Overview',
-    labelVi: 'Mục lục & Tổng quan chương',
-    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAO9nNRFwV7RrOGpzy0eWTs7DWQdyaBTS1hQ-jwK1d3hfxU2kXWpVdH7j7wmor4k7unGrBdaUu8p7w7VUArv3PqRka2OMVNm8HKiElTo-Oa2G5xmSGVjF7EYNsDH01AlY1qJaJT1JVJQPWGM-u535Y9S9FJB7s6udOrp_iUzIA4AlSuvDV48U-Ajczz7aUAS06j0Qu9kGpUr41v6DncNOJuZ6PwhXHPkYEsHk0a_H1o',
-    alt: 'Trang mục lục chi tiết và cấu trúc chuyên khảo',
-  },
-  {
-    id: 'diagram',
-    label: 'System Architecture Diagram Spread',
-    labelVi: 'Sơ đồ kiến trúc & Mô hình',
-    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvG4fzf3efVoKybJMlCQfPqGZ2xkjNbjG-G81vPuMxxI7CXJxGZrwMwJZi-1b0tWZ6JVsoiohJBD6q3xJbd5w_WGubUYC9SvaQwSaZOwbOgPrqspr5xf4Ppn2JPhMNM9Q333rm7atEJx7Izjv_3OIstMx2OI0nLz2GKcI--VSC5iSvNNjjjZ0D4QcS13gtmU4SyrXsBQ9TFbXDvfzNEU2PAVy1LQ-NB9md4HU2e9nO',
-    alt: 'Sơ đồ trực quan kiến trúc hệ thống dữ liệu phân tán',
-  },
-  {
-    id: 'back',
-    label: 'Back Cover & Peer Endorsements',
-    labelVi: 'Bìa sau & Nhận xét chuyên gia',
-    url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAktEUxeMjFZzO8oFgjcrRGxm5Ty5pvWyDA_Fctk38vuaj0FqoMGb5OIpVRctqyp2ryXuaA1aYAPCUIFEQb9bBxoqQCxvIx2m1kOkJK_V7NhVwwUk4qhl_aghao6hABH5zd4-dqJRRjLTtZIftqrNnUmgCZnPpX5WgKl_8Jxx5-8gi4apfw0PC00Gw3J3rEgVne1tjqmHhl1-kAldJ8R-swgMEQoyCyA7LdE15b42XO',
-    alt: 'Bìa sau của ấn bản với lời đề tựa từ các chuyên gia đầu ngành',
-  },
-];
-
 export const BookDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useStore();
 
-  const canonicalBook = MOCK_BOOKS.find((b) => b.id === id) || MOCK_BOOKS[0];
+  const [book, setBook] = useState<Book | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [quantity, setQuantity] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<BookTabId>('tab-overview');
@@ -60,9 +26,43 @@ export const BookDetails: React.FC = () => {
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
 
-  const unitPrice = canonicalBook.price || 360000;
-  const originalPrice = canonicalBook.originalPrice || Math.round(unitPrice * 1.25);
-  const stockCeiling = canonicalBook.stockCount || 38;
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setError(null);
+
+    if (!id) {
+      setError('Mã ấn phẩm không hợp lệ.');
+      setIsLoading(false);
+      return;
+    }
+
+    fetchBookByIdFromFirestore(id)
+      .then((data) => {
+        if (!isMounted) return;
+        if (!data) {
+          setError('Không tìm thấy thông tin ấn phẩm trong thư viện.');
+        } else {
+          setBook(data);
+        }
+      })
+      .catch((err: any) => {
+        if (!isMounted) return;
+        console.error('[BookDetails] Error fetching book by id:', err);
+        setError(err?.message || 'Có lỗi xảy ra khi tải thông tin ấn phẩm.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const unitPrice = book?.price || 0;
+  const originalPrice = book?.originalPrice || Math.round(unitPrice * 1.25);
+  const stockCeiling = book?.stockCount || 10;
 
   const handleDecrement = () => {
     if (quantity > 1) {
@@ -77,9 +77,10 @@ export const BookDetails: React.FC = () => {
   };
 
   const handleAddToCart = () => {
+    if (!book) return;
     setIsAdding(true);
     const itemToAdd: Book = {
-      ...canonicalBook,
+      ...book,
       price: unitPrice,
       originalPrice: originalPrice,
     };
@@ -91,8 +92,9 @@ export const BookDetails: React.FC = () => {
   };
 
   const handleBuyNow = () => {
+    if (!book) return;
     const itemToAdd: Book = {
-      ...canonicalBook,
+      ...book,
       price: unitPrice,
       originalPrice: originalPrice,
     };
@@ -100,10 +102,57 @@ export const BookDetails: React.FC = () => {
     navigate('/checkout');
   };
 
+  const thumbnails: GalleryThumbnail[] = useMemo(() => {
+    if (!book) return [];
+    const list: GalleryThumbnail[] = [
+      {
+        id: 'thumb-primary',
+        label: 'Front Cover Original',
+        labelVi: 'Bìa trước nguyên bản',
+        url: book.coverImage,
+        alt: `Bìa trước của sách ${book.title}`,
+      },
+    ];
+    return list;
+  }, [book]);
+
   const currentCover =
-    activeThumbIndex === 0
-      ? canonicalBook.coverImage
-      : GALLERY_THUMBNAILS[activeThumbIndex]?.url || canonicalBook.coverImage;
+    thumbnails[activeThumbIndex]?.url || book?.coverImage || '';
+
+  if (isLoading) {
+    return (
+      <div
+        id="book-details-loading-state"
+        data-testid="book-details-loading-spinner"
+        className="min-h-[70vh] flex flex-col items-center justify-center w-full"
+      >
+        <div className="w-14 h-14 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+        <p className="text-secondary font-medium text-body-lg">Đang tải thông tin ấn phẩm...</p>
+      </div>
+    );
+  }
+
+  if (error || !book) {
+    return (
+      <div
+        id="book-details-error-state"
+        data-testid="book-details-error-state"
+        className="min-h-[60vh] flex flex-col items-center justify-center w-full px-4 text-center max-w-lg mx-auto"
+      >
+        <div className="w-16 h-16 rounded-full bg-error/10 text-error flex items-center justify-center mb-4">
+          <span className="material-symbols-outlined text-3xl">menu_book</span>
+        </div>
+        <h2 className="text-2xl font-bold text-primary mb-2">Không tìm thấy sách</h2>
+        <p className="text-secondary mb-6">{error || 'Ấn phẩm không tồn tại hoặc đã ngừng phát hành.'}</p>
+        <button
+          onClick={() => navigate('/catalog')}
+          className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+        >
+          Quay lại danh mục sách
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -114,8 +163,8 @@ export const BookDetails: React.FC = () => {
       <div className="relative w-full max-w-7xl mx-auto px-gutter-sm md:px-gutter-lg pb-space-xxl">
         {/* 1. Breadcrumbs */}
         <BookBreadcrumbs
-          genre={canonicalBook.genre}
-          bookTitle={canonicalBook.title}
+          genre={book.genre}
+          bookTitle={book.title}
         />
 
         {/* 2. Main Hero Section */}
@@ -124,11 +173,11 @@ export const BookDetails: React.FC = () => {
           <div className="lg:col-span-5">
             <CoverGallery
               currentCover={currentCover}
-              bookTitle={canonicalBook.title}
-              pages={canonicalBook.specs?.pages || 616}
+              bookTitle={book.title}
+              pages={book.specs?.pages || 300}
               isZoomed={isZoomed}
               onToggleZoom={() => setIsZoomed(!isZoomed)}
-              thumbnails={GALLERY_THUMBNAILS}
+              thumbnails={thumbnails}
               activeThumbIndex={activeThumbIndex}
               onSelectThumb={setActiveThumbIndex}
             />
@@ -136,7 +185,7 @@ export const BookDetails: React.FC = () => {
 
           {/* Right Column: Book Hero Info & Actions */}
           <div className="lg:col-span-7 flex flex-col gap-space-lg">
-            <BookHeroInfo book={canonicalBook} />
+            <BookHeroInfo book={book} />
 
             <PurchaseActionCluster
               unitPrice={unitPrice}
@@ -156,13 +205,13 @@ export const BookDetails: React.FC = () => {
 
         {/* 3. Editorial Tabs Section */}
         <BookTabsSection
-          book={canonicalBook}
+          book={book}
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
 
         {/* 4. Recommendations Carousel */}
-        <RelatedBooksCarousel />
+        <RelatedBooksCarousel currentBookId={book.id} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchReviewsFromFirestore } from '../../services/firebase';
 
-interface PatronReview {
+export interface PatronReview {
   id: string;
   author: string;
   role: string;
@@ -10,9 +11,9 @@ interface PatronReview {
   avatarText: string;
 }
 
-const REVIEWS: PatronReview[] = [
+const DEFAULT_REVIEWS: PatronReview[] = [
   {
-    id: 'rev-1',
+    id: 'rev-default-1',
     author: 'Alexandre Xu',
     role: 'Kỹ sư Trưởng Hệ thống Phân tán',
     rating: 5,
@@ -22,7 +23,7 @@ const REVIEWS: PatronReview[] = [
     avatarText: 'AX',
   },
   {
-    id: 'rev-2',
+    id: 'rev-default-2',
     author: 'Sarah Chen',
     role: 'Trưởng nhóm Kiến trúc Phần mềm CloudNative',
     rating: 5,
@@ -32,7 +33,7 @@ const REVIEWS: PatronReview[] = [
     avatarText: 'SC',
   },
   {
-    id: 'rev-3',
+    id: 'rev-default-3',
     author: 'Minh Nguyễn',
     role: 'Nhà nghiên cứu Khoa học Dữ liệu',
     rating: 5,
@@ -62,6 +63,20 @@ const VALUE_PROPS = [
 ];
 
 export const PatronReviewsSection: React.FC = () => {
+  const [reviews, setReviews] = useState<PatronReview[]>(DEFAULT_REVIEWS);
+
+  useEffect(() => {
+    fetchReviewsFromFirestore()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setReviews(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('[PatronReviewsSection] Using fallback reviews:', err);
+      });
+  }, []);
+
   return (
     <section
       id="home-patron-reviews"
@@ -126,7 +141,7 @@ export const PatronReviewsSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
-          {REVIEWS.map((review) => (
+          {reviews.map((review) => (
             <div
               key={review.id}
               data-testid={`home-reviews-card-${review.id}`}
@@ -135,7 +150,7 @@ export const PatronReviewsSection: React.FC = () => {
               <div>
                 {/* 5-star Rating */}
                 <div className="flex items-center gap-1 text-tertiary-container mb-space-sm">
-                  {[...Array(review.rating)].map((_, i) => (
+                  {[...Array(review.rating || 5)].map((_, i) => (
                     <span key={i} className="material-symbols-outlined text-[18px] fill">
                       star
                     </span>

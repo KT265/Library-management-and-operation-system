@@ -12,11 +12,19 @@ export const StorefrontHeader: React.FC = () => {
     setSearchQuery,
     getTotalCount,
     openCart,
+    user,
+    isAuthenticated,
   } = useStore();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const profileRootRef = useRef<HTMLDivElement>(null);
   const totalCount = getTotalCount();
+
+  // Reset avatar error when user avatar changes
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.avatar]);
 
   // Handle clicking outside profile dropdown
   useEffect(() => {
@@ -189,7 +197,7 @@ export const StorefrontHeader: React.FC = () => {
 
           {/* Patron Profile Menu */}
           <div
-            className="relative"
+            className="relative flex items-center gap-space-xs"
             id="profileDropdownRoot"
             data-testid="sf-header-profile-root"
             ref={profileRootRef}
@@ -197,13 +205,37 @@ export const StorefrontHeader: React.FC = () => {
             <button
               aria-expanded={isProfileOpen}
               aria-label="Tài khoản cá nhân"
-              className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:opacity-95 transition-all focus:outline-none cursor-pointer ring-2 ring-secondary-container"
+              className="flex items-center gap-space-xs p-0.5 rounded-full hover:bg-surface-container-high/60 transition-all focus:outline-none cursor-pointer group"
               id="profileMenuBtn"
               data-testid="sf-header-profile-btn"
               type="button"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center overflow-hidden ring-2 ring-secondary-container shrink-0">
+                {isAuthenticated && user?.avatar && !avatarError ? (
+                  <img
+                    id="sf-header-user-avatar"
+                    data-testid="sf-header-user-avatar"
+                    src={user.avatar}
+                    alt={user.name || 'User Avatar'}
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+                )}
+              </div>
+
+              {isAuthenticated && user?.name && (
+                <span
+                  id="sf-header-user-name"
+                  data-testid="sf-header-user-name"
+                  className="hidden sm:inline font-label-md text-label-md text-on-surface font-semibold max-w-[120px] truncate select-none pr-1"
+                  title={user.name}
+                >
+                  {user.name}
+                </span>
+              )}
             </button>
 
             <ProfileDropdown

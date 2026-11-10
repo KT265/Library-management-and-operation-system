@@ -5,7 +5,18 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    port: 5173,
+    strictPort: false,
+    host: true,
+    fs: {
+      deny: [
+        '.env',
+        '.env.*',
+        '*.{crt,pem}',
+        'serviceAccountKey*.json',
+        '*.cjs',
+        'seed.cjs',
+      ],
+    },
   },
 });
-

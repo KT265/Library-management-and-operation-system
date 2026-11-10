@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "server": "node server.cjs",
-    "test": "node scripts/run-e2e-tests.mjs"
+    "test": "node scripts/run-e2e-tests.mjs",
+    "test:phase5": "node tests/phase5_verification_suite.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",

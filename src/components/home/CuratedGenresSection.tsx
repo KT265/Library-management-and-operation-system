@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { fetchCategoriesFromFirestore } from '../../services/firebase';
 
 interface CuratedGenre {
   name: string;
@@ -8,7 +9,7 @@ interface CuratedGenre {
   icon: string;
 }
 
-const CURATED_GENRES: CuratedGenre[] = [
+const DEFAULT_CURATED_GENRES: CuratedGenre[] = [
   { name: 'Literary Fiction', labelVi: 'Văn học tinh hoa', count: '1.420 Đầu sách', icon: 'book_4' },
   { name: 'Tech & Coding', labelVi: 'Kỹ thuật & Công nghệ', count: '890 Đầu sách', icon: 'terminal' },
   { name: 'Sci-Fi & Fantasy', labelVi: 'Khoa học viễn tưởng', count: '1.110 Đầu sách', icon: 'rocket_launch' },
@@ -22,6 +23,32 @@ interface CuratedGenresSectionProps {
 }
 
 export const CuratedGenresSection: React.FC<CuratedGenresSectionProps> = ({ onSelectGenre }) => {
+  const [genres, setGenres] = useState<CuratedGenre[]>(DEFAULT_CURATED_GENRES);
+
+  useEffect(() => {
+    fetchCategoriesFromFirestore()
+      .then((categories) => {
+        if (categories && categories.length > 0) {
+          const iconMap: Record<string, string> = {
+            cat_01: 'book_4',
+            cat_02: 'psychology',
+            cat_03: 'terminal',
+            cat_04: 'rocket_launch',
+          };
+          const mapped = categories.map((c) => ({
+            name: c.nameCategories || c.name || '',
+            labelVi: c.nameCategories || c.name || '',
+            count: 'Tuyển tập đặc biệt',
+            icon: iconMap[c.id] || 'auto_stories',
+          }));
+          setGenres(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn('[CuratedGenresSection] Using default categories:', err);
+      });
+  }, []);
+
   return (
     <section
       id="home-curated-genres"
@@ -58,7 +85,7 @@ export const CuratedGenresSection: React.FC<CuratedGenresSectionProps> = ({ onSe
         data-testid="home-curated-genres-grid"
         className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-space-md"
       >
-        {CURATED_GENRES.map((genre) => (
+        {genres.map((genre) => (
           <div
             key={genre.name}
             data-path="catalog"
@@ -69,7 +96,7 @@ export const CuratedGenresSection: React.FC<CuratedGenresSectionProps> = ({ onSe
             <div className="w-12 h-12 rounded-full bg-surface-container-lowest text-primary group-hover:bg-primary group-hover:text-on-primary flex items-center justify-center mb-space-xs transition-colors shadow-sm">
               <span className="material-symbols-outlined text-[24px]">{genre.icon}</span>
             </div>
-            <span className="font-title-sm text-title-sm text-on-surface group-hover:text-on-secondary-container transition-colors">
+            <span className="font-title-sm text-title-sm text-on-surface group-hover:text-on-secondary-container transition-colors line-clamp-1">
               {genre.labelVi}
               <span className="sr-only"> ({genre.name})</span>
             </span>

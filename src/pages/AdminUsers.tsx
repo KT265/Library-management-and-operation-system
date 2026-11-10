@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import '../components/admin-users/admin-users.css';
+import { collection, getDocs } from 'firebase/firestore';
+import { db, mapFirestoreUserToAdminManagedUser } from '../services/firebase';
 import {
   AdminManagedUser,
   UserRole,
-  INITIAL_MANAGED_USERS,
   normalizeVietnamese,
 } from '../components/admin-users/types';
 import { UsersPermissionsHeader } from '../components/admin-users/UsersPermissionsHeader';
@@ -14,8 +15,10 @@ import { EditRoleModal } from '../components/admin-users/EditRoleModal';
 import { UsersToast } from '../components/admin-users/UsersToast';
 
 export const AdminUsers: React.FC = () => {
-  // Ephemeral State for interactive role assignment (Requirement R3)
-  const [users, setUsers] = useState<AdminManagedUser[]>(INITIAL_MANAGED_USERS);
+  const [users, setUsers] = useState<AdminManagedUser[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<'all' | UserRole>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,6 +44,27 @@ export const AdminUsers: React.FC = () => {
     setToastTimeoutId(id);
   };
 
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const snap = await getDocs(collection(db, 'Users'));
+      const fetched = snap.docs.map((docSnap) =>
+        mapFirestoreUserToAdminManagedUser(docSnap.data(), docSnap.id)
+      );
+      setUsers(fetched);
+    } catch (err: any) {
+      console.error('[AdminUsers] Error querying Firestore "Users":', err);
+      setError('Không thể tải danh sách tài khoản người dùng từ Firestore.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   // Toast timeout cleanup on unmount
   useEffect(() => {
     return () => {
@@ -51,9 +75,6 @@ export const AdminUsers: React.FC = () => {
   }, [toastTimeoutId]);
 
   // Dynamic KPI and counter calculations adhering to Stitch Screen baseline (6 Admins, 2,839 Users)
-  // Baseline list contains 3 admins and 4 users.
-  // Dynamic offsets preserve baseline metrics while accurately reflecting additions and role conversions:
-  // Baseline: 3 admins + 3 = 6 Admins. 4 users + 2835 = 2839 Users. Total = 2845.
   const currentAdminInList = useMemo(
     () => users.filter((u) => u.role === 'admin').length,
     [users]
@@ -116,6 +137,7 @@ export const AdminUsers: React.FC = () => {
     setSearchQuery('');
     setSelectedRole('all');
     setCurrentPage(1);
+    fetchUsers();
     showToast('Đã làm mới dữ liệu người dùng thành công.');
   };
 
@@ -149,53 +171,73 @@ export const AdminUsers: React.FC = () => {
       data-testid="admin-users-page"
       className="flex flex-col w-full pb-margin-lg"
     >
-      {/* Top Banner / Page Header */}
+      {/* 1. Header with Breadcrumb and Real-time Status */}
       <UsersPermissionsHeader />
 
-      {/* KPI Metrics Grid */}
-      <UsersKpisGrid adminCount={adminKpiCount} userCount={userKpiCount} />
+      {/* 2. 3-Card KPI Summary Grid */}
+      <UsersKpisGrid
+        adminCount={adminKpiCount}
+        userCount={userKpiCount}
+      />
 
-      {/* Filter & Action Toolbar */}
+      {/* 3. Filter and Search Toolbar */}
       <UsersFilterToolbar
         searchQuery={searchQuery}
-        onSearchChange={(value) => {
-          setSearchQuery(value);
-          setCurrentPage(1);
-        }}
         selectedRole={selectedRole}
-        onRoleSelect={(role) => {
-          setSelectedRole(role);
-          setCurrentPage(1);
-        }}
+        onSearchChange={setSearchQuery}
+        onRoleSelect={setSelectedRole}
         onRefresh={handleRefresh}
         totalCount={totalSystemCount}
         adminCount={adminKpiCount}
         userCount={userKpiCount}
       />
 
-      {/* Users & Roles Data Table */}
-      <UsersTable
-        users={filteredUsers}
-        onEditRole={handleOpenEditUser}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        totalSystemCount={totalSystemCount}
-      />
+      {/* Loading & Error States */}
+      {loading ? (
+        <div
+          id="admin-users-loading"
+          data-testid="admin-users-loading-spinner"
+          className="flex flex-col items-center justify-center py-20 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 my-4"
+        >
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
+          <p className="text-secondary font-medium text-body-md">Đang đồng bộ danh sách tài khoản từ Firestore...</p>
+        </div>
+      ) : error ? (
+        <div
+          id="admin-users-error"
+          data-testid="admin-users-error-state"
+          className="flex flex-col items-center justify-center p-8 bg-error/5 border border-error/20 rounded-2xl text-center my-4"
+        >
+          <span className="material-symbols-outlined text-4xl text-error mb-2">error</span>
+          <p className="text-error font-medium mb-4">{error}</p>
+          <button
+            onClick={fetchUsers}
+            className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+          >
+            Thử lại
+          </button>
+        </div>
+      ) : (
+        /* 4. Users Data Table with Role Badges & Permissions Chips */
+        <UsersTable
+          users={filteredUsers}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          onEditRole={handleOpenEditUser}
+          totalSystemCount={totalSystemCount}
+        />
+      )}
 
-      {/* Role Edit / Create Modal Backdrop & Dialog */}
+      {/* 5. Edit Role & Permission Dialog */}
       <EditRoleModal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
         user={editingUser}
+        onClose={handleCloseModal}
         onSave={handleSaveUser}
       />
 
-      {/* Floating Notification Toast */}
-      <UsersToast
-        message={toastMessage}
-        isVisible={isToastVisible}
-        onClose={() => setIsToastVisible(false)}
-      />
+      {/* 6. Ephemeral Toast Feedback Banner */}
+      <UsersToast isVisible={isToastVisible} message={toastMessage} onClose={() => setIsToastVisible(false)} />
     </div>
   );
 };

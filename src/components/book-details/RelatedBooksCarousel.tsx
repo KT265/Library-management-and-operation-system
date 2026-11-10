@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatVND } from '../../utils/currency';
+import { fetchBooksFromFirestore } from '../../services/firebase';
 
 export interface RecommendedBookItem {
   id: string;
@@ -11,48 +12,47 @@ export interface RecommendedBookItem {
   description: string;
 }
 
-const RECOMMENDED_BOOKS: RecommendedBookItem[] = [
-  {
-    id: 'book-8',
-    title: 'Database Internals',
-    author: 'Alex Petrov',
-    price: 380000,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAoaQ72umhvclAxXCXBmasus2nRUktnHzPZIc3cfNy3AhrB8Sq2CGSQejF-Nc0OILh-f_-aKhMWGaOhGqurRvk8V4KTsdvc3YkLJsON5t9xp-Dqc-Si6FQVQujEL_1CIZJX4il-eWPURRu9LMeBrPpLoAPU6DDfpd0nowIyT5b9aw4T_8da6Q3tSzUBH_o4mzYtCxfaNcTH06_JqlNNBZfPkF5wnau5njxikN6N5mId',
-    description: 'Chuyên khảo sâu sắc về các công cụ lưu trữ dữ liệu phân tán và quan hệ hiện đại.',
-  },
-  {
-    id: 'book-9',
-    title: 'System Design Interview (Vol. 1)',
-    author: 'Alex Xu',
-    price: 290000,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBR6DJ8yIDuRSV6f3J86l5aLnvtorxomeE6p88UK1AkxyBh7mRmWJRqya7kLX4Mh08LHQwn8a5J7P57o7q4apZ-5HYmNBrRpX84nC3GPgo1W8OCKuI0stj2jCXYqLx0Le4mlARXWSCpv_l5UDxihn9SflTqLv3i3qsExcsTblLTDfcLWGkrNscYuaRypuSoDM8kn3KWKP0K6y4vh_1RI9satQ5LEO9ntqGBBSGQVOGD',
-    description: 'Bản thiết kế trực quan từng bước cho các bài toán kiến trúc hệ thống quy mô lớn.',
-  },
-  {
-    id: 'book-10',
-    title: 'Site Reliability Engineering',
-    author: 'Niall Richard Murphy et al.',
-    price: 350000,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDnQMj4z_B6VYPjbAMa-nRU9vUNImOjHrRVM2UyABuLiRBo5Eh08OUqTM0gVN10ab4ZCKfxdcR-YJyKCx5etxDzKjFmoSdYtTiL3qUK-r7AH9Ha2nXiR1Pt60XFUxll6soKK_PaHsHiwSXnKx4IDMYXbFDAdUHVnfsJXLIyk1QUJnmq5nX4HbfyJNRDOE4WaV8OsQYEXIGWYG_h-2c5sP-TYRbq4iNQulZ0sKUnZ6Mf',
-    description: 'Cách Google vận hành các hệ thống phân tán quy mô toàn cầu bền bỉ và tin cậy.',
-  },
-  {
-    id: 'book-11',
-    title: 'Building Microservices',
-    author: 'Sam Newman',
-    price: 370000,
-    coverImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA1kBO8fCsjEbHzC_4Wm0bJa1SaNQPmAre5qCF7H4RdFVS17fstYzu4HA9cdMa6Q0KaCdrrQMh6AEG-lFdqMl_1Kq0gCKlGPaMmWmAzQPEzh6D_oZiRW0PhUVtn-8GJ_Xc6WvEhg5jSG8nTOIfvFj-jaVhe3KjV5ZkERTws4TnZcoZAKb9MuImIij9--GCwJqtAovVedy9se1DGCHG7s6ArVf3z8McHX6Xab0sgbsDd',
-    description: 'Thiết kế các hệ thống vi dịch vụ độc lập, ranh giới rõ ràng và đường ống sự kiện.',
-  },
-];
+interface RelatedBooksCarouselProps {
+  currentBookId?: string;
+}
 
-export const RelatedBooksCarousel: React.FC = () => {
+export const RelatedBooksCarousel: React.FC<RelatedBooksCarouselProps> = ({ currentBookId }) => {
   const navigate = useNavigate();
   const recContainerRef = useRef<HTMLDivElement>(null);
+  const [recommendedBooks, setRecommendedBooks] = useState<RecommendedBookItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+
+    fetchBooksFromFirestore()
+      .then((books) => {
+        if (!isMounted) return;
+        const filtered = books
+          .filter((b) => b.id !== currentBookId)
+          .slice(0, 6)
+          .map((b) => ({
+            id: b.id,
+            title: b.title,
+            author: b.author,
+            price: b.price,
+            coverImage: b.coverImage,
+            description: b.description ? b.description.slice(0, 90) + '...' : '',
+          }));
+        setRecommendedBooks(filtered);
+      })
+      .catch((err) => {
+        console.error('[RelatedBooksCarousel] Error loading related books:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentBookId]);
 
   const handleScrollLeft = () => {
     if (recContainerRef.current) {
@@ -121,41 +121,52 @@ export const RelatedBooksCarousel: React.FC = () => {
         ref={recContainerRef}
         className="flex gap-space-md overflow-x-auto pb-space-sm no-scrollbar scroll-smooth"
       >
-        {RECOMMENDED_BOOKS.map((rec) => (
-          <div
-            key={rec.id}
-            data-testid={`book-details-related-card-${rec.id}`}
-            onClick={() => navigate(`/book/${rec.id}`)}
-            className="w-64 shrink-0 rounded-3xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md border border-outline-variant/30 transition-all cursor-pointer flex flex-col justify-between group"
-          >
-            <div>
-              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-surface-container mb-space-sm">
-                <img
-                  src={rec.coverImage}
-                  alt={rec.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+        {isLoading ? (
+          <div className="py-12 flex items-center justify-center w-full text-secondary">
+            <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+            Đang tải tác phẩm liên quan...
+          </div>
+        ) : recommendedBooks.length === 0 ? (
+          <div className="py-8 text-center w-full text-secondary text-body-sm">
+            Hiện chưa có tác phẩm đề xuất liên quan.
+          </div>
+        ) : (
+          recommendedBooks.map((rec) => (
+            <div
+              key={rec.id}
+              data-testid={`book-details-related-card-${rec.id}`}
+              onClick={() => navigate(`/book/${rec.id}`)}
+              className="w-64 shrink-0 rounded-3xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md border border-outline-variant/30 transition-all cursor-pointer flex flex-col justify-between group"
+            >
+              <div>
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-surface-container mb-space-sm">
+                  <img
+                    src={rec.coverImage}
+                    alt={rec.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+
+                <h4 className="font-title-sm text-title-sm font-bold text-primary group-hover:text-primary-container transition-colors line-clamp-1">
+                  {rec.title}
+                </h4>
+                <p className="font-body-xs text-secondary mt-0.5 mb-1">{rec.author}</p>
+                <p className="font-body-xs text-on-surface-variant line-clamp-2">
+                  {rec.description}
+                </p>
               </div>
 
-              <h4 className="font-title-sm text-title-sm font-bold text-primary group-hover:text-primary-container transition-colors line-clamp-1">
-                {rec.title}
-              </h4>
-              <p className="font-body-xs text-secondary mt-0.5 mb-1">{rec.author}</p>
-              <p className="font-body-xs text-on-surface-variant line-clamp-2">
-                {rec.description}
-              </p>
+              <div className="mt-space-sm pt-space-xs border-t border-outline-variant/20 flex items-center justify-between">
+                <span className="font-title-md text-title-md font-bold text-primary num-tabular">
+                  {formatVND(rec.price)}
+                </span>
+                <span className="material-symbols-outlined text-primary text-[20px] group-hover:translate-x-1 transition-transform">
+                  arrow_forward
+                </span>
+              </div>
             </div>
-
-            <div className="mt-space-sm pt-space-xs border-t border-outline-variant/20 flex items-center justify-between">
-              <span className="font-title-md text-title-md font-bold text-primary num-tabular">
-                {formatVND(rec.price)}
-              </span>
-              <span className="material-symbols-outlined text-primary text-[20px] group-hover:translate-x-1 transition-transform">
-                arrow_forward
-              </span>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </section>
   );
