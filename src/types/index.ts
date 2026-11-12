@@ -77,6 +77,7 @@ export interface Book {
   keyFeatures?: string[];
   specs?: BookSpec;
   reviews?: BookReview[];
+  /** ERD-compliant specifications map — directly from Firestore Books.specifications */
   specifications?: {
     numPages?: number | string;
     language?: string;

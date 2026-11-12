@@ -196,6 +196,15 @@ export function mapFirestoreBookToBook(data: any, id: string): Book {
       weight: specs.weight ? `${specs.weight} g` : '350 g',
       publicationYear: specs.releaseDate ? new Date(specs.releaseDate).getFullYear() : specs.publicationYear || 2023,
     },
+    // ERD-compliant specifications map — used by SpecificationsTab
+    specifications: {
+      numPages: specs.numPages ?? specs.pages ?? undefined,
+      language: specs.language || undefined,
+      size: specs.size || specs.dimensions || undefined,
+      weight: specs.weight || undefined,
+      releaseDate: specs.releaseDate || undefined,
+      publisher: specs.publisher || data.publisher || undefined,
+    },
   };
 }
 
