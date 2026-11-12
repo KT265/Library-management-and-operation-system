@@ -6,38 +6,38 @@ interface SpecificationsTabProps {
 }
 
 export const SpecificationsTab: React.FC<SpecificationsTabProps> = ({ book }) => {
-  const specs = book.specs;
-
   const specRows = [
     {
       labelVi: 'Số trang',
       legacyKey: 'Print Length',
-      val: `${specs?.pages || 616} trang`,
+      val: book.specifications?.numPages
+        ? `${book.specifications.numPages} trang`
+        : 'Đang cập nhật',
     },
     {
       labelVi: 'Ngôn ngữ',
       legacyKey: 'Language',
-      val: specs?.language === 'English' ? 'Tiếng Anh (Bản quyền gốc)' : 'Tiếng Việt',
+      val: book.specifications?.language || 'Đang cập nhật',
     },
     {
       labelVi: 'Kích thước',
       legacyKey: 'Dimensions',
-      val: specs?.dimensions || '17.8 x 3.6 x 23.4 cm',
+      val: book.specifications?.size || 'Đang cập nhật',
     },
     {
       labelVi: 'Trọng lượng vận chuyển',
       legacyKey: 'Shipping Weight',
-      val: specs?.weight || '950 g',
+      val: book.specifications?.weight || 'Đang cập nhật',
     },
     {
       labelVi: 'Ngày phát hành',
       legacyKey: 'Publication Date',
-      val: specs?.publicationYear ? `Năm ${specs.publicationYear}` : '2017',
+      val: book.specifications?.releaseDate || 'Đang cập nhật',
     },
     {
       labelVi: 'Nhà xuất bản',
       legacyKey: 'Publisher',
-      val: specs?.publisher || book.publisher,
+      val: book.specifications?.publisher || 'Đang cập nhật',
     },
   ];
 

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { InventoryBook } from './types';
+import { doc, updateDoc, collection, addDoc, getDoc, getDocs } from 'firebase/firestore';
+import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
+import { useStore } from '../../store/useStore';
 
 interface EditBookModalProps {
   isOpen: boolean;
@@ -7,6 +10,11 @@ interface EditBookModalProps {
   onClose: () => void;
   onSaveBook: (updated: InventoryBook) => void;
   categories: string[];
+}
+
+interface CategoryOption {
+  id: string;
+  name: string;
 }
 
 export const EditBookModal: React.FC<EditBookModalProps> = ({
@@ -19,7 +27,8 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [authorImage, setAuthorImage] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<CategoryOption[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [isbn, setIsbn] = useState('');
   const [originalPrice, setOriginalPrice] = useState('');
@@ -27,60 +36,136 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
   const [totalUnits, setTotalUnits] = useState('');
   const [publisher, setPublisher] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (book) {
-      setTitle(book.title);
-      setAuthor(book.author);
-      setAuthorImage(book.authorImage || '');
+    if (!isOpen || !book) return;
+    let isMounted = true;
 
-      // Initialize categories
-      if (book.categories && book.categories.length > 0) {
-        setSelectedCategories(book.categories);
-      } else if (book.category) {
-        setSelectedCategories([book.category]);
-      } else {
-        setSelectedCategories([categories[0] || 'Khoa học máy tính']);
+    setTitle(book.title);
+    setAuthor(book.author);
+    setAuthorImage(book.authorImage || '');
+    setIsbn(book.isbn);
+    setOriginalPrice(String(book.originalPrice || book.price));
+    setPrice(String(book.price));
+    setTotalUnits(String(book.totalUnits));
+    setPublisher(book.publisher || '');
+    setNewCategoryInput('');
+    setError(null);
+
+    async function loadCategories() {
+      try {
+        const snap = await getDocs(collection(db, FIRESTORE_COLLECTIONS.CATEGORIES));
+        const loaded: CategoryOption[] = snap.docs.map((d) => ({
+          id: d.id,
+          name: d.data().nameCategories || d.data().name || d.id,
+        }));
+
+        const optionsPool = [...loaded];
+        categories.forEach((catName, idx) => {
+          if (!optionsPool.some((o) => o.name.toLowerCase() === catName.toLowerCase())) {
+            optionsPool.push({ id: `cat_default_${idx}`, name: catName });
+          }
+        });
+
+        // Resolve preselected categories
+        const rawBookCats =
+          book?.categories && book.categories.length > 0
+            ? book.categories
+            : book?.category
+            ? [book.category]
+            : [categories[0] || 'Khoa học máy tính'];
+
+        const matchedIds: string[] = [];
+        rawBookCats.forEach((bCat) => {
+          const found = optionsPool.find(
+            (o) => o.id === bCat || o.name.toLowerCase() === bCat.toLowerCase()
+          );
+          if (found) {
+            matchedIds.push(found.id);
+          } else {
+            // Include as an option so user's category is preserved
+            const customOpt = { id: bCat, name: bCat };
+            optionsPool.push(customOpt);
+            matchedIds.push(bCat);
+          }
+        });
+
+        if (isMounted) {
+          setAvailableCategories(optionsPool);
+          setSelectedCategoryIds(matchedIds.length > 0 ? matchedIds : [optionsPool[0]?.id || 'cat_01']);
+        }
+      } catch (err) {
+        console.error('[EditBookModal] Error loading categories from Firestore:', err);
+        const fallbackOptions = categories.map((c, idx) => ({ id: `cat_${idx}`, name: c }));
+        if (isMounted) {
+          setAvailableCategories(fallbackOptions);
+          setSelectedCategoryIds([fallbackOptions[0]?.id || 'cat_0']);
+        }
       }
-
-      setIsbn(book.isbn);
-      setOriginalPrice(String(book.originalPrice || book.price));
-      setPrice(String(book.price));
-      setTotalUnits(String(book.totalUnits));
-      setPublisher(book.publisher || '');
-      setNewCategoryInput('');
-      setError(null);
     }
-  }, [book, categories]);
+
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, book, categories]);
 
   if (!isOpen || !book) return null;
 
-  const handleToggleCategory = (cat: string) => {
-    setSelectedCategories((prev) => {
-      if (prev.includes(cat)) {
+  const handleToggleCategory = (catId: string) => {
+    setSelectedCategoryIds((prev) => {
+      if (prev.includes(catId)) {
         if (prev.length === 1) {
           setError('Vui lòng chọn ít nhất một thể loại cho sách.');
           return prev;
         }
         setError(null);
-        return prev.filter((c) => c !== cat);
+        return prev.filter((c) => c !== catId);
       } else {
         setError(null);
-        return [...prev, cat];
+        return [...prev, catId];
       }
     });
   };
 
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = async () => {
     const trimmed = newCategoryInput.trim();
     if (!trimmed) return;
-    if (!selectedCategories.includes(trimmed)) {
-      setSelectedCategories((prev) => [...prev, trimmed]);
+
+    const existing = availableCategories.find(
+      (c) => c.name.toLowerCase() === trimmed.toLowerCase() || c.id === trimmed
+    );
+    if (existing) {
+      if (!selectedCategoryIds.includes(existing.id)) {
+        setSelectedCategoryIds((prev) => [...prev, existing.id]);
+      }
+      setNewCategoryInput('');
+      return;
     }
-    setNewCategoryInput('');
+
+    try {
+      const catDocRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.CATEGORIES), {
+        nameCategories: trimmed,
+      });
+      const newCat: CategoryOption = {
+        id: catDocRef.id,
+        name: trimmed,
+      };
+      setAvailableCategories((prev) => [...prev, newCat]);
+      setSelectedCategoryIds((prev) => [...prev, catDocRef.id]);
+      setNewCategoryInput('');
+    } catch (err) {
+      console.error('[EditBookModal] Error creating category in Firestore:', err);
+      const fallbackId = `cat_${Date.now()}`;
+      const fallbackCat: CategoryOption = { id: fallbackId, name: trimmed };
+      setAvailableCategories((prev) => [...prev, fallbackCat]);
+      setSelectedCategoryIds((prev) => [...prev, fallbackId]);
+      setNewCategoryInput('');
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -89,7 +174,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
       return;
     }
 
-    if (selectedCategories.length === 0) {
+    if (selectedCategoryIds.length === 0) {
       setError('Vui lòng chọn ít nhất một thể loại cho ấn phẩm.');
       return;
     }
@@ -97,23 +182,104 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
     const origPriceNum = Math.max(0, parseInt(originalPrice.replace(/[^0-9]/g, ''), 10) || 0);
     const priceNum = Math.max(0, parseInt(price.replace(/[^0-9]/g, ''), 10) || 0);
     const totalNum = parseInt(totalUnits, 10) || 1;
+    const effectiveOrigPrice = origPriceNum || Math.round(priceNum * 1.2);
 
-    onSaveBook({
-      ...book,
-      title: title.trim(),
-      author: author.trim(),
-      authorImage: authorImage.trim(),
-      category: selectedCategories[0] || 'Khác',
-      categories: selectedCategories,
-      isbn: isbn.trim(),
-      originalPrice: origPriceNum,
-      price: priceNum,
-      totalUnits: totalNum,
-      availableUnits: totalNum,
-      publisher: publisher.trim(),
-    });
+    try {
+      setIsSubmitting(true);
 
-    onClose();
+      // 1. Author synchronization with Authors collection
+      let finalAuthorId = book.idAuthor?.trim() || '';
+
+      if (finalAuthorId) {
+        try {
+          const authorDocRef = doc(db, FIRESTORE_COLLECTIONS.AUTHORS, finalAuthorId);
+          const authorSnap = await getDoc(authorDocRef);
+          if (authorSnap.exists()) {
+            await updateDoc(authorDocRef, {
+              nameAuthor: author.trim(),
+              imgAuthor: authorImage.trim(),
+            });
+          } else {
+            // Author document was referenced by ID but missing from collection
+            const newAuthorRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.AUTHORS), {
+              nameAuthor: author.trim(),
+              imgAuthor: authorImage.trim(),
+              introduction: book.authorBio || '',
+            });
+            finalAuthorId = newAuthorRef.id;
+          }
+        } catch (authorErr) {
+          console.warn('[EditBookModal] Author sync warning:', authorErr);
+        }
+      } else {
+        // Book had no idAuthor reference, create author document
+        try {
+          const newAuthorRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.AUTHORS), {
+            nameAuthor: author.trim(),
+            imgAuthor: authorImage.trim(),
+            introduction: book.authorBio || '',
+          });
+          finalAuthorId = newAuthorRef.id;
+        } catch (authorErr) {
+          console.warn('[EditBookModal] Author creation warning:', authorErr);
+          finalAuthorId = author.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'author-gen';
+        }
+      }
+
+      // 2. Update Book Document in Books collection
+      const updatePayload = {
+        ISBN13: isbn.trim(),
+        ISBN12: isbn.trim(),
+        title: title.trim(),
+        nameAuthor: author.trim(),
+        idAuthor: finalAuthorId,
+        categories: selectedCategoryIds,
+        originalPrice: effectiveOrigPrice,
+        saleprice: priceNum,
+        salePrice: priceNum,
+        stockQuantity: totalNum,
+        specifications: {
+          numPages: book.pages || 0,
+          language: book.language || 'Tiếng Việt',
+          size: typeof book.dimensions === 'string' ? book.dimensions : '16 x 24 x 2.5 cm',
+          weight: '350 g',
+          releaseDate: `${book.publishYear || 2024}-01-01`,
+          publisher: publisher.trim() || book.publisher || 'NXB Trẻ',
+        },
+      };
+
+      await updateDoc(doc(db, FIRESTORE_COLLECTIONS.BOOKS, book.id), updatePayload);
+
+      const selectedCategoryNames = availableCategories
+        .filter((c) => selectedCategoryIds.includes(c.id))
+        .map((c) => c.name);
+
+      const updatedBook: InventoryBook = {
+        ...book,
+        idAuthor: finalAuthorId,
+        title: title.trim(),
+        author: author.trim(),
+        authorImage: authorImage.trim(),
+        category: selectedCategoryNames[0] || 'Văn học',
+        categories: selectedCategoryIds,
+        isbn: isbn.trim(),
+        originalPrice: effectiveOrigPrice,
+        price: priceNum,
+        totalUnits: totalNum,
+        availableUnits: totalNum,
+        publisher: publisher.trim(),
+      };
+
+      useStore.getState().showToast(`Đã cập nhật thông tin ấn phẩm “${title.trim()}”.`);
+      onSaveBook(updatedBook);
+      onClose();
+    } catch (err: any) {
+      console.error('[EditBookModal] Error updating book in Firestore:', err);
+      setError('Lỗi khi cập nhật ấn phẩm lên cơ sở dữ liệu. Vui lòng thử lại.');
+      useStore.getState().showToast('Lỗi khi cập nhật ấn phẩm.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -232,7 +398,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
                 <span>Thể loại ấn phẩm (Chọn nhiều hoặc bỏ chọn)</span>
               </div>
               <span className="text-xs text-secondary font-semibold">
-                Đã chọn: {selectedCategories.length}
+                Đã chọn: {selectedCategoryIds.length}
               </span>
             </div>
 
@@ -241,16 +407,15 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
               data-testid="admin-inventory-modal-edit-categories-group"
               className="flex flex-wrap gap-2 pt-1"
             >
-              {/* Combine default categories and any custom already selected */}
-              {Array.from(new Set([...categories, ...selectedCategories])).map((cat) => {
-                const isSelected = selectedCategories.includes(cat);
+              {availableCategories.map((cat) => {
+                const isSelected = selectedCategoryIds.includes(cat.id);
                 return (
                   <button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    id={`edit-cat-chip-${cat}`}
-                    data-testid={`admin-inventory-modal-edit-cat-${cat}`}
-                    onClick={() => handleToggleCategory(cat)}
+                    id={`edit-cat-chip-${cat.name}`}
+                    data-testid={`admin-inventory-modal-edit-cat-${cat.name}`}
+                    onClick={() => handleToggleCategory(cat.id)}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
                       isSelected
                         ? 'bg-primary text-on-primary border-primary shadow-xs'
@@ -260,7 +425,7 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
                     <span className="material-symbols-outlined text-[16px]">
                       {isSelected ? 'check_circle' : 'add'}
                     </span>
-                    <span>{cat}</span>
+                    <span>{cat.name}</span>
                   </button>
                 );
               })}
@@ -403,9 +568,13 @@ export const EditBookModal: React.FC<EditBookModalProps> = ({
               type="submit"
               id="btn-save-edit-book"
               data-testid="admin-inventory-modal-edit-btn-submit"
-              className="px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Lưu thay đổi
+              {isSubmitting && (
+                <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+              )}
+              <span>{isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
             </button>
           </div>
         </form>

@@ -55,6 +55,7 @@ export interface BookFormatOption {
 
 export interface Book {
   id: string;
+  idAuthor?: string;
   title: string;
   subtitle?: string;
   author: string;
@@ -76,6 +77,14 @@ export interface Book {
   keyFeatures?: string[];
   specs?: BookSpec;
   reviews?: BookReview[];
+  specifications?: {
+    numPages?: number | string;
+    language?: string;
+    size?: string;
+    weight?: string;
+    releaseDate?: string;
+    publisher?: string;
+  };
 }
 
 export interface CartItem {

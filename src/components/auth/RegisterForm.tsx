@@ -17,6 +17,7 @@ export interface RegisterFormProps {
   setAgreeTerms: (val: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
   isVisible: boolean;
+  isLoading?: boolean;
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({
@@ -36,6 +37,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   setAgreeTerms,
   onSubmit,
   isVisible,
+  isLoading = false,
 }) => {
   return (
     <div
@@ -213,10 +215,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             id="regSubmitBtn"
             data-testid="auth-register-form-btn-submit"
             type="submit"
-            className="w-full h-12 bg-primary text-on-primary rounded-full font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:bg-primary-container transition-all active:scale-[0.99] cursor-pointer"
+            disabled={isLoading}
+            className="w-full h-12 bg-primary text-on-primary rounded-full font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:bg-primary-container transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span>Hoàn tất đăng ký tài khoản</span>
-            <span className="material-symbols-outlined text-[18px]">verified_user</span>
+            {isLoading ? (
+              <>
+                <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                <span>Đang xử lý đăng ký...</span>
+              </>
+            ) : (
+              <>
+                <span>Hoàn tất đăng ký tài khoản</span>
+                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+              </>
+            )}
           </button>
         </div>
       </form>

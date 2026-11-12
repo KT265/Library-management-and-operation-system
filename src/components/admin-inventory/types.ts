@@ -1,5 +1,6 @@
 export interface InventoryBook {
   id: string;
+  idAuthor?: string;
   title: string;
   author: string;
   authorBio?: string;

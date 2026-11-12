@@ -1,7 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import '../components/admin-users/admin-users.css';
-import { collection, getDocs } from 'firebase/firestore';
-import { db, mapFirestoreUserToAdminManagedUser } from '../services/firebase';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import {
+  db,
+  mapFirestoreUserToAdminManagedUser,
+  FIRESTORE_COLLECTIONS,
+} from '../services/firebase';
+import { useStore } from '../store/useStore';
 import {
   AdminManagedUser,
   UserRole,
@@ -15,6 +20,7 @@ import { EditRoleModal } from '../components/admin-users/EditRoleModal';
 import { UsersToast } from '../components/admin-users/UsersToast';
 
 export const AdminUsers: React.FC = () => {
+  const globalShowToast = useStore((state) => state.showToast);
   const [users, setUsers] = useState<AdminManagedUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +32,7 @@ export const AdminUsers: React.FC = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminManagedUser | null>(null);
+  const [isSavingUser, setIsSavingUser] = useState(false);
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState('');
@@ -38,6 +45,7 @@ export const AdminUsers: React.FC = () => {
     }
     setToastMessage(message);
     setIsToastVisible(true);
+    globalShowToast?.(message);
     const id = setTimeout(() => {
       setIsToastVisible(false);
     }, 3500);
@@ -151,18 +159,31 @@ export const AdminUsers: React.FC = () => {
     setEditingUser(null);
   };
 
-  const handleSaveUser = (savedUser: AdminManagedUser) => {
-    setUsers((prev) => {
-      const exists = prev.some((u) => u.id === savedUser.id);
-      if (exists) {
-        return prev.map((u) => (u.id === savedUser.id ? savedUser : u));
-      }
-      return [savedUser, ...prev];
-    });
+  const handleSaveUser = async (savedUser: AdminManagedUser) => {
+    try {
+      setIsSavingUser(true);
+      const firestoreRole = savedUser.role === 'admin' ? 'ADMIN' : 'CUSTOMER';
+      await updateDoc(doc(db, FIRESTORE_COLLECTIONS.USERS, savedUser.id), {
+        roleUser: firestoreRole,
+      });
 
-    handleCloseModal();
-    const roleTitle = savedUser.role === 'admin' ? 'Quản trị viên (Admin)' : 'Người dùng (User)';
-    showToast(`Đã lưu thay đổi! Vai trò hiện tại: ${roleTitle}`);
+      setUsers((prev) => {
+        const exists = prev.some((u) => u.id === savedUser.id);
+        if (exists) {
+          return prev.map((u) => (u.id === savedUser.id ? savedUser : u));
+        }
+        return [savedUser, ...prev];
+      });
+
+      handleCloseModal();
+      const roleTitle = savedUser.role === 'admin' ? 'Quản trị viên (Admin)' : 'Người dùng (User)';
+      showToast(`Đã lưu thay đổi! Vai trò hiện tại: ${roleTitle}`);
+    } catch (err: any) {
+      console.error('[AdminUsers] Error updating user role:', err);
+      showToast('Lỗi khi cập nhật vai trò người dùng trong cơ sở dữ liệu.');
+    } finally {
+      setIsSavingUser(false);
+    }
   };
 
   return (
@@ -234,6 +255,7 @@ export const AdminUsers: React.FC = () => {
         user={editingUser}
         onClose={handleCloseModal}
         onSave={handleSaveUser}
+        isSaving={isSavingUser}
       />
 
       {/* 6. Ephemeral Toast Feedback Banner */}
