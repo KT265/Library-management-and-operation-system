@@ -55,15 +55,13 @@ const NAV_ITEMS: NavItem[] = [
 export const AdminSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, switchRole } = useStore();
+  const { user } = useStore();
 
   const handleSwitchToStorefront = () => {
-    switchRole('customer');
     navigate('/');
   };
 
   const handleSwitchToAdmin = () => {
-    switchRole('admin');
     navigate('/admin');
   };
 
