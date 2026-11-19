@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { collection, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db, mapFirestoreVoucherToAdminVoucher } from '../services/firebase';
 import { useStore } from '../store/useStore';
 import {
@@ -11,6 +11,7 @@ import { VoucherKpisBento } from '../components/admin-vouchers/VoucherKpisBento'
 import { VoucherToolbar } from '../components/admin-vouchers/VoucherToolbar';
 import { VouchersTable } from '../components/admin-vouchers/VouchersTable';
 import { CreateVoucherModal } from '../components/admin-vouchers/CreateVoucherModal';
+import { useVoucherStatusCheck, autoDeactivateExpiredVouchers } from '../hooks/useVoucherStatusCheck';
 
 export const AdminVouchers: React.FC = () => {
   const showToast = useStore((state) => state.showToast);
@@ -30,24 +31,36 @@ export const AdminVouchers: React.FC = () => {
   const [editingVoucher, setEditingVoucher] = useState<AdminVoucher | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const fetchVouchers = async () => {
+  const fetchVouchers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // 1. Tự động kiểm tra niên hạn và tắt các voucher quá hạn / chưa tới ngày trên Firestore
+      try {
+        await autoDeactivateExpiredVouchers();
+      } catch (autoErr) {
+        console.error(autoErr);
+        console.warn('[AdminVouchers] Error in autoDeactivateExpiredVouchers:', autoErr);
+      }
+
+      // 2. Tải danh sách mới nhất từ Firestore
       const snap = await getDocs(collection(db, 'Vouchers'));
       const fetched = snap.docs.map((d) => mapFirestoreVoucherToAdminVoucher(d.data(), d.id));
       setVouchers(fetched);
     } catch (err: any) {
       console.error('[AdminVouchers] Error querying "Vouchers":', err);
-      setError('Không thể tải danh sách mã voucher từ Firestore.');
+      setError(`Không thể tải danh sách mã voucher từ Firestore (${err?.message || err?.code || 'Lỗi kết nối'}).`);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchVouchers();
-  }, []);
+  }, [fetchVouchers]);
+
+  // Hook tự động kiểm tra trạng thái ngày hết hạn
+  useVoucherStatusCheck(fetchVouchers);
 
   // Filtered list
   const filteredVouchers = useMemo(() => {
@@ -95,44 +108,61 @@ export const AdminVouchers: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDuplicateVoucher = (voucher: AdminVoucher) => {
-    const duplicated: AdminVoucher = {
-      ...voucher,
-      id: `v-${Date.now()}`,
-      code: `${voucher.code}_COPY`,
-      campaign: `${voucher.campaign} (Bản sao)`,
-      usedCount: 0,
-      status: 'active',
-    };
-    setVouchers((prev) => [duplicated, ...prev]);
-    showToast?.(`Đã nhân bản voucher “${voucher.code}” thành công.`);
+  // Deactivate: updateDoc stateVoucher = false
+  const handleDeactivateVoucher = async (voucherId: string) => {
+    try {
+      await updateDoc(doc(db, 'Vouchers', voucherId), {
+        stateVoucher: false,
+        updateAt: serverTimestamp(),
+      });
+      setVouchers((prev) =>
+        prev.map((v) => (v.id === voucherId ? { ...v, stateVoucher: false, status: 'expired' } : v))
+      );
+      showToast?.('Đã tạm ngưng áp dụng mã voucher trên hệ thống.');
+    } catch (err: any) {
+      console.error('[AdminVouchers] Error deactivating voucher:', err);
+      showToast?.('Không thể tạm ngưng voucher. Vui lòng thử lại.');
+    }
   };
 
-  const handleDeleteVoucher = (voucherId: string) => {
-    setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
-    showToast?.('Đã xóa mã voucher khỏi hệ thống khuyến mại.');
+  // Relaunch: updateDoc stateVoucher = true
+  const handleRelaunchVoucher = async (voucherId: string) => {
+    try {
+      await updateDoc(doc(db, 'Vouchers', voucherId), {
+        stateVoucher: true,
+        updateAt: serverTimestamp(),
+      });
+      setVouchers((prev) =>
+        prev.map((v) => (v.id === voucherId ? { ...v, stateVoucher: true, status: 'active' } : v))
+      );
+      showToast?.('Đã kích hoạt lại mã ưu đãi thành công.');
+    } catch (err: any) {
+      console.error('[AdminVouchers] Error relaunching voucher:', err);
+      showToast?.('Không thể kích hoạt lại voucher. Vui lòng thử lại.');
+    }
   };
 
-  const handleToggleStatus = (voucher: AdminVoucher) => {
-    setVouchers((prev) =>
-      prev.map((v) =>
-        v.id === voucher.id
-          ? { ...v, status: v.status === 'active' ? 'expired' : 'active' }
-          : v
-      )
-    );
-    showToast?.(`Đã thay đổi trạng thái mã “${voucher.code}”.`);
+  // Archive Forever: deleteDoc
+  const handleDeleteVoucher = async (voucherId: string) => {
+    try {
+      await deleteDoc(doc(db, 'Vouchers', voucherId));
+      setVouchers((prev) => prev.filter((v) => v.id !== voucherId));
+      showToast?.('Đã xóa vĩnh viễn voucher khỏi hệ thống Firestore.');
+    } catch (err: any) {
+      console.error('[AdminVouchers] Error deleting voucher:', err);
+      showToast?.('Không thể xóa voucher khỏi Firestore.');
+    }
   };
 
   const handleSaveVoucher = (voucher: AdminVoucher) => {
     if (modalMode === 'create') {
       setVouchers((prev) => [voucher, ...prev]);
-      showToast?.(`Đã kích hoạt mã ưu đãi mới “${voucher.code}”.`);
+      showToast?.(`Đã tạo và kích hoạt mã ưu đãi mới “${voucher.code}” trên Firestore.`);
     } else {
       setVouchers((prev) =>
         prev.map((v) => (v.id === voucher.id ? voucher : v))
       );
-      showToast?.(`Đã cập nhật mã ưu đãi “${voucher.code}”.`);
+      showToast?.(`Đã cập nhật mã ưu đãi “${voucher.code}” trên Firestore.`);
     }
     setIsModalOpen(false);
   };
@@ -145,12 +175,12 @@ export const AdminVouchers: React.FC = () => {
     >
       {/* 1. Header with Title & Add Voucher CTA */}
       <VouchersHeader
-        activeCount={vouchers.filter((v) => v.status === 'active').length}
+        activeCount={vouchers.filter((v) => v.stateVoucher === true || v.status === 'active').length}
         onOpenCreateModal={handleOpenCreateModal}
       />
 
-      {/* 2. 4-Card Bento Metrics Grid */}
-      <VoucherKpisBento />
+      {/* 2. 3-Card Bento Metrics Grid */}
+      <VoucherKpisBento vouchers={vouchers} />
 
       {/* 3. Search and Multi-Filter Toolbar */}
       <VoucherToolbar
@@ -192,8 +222,8 @@ export const AdminVouchers: React.FC = () => {
           onCopyCode={handleCopyCode}
           copiedCode={copiedCode}
           onEdit={handleEditVoucher}
-          onDuplicate={handleDuplicateVoucher}
-          onToggleStatus={handleToggleStatus}
+          onDeactivate={handleDeactivateVoucher}
+          onRelaunch={handleRelaunchVoucher}
           onArchive={handleDeleteVoucher}
         />
       )}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { doc, getDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { formatVND } from '../../utils/currency';
 import { FulfillmentOrder, OrderFulfillmentCycle } from './types';
 
@@ -17,6 +19,7 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
 }) => {
   const [trackingCode, setTrackingCode] = useState('');
   const [selectedCycle, setSelectedCycle] = useState<OrderFulfillmentCycle>('Pending');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (order) {
@@ -27,27 +30,133 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
 
   if (!isOpen || !order) return null;
 
-  const handleSave = () => {
+  const mapCycleToStatusOrder = (cycle: OrderFulfillmentCycle): string => {
+    switch (cycle) {
+      case 'Delivered':
+        return 'DELIVERED';
+      case 'Processing':
+        return 'PROCESSING';
+      case 'Returned':
+        return 'RETURNED';
+      case 'Cancelled':
+        return 'CANCELLED';
+      case 'Pending':
+      default:
+        return 'PENDING';
+    }
+  };
+
+  /**
+   * Increments readBookCount for the user associated with the order when delivered.
+   * Calculation: Count the exact number of objects in the items array (order.items.length).
+   * DO NOT sum up the quantity of each item.
+   */
+  const syncUserReadBookCountOnDelivery = async (orderId: string) => {
+    try {
+      const orderSnap = await getDoc(doc(db, 'Order', orderId));
+      if (!orderSnap.exists()) return;
+      const orderData = orderSnap.data();
+
+      if (orderData.deliveryCountSynced) {
+        return;
+      }
+
+      const idUser = orderData.idUser || orderData.userId;
+      const items = Array.isArray(orderData.items) ? orderData.items : [];
+      const itemsCount = items.length;
+
+      if (idUser && itemsCount > 0) {
+        await updateDoc(doc(db, 'Users', idUser), {
+          readBookCount: increment(itemsCount),
+        });
+        await updateDoc(doc(db, 'Order', orderId), {
+          deliveryCountSynced: true,
+        });
+      }
+    } catch (syncErr) {
+      console.error('[CirculationConsole] Error updating user readBookCount on delivery:', syncErr);
+    }
+  };
+
+  const handleStatusChange = async (newCycle: OrderFulfillmentCycle) => {
+    setSelectedCycle(newCycle);
+    if (!order?.id) return;
+
+    const newStatusValue = mapCycleToStatusOrder(newCycle);
+    try {
+      setIsUpdating(true);
+      await updateDoc(doc(db, 'Order', order.id), {
+        statusOrder: newStatusValue,
+        updateAt: serverTimestamp(),
+      });
+
+      if (newStatusValue === 'DELIVERED') {
+        await syncUserReadBookCountOnDelivery(order.id);
+      }
+    } catch (err) {
+      console.error('[CirculationConsole] Error updating statusOrder in Firestore:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleSave = async () => {
+    const newStatusValue = mapCycleToStatusOrder(selectedCycle);
+    try {
+      setIsUpdating(true);
+      await updateDoc(doc(db, 'Order', order.id), {
+        statusOrder: newStatusValue,
+        trackingCode,
+        updateAt: serverTimestamp(),
+      });
+
+      if (newStatusValue === 'DELIVERED') {
+        await syncUserReadBookCountOnDelivery(order.id);
+      }
+    } catch (err) {
+      console.error('[CirculationConsole] Error saving order to Firestore:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+
     onUpdateOrder({
       ...order,
       trackingCode,
       fulfillmentCycle: selectedCycle,
+      statusOrder: newStatusValue,
       isOverdue: false,
       fineAmountVND: undefined,
     });
     onClose();
   };
 
-  const handleWaiveFine = () => {
+  const handleWaiveFine = async () => {
+    try {
+      setIsUpdating(true);
+      await updateDoc(doc(db, 'Order', order.id), {
+        statusOrder: 'RETURNED',
+        updateAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error('[CirculationConsole] Error updating status to RETURNED:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+
     onUpdateOrder({
       ...order,
       isOverdue: false,
       fineAmountVND: undefined,
       dueSubtext: 'Đã miễn phí trễ hạn bởi Quản trị viên',
       fulfillmentCycle: 'Returned',
+      statusOrder: 'RETURNED',
     });
     onClose();
   };
+
+  const displayOrderId = order.orderNumber
+    ? (order.orderNumber.startsWith('ORD-') ? order.orderNumber : `ORD-${order.orderNumber}`)
+    : (order.id.startsWith('ORD-') ? order.id : `ORD-${order.id}`);
 
   return (
     <div
@@ -62,27 +171,26 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
         data-testid="admin-orders-modal-console"
         className="bg-surface-container-lowest rounded-3xl p-space-lg max-w-lg w-full shadow-2xl border border-surface-container my-8 animate-in fade-in zoom-in-95 duration-150"
       >
-        <div className="flex items-center justify-between pb-space-sm mb-space-md border-b border-surface-container">
-          <div className="flex items-center gap-space-sm">
-            <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">
-              {order.orderNumber}
-            </div>
-            <div>
-              <h3 className="font-title-lg font-bold text-primary">
-                Bảng Điều phối Lưu hành
-              </h3>
-              <p className="font-body-sm text-secondary">
-                Kiểu xuất kho: <span className="font-semibold">{order.dispatchType}</span>
-              </p>
-            </div>
+        <div className="flex items-start justify-between pb-space-sm mb-space-md border-b border-surface-container">
+          <div>
+            <h3 className="font-title-lg font-bold text-primary">
+              Bảng Điều phối Lưu hành
+            </h3>
+            <p className="text-sm text-slate-500 font-medium">
+              Mã đơn: {displayOrderId}
+            </p>
+            <p className="font-body-sm text-secondary mt-0.5">
+              Kiểu xuất kho: <span className="font-semibold">{order.dispatchType}</span>
+            </p>
           </div>
           <button
             type="button"
             id="btn-close-console-modal"
             data-testid="admin-orders-modal-console-btn-close"
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface cursor-pointer"
-          >
+            className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface cursor-pointer shrink-0 ml-4"
+
+>
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
@@ -162,13 +270,13 @@ export const CirculationConsoleModal: React.FC<CirculationConsoleModalProps> = (
               id="select-cycle-state"
               data-testid="admin-orders-modal-select-cycle"
               value={selectedCycle}
-              onChange={(e) => setSelectedCycle(e.target.value as OrderFulfillmentCycle)}
-              className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              disabled={isUpdating}
+              onChange={(e) => handleStatusChange(e.target.value as OrderFulfillmentCycle)}
+              className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/30 text-on-surface text-xs focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer disabled:opacity-50"
             >
-              <option value="Pending">Chờ xuất kho (Pending)</option>
-              <option value="Delivered">Đã giao hàng (Delivered)</option>
-              <option value="Returned">Đã hoàn tất / Đổi trả (Returned)</option>
-              <option value="Cancelled">Đã huỷ đơn (Cancelled)</option>
+              <option value="Pending">Chờ xử lý (Pending)</option>
+              <option value="Processing">Đang giao hàng (Processing)</option>
+              <option value="Delivered">Đã hoàn tất (Delivered)</option>
             </select>
           </div>
 

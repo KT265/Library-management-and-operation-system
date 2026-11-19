@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
-import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
+import { db } from '../../services/firebase';
 import { StockAlertItem } from './types';
 
 export interface LowStockAlertsCardProps {
@@ -22,7 +22,7 @@ export const LowStockAlertsCard: React.FC<LowStockAlertsCardProps> = ({
     let isMounted = true;
     setInternalLoading(true);
 
-    getDocs(collection(db, FIRESTORE_COLLECTIONS.BOOKS))
+    getDocs(collection(db, 'Books'))
       .then((booksSnap) => {
         if (!isMounted) return;
         const booksData = booksSnap.docs.map((d) => ({ id: d.id, ...d.data() }));

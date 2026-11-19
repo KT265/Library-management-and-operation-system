@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase';
+import { useStore } from '../../store/useStore';
 import { PatronProfileData } from './types';
 
 export interface EditProfileModalProps {
   isOpen: boolean;
   initialData: PatronProfileData;
+  userId?: string;
   onClose: () => void;
   onSave: (data: PatronProfileData) => void;
 }
@@ -11,9 +15,14 @@ export interface EditProfileModalProps {
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   isOpen,
   initialData,
+  userId,
   onClose,
   onSave,
 }) => {
+  const currentUser = useStore((state) => state.user);
+  const targetUserId = userId || currentUser?.id;
+  const [isSaving, setIsSaving] = useState(false);
+
   const [formData, setFormData] = useState<PatronProfileData>(() => ({
     ...initialData,
     city: initialData.city || 'TP. Hồ Chí Minh',
@@ -36,20 +45,46 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const city = (formData.city || '').trim();
     const district = (formData.district || '').trim();
     const detailed = (formData.detailedAddress || '').trim();
     const fullAddress = [detailed, district, city].filter(Boolean).join(', ');
 
-    onSave({
-      ...formData,
+    // Construct an object with the modified fields (excluding email)
+    const updatedFields: Record<string, any> = {
+      nameUser: formData.name.trim(),
+      name: formData.name.trim(),
+      numTelephone: formData.phone.trim(),
+      phone: formData.phone.trim(),
       city,
       district,
       detailedAddress: detailed,
+      addressUser: [{ city, district, detail: detailed }],
+      addresUser: [city, district, detailed],
       address: fullAddress || formData.address,
-    });
+      updateAt: serverTimestamp(),
+    };
+
+    try {
+      setIsSaving(true);
+      if (targetUserId) {
+        await updateDoc(doc(db, 'Users', targetUserId), updatedFields);
+      }
+
+      onSave({
+        ...formData,
+        city,
+        district,
+        detailedAddress: detailed,
+        address: fullAddress || formData.address,
+      });
+    } catch (err) {
+      console.error('[EditProfileModal] Error saving profile to Firestore Users:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -92,17 +127,23 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
           </div>
 
-          {/* Email */}
+          {/* Email: Disabled / ReadOnly */}
           <div className="flex flex-col space-y-1">
-            <label className="font-label-md text-label-md text-on-surface font-semibold">
-              Địa chỉ Email
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="input-profile-email" className="font-label-md text-label-md text-on-surface font-semibold">
+                Địa chỉ Email
+              </label>
+              <span className="text-body-xs font-normal text-outline italic">Không thể thay đổi</span>
+            </div>
             <input
+              id="input-profile-email"
+              data-testid="user-profile-edit-input-email"
               type="email"
-              required
+              disabled={true}
+              readOnly
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full h-11 px-3 bg-surface-container-low rounded-lg text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              className="w-full h-11 px-3 bg-surface-container-high/60 cursor-not-allowed opacity-75 rounded-lg text-on-surface-variant font-body-md text-body-md shadow-sm border border-outline-variant/30 select-none"
+              title="Địa chỉ Email không thể thay đổi"
             />
           </div>
 
@@ -186,9 +227,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               id="saveProfileBtn"
               data-testid="user-profile-edit-modal-btn-save"
               type="submit"
-              className="h-10 px-6 rounded-full font-label-md text-label-md bg-primary text-on-primary font-bold shadow-md hover:bg-primary-container transition-all cursor-pointer"
+              disabled={isSaving}
+              className="h-10 px-6 rounded-full font-label-md text-label-md bg-primary text-on-primary font-bold shadow-md hover:bg-primary-container transition-all cursor-pointer disabled:opacity-50"
             >
-              Lưu thay đổi
+              {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </div>
         </form>

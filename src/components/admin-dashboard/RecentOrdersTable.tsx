@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
-import { db, FIRESTORE_COLLECTIONS, convertTimestampToISO } from '../../services/firebase';
+import { db, convertTimestampToISO } from '../../services/firebase';
 import { formatVND } from '../../utils/currency';
 import { OrderItem } from './types';
 
@@ -24,7 +24,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
     let isMounted = true;
     setInternalLoading(true);
 
-    getDocs(collection(db, FIRESTORE_COLLECTIONS.ORDER))
+    getDocs(collection(db, 'Order'))
       .then((ordersSnap) => {
         if (!isMounted) return;
         const rawOrders = ordersSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -40,8 +40,8 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
           const titles = items.map((it: any) => `"${it.title || 'Sách'}"`).slice(0, 2).join(', ');
           const itemSummary = count > 0 ? `${count} ấn phẩm • ${titles}${items.length > 2 ? '...' : ''}` : 'Chưa có ấn phẩm';
 
-          const paymentStatus = String(ord.statusPayment || ord.paymentStatus || '').toUpperCase();
-          const orderStatus = String(ord.statusOrder || ord.status || '').toUpperCase();
+          const paymentStatus = String(ord.statusPayment || '').toUpperCase();
+          const orderStatus = String(ord.statusOrder || '').toUpperCase();
 
           let badgeLabel = 'Chờ xử lý';
           let badgeClasses = 'bg-surface-container-high text-on-surface-variant text-label-sm font-label-sm px-2.5 py-0.5 rounded-full font-bold';
@@ -55,8 +55,8 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
           } else if (orderStatus === 'SHIPPED') {
             badgeLabel = 'Đang vận chuyển';
             badgeClasses = 'bg-secondary-container text-on-secondary-container text-label-sm font-label-sm px-2.5 py-0.5 rounded-full font-bold';
-          } else if (paymentStatus === 'PENDING' || orderStatus === 'PROCESSING') {
-            badgeLabel = 'Chờ xuất kho';
+          } else if (orderStatus === 'PROCESSING' || paymentStatus === 'PENDING') {
+            badgeLabel = 'Đang giao hàng';
             badgeClasses = 'bg-tertiary-fixed text-on-tertiary-fixed text-label-sm font-label-sm px-2.5 py-0.5 rounded-full font-bold';
           }
 
@@ -80,7 +80,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
             orderNumber: displayOrderNumber,
             customerName: ord.infoCustom?.cusName || ord.infoCustom?.name || ord.userName || 'Độc giả',
             itemSummary,
-            amount: ord.totalPrice ?? ord.totalAmount ?? 0,
+            amount: typeof ord.totalPrice === 'number' ? ord.totalPrice : (Number(ord.totalPrice) || 0),
             badgeLabel,
             badgeClasses,
             date: dateFormatted,

@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { AdminVoucher } from './types';
 
 interface VoucherTableRowProps {
@@ -6,9 +8,9 @@ interface VoucherTableRowProps {
   copiedCode: string | null;
   onCopyCode: (code: string) => void;
   onEdit: (voucher: AdminVoucher) => void;
-  onDuplicate: (voucher: AdminVoucher) => void;
-  onToggleStatus: (voucher: AdminVoucher) => void;
-  onArchive: (voucherId: string) => void;
+  onDeactivate?: (voucherId: string) => void;
+  onRelaunch?: (voucherId: string) => void;
+  onArchive?: (voucherId: string) => void;
 }
 
 export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
@@ -16,16 +18,18 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
   copiedCode,
   onCopyCode,
   onEdit,
-  onDuplicate,
-  onToggleStatus,
+  onDeactivate,
+  onRelaunch,
   onArchive,
 }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const usagePercent = Math.min(
     100,
     Math.round((voucher.usedCount / voucher.totalUsageLimit) * 100)
   );
   const isExpiring = voucher.status === 'expiring';
-  const isExpired = voucher.status === 'expired';
+  const isDeactivatedOrExpired = voucher.stateVoucher === false || voucher.status === 'expired';
 
   // Map progress bar width to Tailwind classes without inline styles
   const getProgressWidthClass = (percent: number) => {
@@ -44,12 +48,69 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
     return 'w-0';
   };
 
+  // Handler: Deactivate Voucher (stateVoucher: false)
+  const handleDeactivate = async () => {
+    if (isProcessing) return;
+    try {
+      setIsProcessing(true);
+      await updateDoc(doc(db, 'Vouchers', voucher.id), {
+        stateVoucher: false,
+        updateAt: serverTimestamp(),
+      });
+      if (onDeactivate) {
+        onDeactivate(voucher.id);
+      }
+    } catch (err) {
+      console.error('[VoucherTableRow] Lỗi khi tạm dừng voucher:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handler: Relaunch Voucher (stateVoucher: true)
+  const handleRelaunch = async () => {
+    if (isProcessing) return;
+    try {
+      setIsProcessing(true);
+      await updateDoc(doc(db, 'Vouchers', voucher.id), {
+        stateVoucher: true,
+        updateAt: serverTimestamp(),
+      });
+      if (onRelaunch) {
+        onRelaunch(voucher.id);
+      }
+    } catch (err) {
+      console.error('[VoucherTableRow] Lỗi khi kích hoạt lại voucher:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handler: Archive Forever (deleteDoc)
+  const handleArchive = async () => {
+    if (isProcessing) return;
+    const confirmDelete = window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn voucher “${voucher.code}” khỏi Firestore không?`);
+    if (!confirmDelete) return;
+
+    try {
+      setIsProcessing(true);
+      await deleteDoc(doc(db, 'Vouchers', voucher.id));
+      if (onArchive) {
+        onArchive(voucher.id);
+      }
+    } catch (err) {
+      console.error('[VoucherTableRow] Lỗi khi xóa vĩnh viễn voucher:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <tr
       id={`voucher-row-${voucher.id}`}
       data-testid={`admin-vouchers-row-${voucher.id}`}
       className={`border-b border-surface-container transition-colors group ${
-        isExpired
+        isDeactivatedOrExpired
           ? 'opacity-65 hover:bg-surface-container-low/60'
           : isExpiring
           ? 'bg-amber-500/5 hover:bg-surface-container-low/80'
@@ -61,7 +122,7 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
         <div className="flex items-center gap-2">
           <span
             className={`font-mono text-label-md px-3 py-1 rounded-md font-bold tracking-wider select-all ${
-              isExpired
+              isDeactivatedOrExpired
                 ? 'bg-surface-container-highest text-secondary line-through'
                 : isExpiring
                 ? 'bg-amber-100 text-amber-900'
@@ -92,14 +153,14 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
         <div className="max-w-xs">
           <div
             className={`font-title-sm text-title-sm font-bold ${
-              isExpired ? 'text-secondary' : 'text-primary'
+              isDeactivatedOrExpired ? 'text-secondary' : 'text-primary'
             }`}
           >
             {voucher.campaign}
           </div>
           <div
             className={`font-body-sm text-body-sm truncate mt-0.5 ${
-              isExpired ? 'text-outline' : 'text-on-surface-variant'
+              isDeactivatedOrExpired ? 'text-outline' : 'text-on-surface-variant'
             }`}
           >
             {voucher.description}
@@ -111,14 +172,14 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
       <td className="py-3.5 px-4">
         <div
           className={`font-label-lg text-label-lg font-bold num-tabular ${
-            isExpired ? 'text-secondary' : isExpiring ? 'text-tertiary' : 'text-primary'
+            isDeactivatedOrExpired ? 'text-secondary' : isExpiring ? 'text-tertiary' : 'text-primary'
           }`}
         >
           {voucher.discountLabel}
         </div>
         <div
           className={`font-body-sm text-body-sm mt-0.5 ${
-            isExpired ? 'text-outline' : 'text-secondary'
+            isDeactivatedOrExpired ? 'text-outline' : 'text-secondary'
           }`}
         >
           {voucher.conditionNote}
@@ -134,7 +195,7 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
             </span>
             <span
               className={`font-bold ${
-                isExpired ? 'text-secondary' : isExpiring ? 'text-tertiary' : 'text-primary'
+                isDeactivatedOrExpired ? 'text-secondary' : isExpiring ? 'text-tertiary' : 'text-primary'
               }`}
             >
               {usagePercent}%
@@ -148,7 +209,7 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
               className={`h-full rounded-full transition-all duration-300 ${getProgressWidthClass(
                 usagePercent
               )} ${
-                isExpired ? 'bg-secondary' : isExpiring ? 'bg-tertiary' : 'bg-primary'
+                isDeactivatedOrExpired ? 'bg-secondary' : isExpiring ? 'bg-tertiary' : 'bg-primary'
               }`}
             />
           </div>
@@ -159,7 +220,7 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
       <td className="py-3.5 px-4">
         <div
           className={`font-label-md text-label-md font-medium ${
-            isExpired
+            isDeactivatedOrExpired
               ? 'text-secondary'
               : isExpiring
               ? 'text-tertiary font-bold'
@@ -170,7 +231,7 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
         </div>
         <div
           className={`font-body-sm text-body-sm mt-0.5 ${
-            isExpired
+            isDeactivatedOrExpired
               ? 'text-outline'
               : isExpiring
               ? 'text-tertiary font-semibold'
@@ -183,19 +244,19 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
 
       {/* 6. Status Badge */}
       <td className="py-3.5 px-4 text-center">
-        {voucher.status === 'active' && (
+        {!isDeactivatedOrExpired && voucher.status === 'active' && (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-emerald-50 text-emerald-800 shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" /> Đang áp dụng (Active)
           </span>
         )}
-        {voucher.status === 'expiring' && (
+        {!isDeactivatedOrExpired && voucher.status === 'expiring' && (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-amber-50 text-amber-800 shadow-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Sắp hết hạn (Expiring)
           </span>
         )}
-        {voucher.status === 'expired' && (
+        {isDeactivatedOrExpired && (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container-high text-secondary shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-outline" /> Đã hết hạn (Expired)
+            <span className="w-1.5 h-1.5 rounded-full bg-outline" /> Đã tắt / Hết hạn
           </span>
         )}
       </td>
@@ -203,64 +264,57 @@ export const VoucherTableRow: React.FC<VoucherTableRowProps> = ({
       {/* 7. Action Buttons */}
       <td className="py-3.5 px-4 text-right">
         <div className="flex items-center justify-end gap-1">
-          {isExpired ? (
-            <button
-              type="button"
-              id={`btn-relaunch-${voucher.id}`}
-              data-testid={`admin-vouchers-btn-relaunch-${voucher.id}`}
-              title="Relaunch Campaign"
-              onClick={() => onEdit(voucher)}
-              className="p-1.5 rounded-full text-secondary hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">replay</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              id={`btn-edit-voucher-${voucher.id}`}
-              data-testid={`admin-vouchers-btn-edit-${voucher.id}`}
-              title="Edit Campaign"
-              onClick={() => onEdit(voucher)}
-              className="p-1.5 rounded-full text-secondary hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[18px]">edit</span>
-            </button>
-          )}
-
+          {/* Edit Campaign Button */}
           <button
             type="button"
-            id={`btn-duplicate-voucher-${voucher.id}`}
-            data-testid={`admin-vouchers-btn-duplicate-${voucher.id}`}
-            title="Duplicate Rule"
-            onClick={() => onDuplicate(voucher)}
+            id={`btn-edit-voucher-${voucher.id}`}
+            data-testid={`admin-vouchers-btn-edit-${voucher.id}`}
+            title="Chỉnh sửa Voucher"
+            onClick={() => onEdit(voucher)}
             className="p-1.5 rounded-full text-secondary hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">content_copy</span>
+            <span className="material-symbols-outlined text-[18px]">edit</span>
           </button>
 
-          {!isExpired ? (
+          {/* Deactivate Button (Pause icon) or Relaunch Button (Play icon) */}
+          {!isDeactivatedOrExpired ? (
             <button
               type="button"
               id={`btn-deactivate-voucher-${voucher.id}`}
               data-testid={`admin-vouchers-btn-deactivate-${voucher.id}`}
-              title="Deactivate"
-              onClick={() => onToggleStatus(voucher)}
-              className="p-1.5 rounded-full text-secondary hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer"
+              title="Tạm dừng áp dụng (Deactivate)"
+              disabled={isProcessing}
+              onClick={handleDeactivate}
+              className="p-1.5 rounded-full text-secondary hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-[18px]">pause_circle</span>
             </button>
           ) : (
             <button
               type="button"
-              id={`btn-archive-voucher-${voucher.id}`}
-              data-testid={`admin-vouchers-btn-archive-${voucher.id}`}
-              title="Archive Forever"
-              onClick={() => onArchive(voucher.id)}
-              className="p-1.5 rounded-full text-outline hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer"
+              id={`btn-relaunch-voucher-${voucher.id}`}
+              data-testid={`admin-vouchers-btn-relaunch-${voucher.id}`}
+              title="Kích hoạt lại (Relaunch)"
+              disabled={isProcessing}
+              onClick={handleRelaunch}
+              className="p-1.5 rounded-full text-secondary hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-50"
             >
-              <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+              <span className="material-symbols-outlined text-[18px]">play_circle</span>
             </button>
           )}
+
+          {/* Archive Forever Button (Trash icon: deleteDoc) */}
+          <button
+            type="button"
+            id={`btn-archive-voucher-${voucher.id}`}
+            data-testid={`admin-vouchers-btn-archive-${voucher.id}`}
+            title="Xóa vĩnh viễn (Archive Forever)"
+            disabled={isProcessing}
+            onClick={handleArchive}
+            className="p-1.5 rounded-full text-outline hover:text-error hover:bg-error-container/40 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+          </button>
         </div>
       </td>
     </tr>

@@ -7,7 +7,7 @@ export interface OrderBookItem {
 }
 
 export type OrderPaymentStatus = 'VietQR Settled' | 'Pending VietQR' | 'COD Settled';
-export type OrderFulfillmentCycle = 'Delivered' | 'Returned' | 'Pending' | 'Cancelled';
+export type OrderFulfillmentCycle = 'Delivered' | 'Returned' | 'Pending' | 'Processing' | 'Cancelled';
 
 export interface FulfillmentOrder {
   id: string;
@@ -22,7 +22,12 @@ export interface FulfillmentOrder {
   dueSubtext: string;
   paymentStatus: OrderPaymentStatus;
   fulfillmentCycle: OrderFulfillmentCycle;
+  statusOrder?: string;
+  stateOrder?: string;
   orderTotalVND: number;
+  totalPrice?: number;
+  createAt?: any;
+  createdAt?: string;
   fineAmountVND?: number;
   isOverdue?: boolean;
   trackingCode?: string;
@@ -30,7 +35,7 @@ export interface FulfillmentOrder {
 
 export interface OrdersFilterState {
   searchTerm: string;
-  statusChip: 'All' | 'Pending' | 'Delivered' | 'Returned' | 'Cancelled';
+  statusChip: 'All' | 'Pending' | 'Processing' | 'Delivered' | 'Returned' | 'Cancelled';
   paymentFilter: 'all' | 'vietqr' | 'cod';
   fromDate: string;
   toDate: string;

@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Book } from '../types';
 import { useStore } from '../store/useStore';
 import { fetchBooksFromFirestore } from '../services/firebase';
 import { CatalogBreadcrumbs } from '../components/catalog/CatalogBreadcrumbs';
 import { CatalogSearchSortBar, CatalogSortOption } from '../components/catalog/CatalogSearchSortBar';
-import { CategoryChipsBar } from '../components/catalog/CategoryChipsBar';
 import { FilterSidebar } from '../components/catalog/FilterSidebar';
 import { MobileFilterDrawer } from '../components/catalog/MobileFilterDrawer';
 import { CatalogBookGrid } from '../components/catalog/CatalogBookGrid';
@@ -15,7 +14,12 @@ import { EditorialShowcaseBanner } from '../components/catalog/EditorialShowcase
 
 // Category mapping supporting both English genres and Firestore Vietnamese categories
 const CATEGORY_MAPPINGS: Record<string, string[]> = {
+  cat_01: ['Literary Fiction', 'Văn học tinh hoa', 'Văn học', 'Tiểu thuyết'],
+  cat_02: ['Self-Growth', 'Phát triển bản thân', 'Psychology & Habits', 'Kỹ năng sống', 'Tâm lý'],
+  cat_03: ['Tech & Coding', 'Distributed Systems', 'Computer Science', 'Kỹ thuật & Công nghệ', 'Công nghệ thông tin', 'Lập trình'],
+  cat_04: ['Sci-Fi & Fantasy', 'Sci-Fi & Speculative', 'Khoa học viễn tưởng', 'Viễn tưởng'],
   'Computer Science': [
+    'cat_03',
     'Distributed Systems',
     'Computer Science',
     'Tech & Coding',
@@ -23,33 +27,29 @@ const CATEGORY_MAPPINGS: Record<string, string[]> = {
     'Công nghệ thông tin',
   ],
   'Psychology & Habits': [
+    'cat_02',
     'Self-Growth',
     'History & Mind',
     'Kỹ năng sống & Phát triển bản thân',
     'Kỹ năng sống',
   ],
   'Literary Fiction': [
+    'cat_01',
     'Literary Fiction',
     'Văn học Việt Nam',
     'Tiểu thuyết lãng mạn',
     'Văn học',
   ],
-  'Sci-Fi & Speculative': ['Sci-Fi & Fantasy', 'Khoa học viễn tưởng'],
+  'Sci-Fi & Speculative': ['cat_04', 'Sci-Fi & Fantasy', 'Khoa học viễn tưởng'],
   'Business & Strategy': ['Tech & Coding', 'Business', 'Kinh doanh & Chiến lược'],
   'Design & Visual Arts': ['Graphic Novels', 'Design & UI', 'Thiết kế & Nghệ thuật'],
 };
 
-const CHIP_CATEGORIES = [
-  { id: 'cs', labelVi: 'Khoa học máy tính', englishName: 'Computer Science' },
-  { id: 'psych', labelVi: 'Tâm lý & Thói quen', englishName: 'Psychology & Habits' },
-  { id: 'fiction', labelVi: 'Văn học tinh hoa', englishName: 'Literary Fiction' },
-  { id: 'scifi', labelVi: 'Khoa học viễn tưởng', englishName: 'Sci-Fi & Speculative' },
-  { id: 'biz', labelVi: 'Kinh doanh & Chiến lược', englishName: 'Business & Strategy' },
-  { id: 'design', labelVi: 'Thiết kế & Nghệ thuật', englishName: 'Design & Visual Arts' },
-];
 
 export const Catalog: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
   const { searchQuery, setSearchQuery, addToCart } = useStore();
 
   // Data fetching state
@@ -59,7 +59,9 @@ export const Catalog: React.FC = () => {
 
   // Filter state
   const [filterQuery, setFilterQuery] = useState(searchQuery);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    return categoryParam ? [categoryParam] : [];
+  });
   const [pricePreset, setPricePreset] = useState<'0-20' | '20-50' | '50+' | null>(null);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<CatalogSortOption>('featured');
@@ -90,6 +92,15 @@ export const Catalog: React.FC = () => {
     setFilterQuery(searchQuery);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (categoryParam) {
+      setSelectedCategories((prev) =>
+        prev.includes(categoryParam) ? prev : [categoryParam]
+      );
+      setCurrentPage(1);
+    }
+  }, [categoryParam]);
+
   const handleClearSearch = () => {
     setFilterQuery('');
     setSearchQuery('');
@@ -115,6 +126,10 @@ export const Catalog: React.FC = () => {
     setSelectedRating(null);
     setSortBy('featured');
     setCurrentPage(1);
+    if (searchParams.get('category')) {
+      searchParams.delete('category');
+      setSearchParams(searchParams, { replace: true });
+    }
   };
 
   const handleAddToCart = (e: React.MouseEvent, book: Book) => {
@@ -147,9 +162,23 @@ export const Catalog: React.FC = () => {
         if (selectedCategories.length > 0) {
           const matchesAnyCat = selectedCategories.some((cat) => {
             const allowedGenres = CATEGORY_MAPPINGS[cat] || [cat];
+            const catLower = cat.toLowerCase();
+
+            // Check if matches in book.categories array
+            if (book.categories && Array.isArray(book.categories)) {
+              const matchedInArray = book.categories.some((c) => {
+                const cLower = String(c).toLowerCase();
+                return (
+                  cLower === catLower ||
+                  allowedGenres.some((ag) => cLower.includes(ag.toLowerCase()))
+                );
+              });
+              if (matchedInArray) return true;
+            }
+
             return (
               allowedGenres.some((g) => book.genre?.toLowerCase().includes(g.toLowerCase())) ||
-              book.title?.toLowerCase().includes(cat.toLowerCase())
+              book.title?.toLowerCase().includes(catLower)
             );
           });
           if (!matchesAnyCat) return false;
@@ -237,20 +266,6 @@ export const Catalog: React.FC = () => {
                 sortBy={sortBy}
                 onSortChange={setSortBy}
                 onToggleMobileFilter={() => setIsMobileFilterOpen(true)}
-              />
-
-              {/* Category Chips Bar */}
-              <CategoryChipsBar
-                categories={CHIP_CATEGORIES}
-                selectedCategory={selectedCategories[0] || null}
-                onSelectCategory={(cat) => {
-                  if (cat) {
-                    setSelectedCategories([cat]);
-                  } else {
-                    setSelectedCategories([]);
-                  }
-                  setCurrentPage(1);
-                }}
               />
 
               {/* Book Results Grid / Loading Spinner / Error State / Empty State */}

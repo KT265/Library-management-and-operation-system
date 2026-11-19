@@ -7,8 +7,8 @@ interface VouchersTableProps {
   copiedCode: string | null;
   onCopyCode: (code: string) => void;
   onEdit: (voucher: AdminVoucher) => void;
-  onDuplicate: (voucher: AdminVoucher) => void;
-  onToggleStatus: (voucher: AdminVoucher) => void;
+  onDeactivate?: (voucherId: string) => void;
+  onRelaunch?: (voucherId: string) => void;
   onArchive: (voucherId: string) => void;
 }
 
@@ -17,8 +17,8 @@ export const VouchersTable: React.FC<VouchersTableProps> = ({
   copiedCode,
   onCopyCode,
   onEdit,
-  onDuplicate,
-  onToggleStatus,
+  onDeactivate,
+  onRelaunch,
   onArchive,
 }) => {
   return (
@@ -84,8 +84,8 @@ export const VouchersTable: React.FC<VouchersTableProps> = ({
                 copiedCode={copiedCode}
                 onCopyCode={onCopyCode}
                 onEdit={onEdit}
-                onDuplicate={onDuplicate}
-                onToggleStatus={onToggleStatus}
+                onDeactivate={onDeactivate}
+                onRelaunch={onRelaunch}
                 onArchive={onArchive}
               />
             ))

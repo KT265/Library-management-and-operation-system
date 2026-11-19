@@ -10,8 +10,8 @@ export const PatronHeaderCard: React.FC<PatronHeaderCardProps> = ({
   user,
   onEditProfile,
 }) => {
-  const patronName = user?.name || 'Minh Nguyễn';
-  const patronEmail = user?.email || 'minh.nguyen@example.com';
+  const patronName = user?.name || 'Độc giả';
+  const patronEmail = user?.email || '';
   const avatarUrl =
     user?.avatar ||
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80';

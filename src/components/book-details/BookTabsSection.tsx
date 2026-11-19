@@ -1,5 +1,6 @@
 import React from 'react';
 import { Book } from '../../types';
+import type { ReviewItem } from '../../pages/BookDetails';
 import { OverviewTab } from './OverviewTab';
 import { SpecificationsTab } from './SpecificationsTab';
 import { ReviewsTab } from './ReviewsTab';
@@ -11,12 +12,20 @@ interface BookTabsSectionProps {
   book: Book;
   activeTab: BookTabId;
   onTabChange: (tab: BookTabId) => void;
+  reviewsList: ReviewItem[];
+  totalReviews: number;
+  calculatedAverageRating: number;
+  reviewsLoading?: boolean;
 }
 
 export const BookTabsSection: React.FC<BookTabsSectionProps> = ({
   book,
   activeTab,
   onTabChange,
+  reviewsList,
+  totalReviews,
+  calculatedAverageRating,
+  reviewsLoading = false,
 }) => {
   const tabs = [
     { id: 'tab-overview' as const, label: 'Giới thiệu tổng quan', icon: 'description' },
@@ -68,7 +77,12 @@ export const BookTabsSection: React.FC<BookTabsSectionProps> = ({
           <SpecificationsTab book={book} />
         </div>
         <div className={activeTab === 'tab-reviews' ? 'block' : 'hidden'}>
-          <ReviewsTab book={book} />
+          <ReviewsTab
+            reviewsList={reviewsList}
+            totalReviews={totalReviews}
+            calculatedAverageRating={calculatedAverageRating}
+            loading={reviewsLoading}
+          />
         </div>
         <div className={activeTab === 'tab-author' ? 'block' : 'hidden'}>
           <AuthorTab book={book} />

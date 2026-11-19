@@ -3,9 +3,15 @@ import { Book } from '../../types';
 
 interface BookHeroInfoProps {
   book: Book;
+  totalReviews: number;
+  calculatedAverageRating: number;
 }
 
-export const BookHeroInfo: React.FC<BookHeroInfoProps> = ({ book }) => {
+export const BookHeroInfo: React.FC<BookHeroInfoProps> = ({
+  book,
+  totalReviews,
+  calculatedAverageRating,
+}) => {
   return (
     <div
       id="book-hero-info"
@@ -63,17 +69,19 @@ export const BookHeroInfo: React.FC<BookHeroInfoProps> = ({ book }) => {
             {[1, 2, 3, 4, 5].map((starIdx) => (
               <span
                 key={starIdx}
-                className="material-symbols-outlined text-[18px] fill"
+                className={`material-symbols-outlined text-[18px] ${
+                  starIdx <= Math.round(calculatedAverageRating) ? 'fill' : ''
+                }`}
               >
                 star
               </span>
             ))}
           </div>
           <span className="font-label-md text-label-md font-bold text-on-surface">
-            {book.rating.toFixed(1)}
+            {calculatedAverageRating.toFixed(1)}
           </span>
           <span className="font-body-sm text-body-sm text-outline">
-            ({book.reviewCount} đánh giá từ độc giả)
+            ({totalReviews} đánh giá từ độc giả)
           </span>
         </div>
 

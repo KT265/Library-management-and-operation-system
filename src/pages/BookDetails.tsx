@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useStore } from '../store/useStore';
 import { Book } from '../types';
-import { fetchBookByIdFromFirestore } from '../services/firebase';
+import { fetchBookByIdFromFirestore, db, FIRESTORE_COLLECTIONS } from '../services/firebase';
 import { BookBreadcrumbs } from '../components/book-details/BookBreadcrumbs';
 import { CoverGallery, GalleryThumbnail } from '../components/book-details/CoverGallery';
 import { BookHeroInfo } from '../components/book-details/BookHeroInfo';
@@ -10,6 +11,15 @@ import { PurchaseActionCluster } from '../components/book-details/PurchaseAction
 import { TrustBadgesBar } from '../components/book-details/TrustBadgesBar';
 import { BookTabsSection, BookTabId } from '../components/book-details/BookTabsSection';
 import { RelatedBooksCarousel } from '../components/book-details/RelatedBooksCarousel';
+
+export interface ReviewItem {
+  id: string;
+  idBookReview: string;
+  idUserReview?: string;
+  userNameReview: string;
+  rating: number;
+  detail: string;
+}
 
 export const BookDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,12 +30,17 @@ export const BookDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Reviews — fetched ONCE here, passed down to BookHeroInfo & ReviewsTab
+  const [reviewsList, setReviewsList] = useState<ReviewItem[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState<boolean>(false);
+
   const [quantity, setQuantity] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<BookTabId>('tab-overview');
   const [activeThumbIndex, setActiveThumbIndex] = useState<number>(0);
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
 
+  // ── Fetch book ──────────────────────────────────────────────────────────────
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
@@ -59,6 +74,49 @@ export const BookDetails: React.FC = () => {
       isMounted = false;
     };
   }, [id]);
+
+  // ── Fetch reviews ONCE — single source of truth for BookHeroInfo & ReviewsTab ──
+  useEffect(() => {
+    if (!id) return;
+    let isMounted = true;
+    setReviewsLoading(true);
+
+    const fetchReviews = async () => {
+      try {
+        const q = query(
+          collection(db, FIRESTORE_COLLECTIONS.REVIEWS),
+          where('idBookReview', '==', id)
+        );
+        const snapshot = await getDocs(q);
+        const items: ReviewItem[] = snapshot.docs.map((docSnap) => {
+          const d = docSnap.data();
+          return {
+            id: docSnap.id,
+            idBookReview: d.idBookReview || id,
+            idUserReview: d.idUserReview,
+            userNameReview: d.userNameReview || d.author || 'Độc giả',
+            rating: typeof d.rating === 'number' ? d.rating : 5,
+            detail: d.detail || d.comment || '',
+          };
+        });
+        if (isMounted) setReviewsList(items);
+      } catch (err) {
+        console.error('[BookDetails] Error fetching reviews:', err);
+      } finally {
+        if (isMounted) setReviewsLoading(false);
+      }
+    };
+
+    fetchReviews();
+    return () => { isMounted = false; };
+  }, [id]);
+
+  // ── Derived review stats ────────────────────────────────────────────────────
+  const totalReviews = reviewsList.length;
+  const calculatedAverageRating =
+    totalReviews > 0
+      ? reviewsList.reduce((acc, r) => acc + r.rating, 0) / totalReviews
+      : 0;
 
   const unitPrice = book?.price || 0;
   const originalPrice = book?.originalPrice || Math.round(unitPrice * 1.25);
@@ -104,20 +162,20 @@ export const BookDetails: React.FC = () => {
 
   const thumbnails: GalleryThumbnail[] = useMemo(() => {
     if (!book) return [];
-    const list: GalleryThumbnail[] = [
-      {
-        id: 'thumb-primary',
-        label: 'Front Cover Original',
-        labelVi: 'Bìa trước nguyên bản',
-        url: book.coverImage,
-        alt: `Bìa trước của sách ${book.title}`,
-      },
-    ];
-    return list;
+    const mainImg = book.imgCoverPage || book.coverImage || '';
+    const additional = Array.isArray(book.imgs) ? book.imgs : [];
+    const all = [mainImg, ...additional].filter(Boolean);
+    return all.map((url, idx) => ({
+      id: `thumb-${idx}`,
+      label: idx === 0 ? 'Front Cover Original' : `Gallery Image ${idx}`,
+      labelVi: idx === 0 ? 'Bìa trước nguyên bản' : `Ảnh chi tiết ${idx}`,
+      url,
+      alt: `${book.title} - ${idx === 0 ? 'Bìa trước' : `Ảnh chi tiết ${idx}`}`,
+    }));
   }, [book]);
 
   const currentCover =
-    thumbnails[activeThumbIndex]?.url || book?.coverImage || '';
+    thumbnails[activeThumbIndex]?.url || book?.imgCoverPage || book?.coverImage || '';
 
   if (isLoading) {
     return (
@@ -172,6 +230,7 @@ export const BookDetails: React.FC = () => {
           {/* Left Column: Gallery Stage & Thumbnails */}
           <div className="lg:col-span-5">
             <CoverGallery
+              bookData={book}
               currentCover={currentCover}
               bookTitle={book.title}
               pages={book.specs?.pages || 300}
@@ -185,7 +244,11 @@ export const BookDetails: React.FC = () => {
 
           {/* Right Column: Book Hero Info & Actions */}
           <div className="lg:col-span-7 flex flex-col gap-space-lg">
-            <BookHeroInfo book={book} />
+            <BookHeroInfo
+                book={book}
+                totalReviews={totalReviews}
+                calculatedAverageRating={calculatedAverageRating}
+              />
 
             <PurchaseActionCluster
               unitPrice={unitPrice}
@@ -208,6 +271,10 @@ export const BookDetails: React.FC = () => {
           book={book}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          reviewsList={reviewsList}
+          totalReviews={totalReviews}
+          calculatedAverageRating={calculatedAverageRating}
+          reviewsLoading={reviewsLoading}
         />
 
         {/* 4. Recommendations Carousel */}

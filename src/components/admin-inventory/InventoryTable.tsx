@@ -55,11 +55,8 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
               <th scope="col" id="th-book-info" className="py-3.5 px-4 font-semibold min-w-[220px]">
                 Tác phẩm &amp; Tác giả
               </th>
-              <th scope="col" id="th-book-category" className="py-3.5 px-4 font-semibold">
-                Thể loại
-              </th>
               <th scope="col" id="th-book-price" className="py-3.5 px-4 font-semibold text-right">
-                Giá bìa (VND)
+                Giá bán (VND)
               </th>
               <th scope="col" id="th-book-stock" className="py-3.5 px-4 font-semibold text-center">
                 Tồn kho
@@ -123,13 +120,6 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                     {book.publisher && (
                       <span className="text-outline text-xs block">NXB: {book.publisher}</span>
                     )}
-                  </td>
-
-                  {/* 3. Thể loại */}
-                  <td className="py-3 px-4">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-container text-on-surface-variant">
-                      {book.category}
-                    </span>
                   </td>
 
                   {/* 4. Giá bìa VND */}

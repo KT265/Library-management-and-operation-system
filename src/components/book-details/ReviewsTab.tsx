@@ -1,83 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
-import { Book } from '../../types';
+import React from 'react';
+import type { ReviewItem } from '../../pages/BookDetails';
 
 interface ReviewsTabProps {
-  book: Book;
+  reviewsList: ReviewItem[];
+  totalReviews: number;
+  calculatedAverageRating: number;
+  loading?: boolean;
 }
 
-interface ReviewItem {
-  id: string;
-  idBookReview: string;
-  idUserReview?: string;
-  userNameReview: string;
-  rating: number;
-  detail: string;
-}
+export const ReviewsTab: React.FC<ReviewsTabProps> = ({
+  reviewsList,
+  totalReviews,
+  calculatedAverageRating,
+  loading = false,
+}) => {
+  const avgRating = calculatedAverageRating.toFixed(1);
 
-export const ReviewsTab: React.FC<ReviewsTabProps> = ({ book }) => {
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function loadReviews() {
-      if (!book?.id) {
-        setReviews([]);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const q = query(
-          collection(db, FIRESTORE_COLLECTIONS.REVIEWS),
-          where('idBookReview', '==', book.id)
-        );
-        const snapshot = await getDocs(q);
-        const items: ReviewItem[] = snapshot.docs.map((docSnap) => {
-          const d = docSnap.data();
-          return {
-            id: docSnap.id,
-            idBookReview: d.idBookReview || book.id,
-            idUserReview: d.idUserReview,
-            userNameReview: d.userNameReview || d.author || 'Độc giả',
-            rating: typeof d.rating === 'number' ? d.rating : 5,
-            detail: d.detail || d.comment || '',
-          };
-        });
-        if (isMounted) {
-          setReviews(items);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('[ReviewsTab] Error fetching reviews:', err);
-        if (isMounted) {
-          setError('Không thể tải đánh giá từ hệ thống.');
-          setLoading(false);
-        }
-      }
-    }
-
-    loadReviews();
-    return () => {
-      isMounted = false;
-    };
-  }, [book?.id]);
-
-  const totalReviews = reviews.length;
-  const avgRating =
-    totalReviews > 0
-      ? (reviews.reduce((acc, r) => acc + r.rating, 0) / totalReviews).toFixed(1)
-      : (book.rating ?? 5.0).toFixed(1);
-
-  const star5Count = reviews.filter((r) => Math.round(r.rating) === 5).length;
-  const star4Count = reviews.filter((r) => Math.round(r.rating) === 4).length;
-  const star3Count = reviews.filter((r) => Math.round(r.rating) === 3).length;
-  const star2Count = reviews.filter((r) => Math.round(r.rating) === 2).length;
-  const star1Count = reviews.filter((r) => Math.round(r.rating) === 1).length;
+  const star5Count = reviewsList.filter((r) => Math.round(r.rating) === 5).length;
+  const star4Count = reviewsList.filter((r) => Math.round(r.rating) === 4).length;
+  const star3Count = reviewsList.filter((r) => Math.round(r.rating) === 3).length;
+  const star2Count = reviewsList.filter((r) => Math.round(r.rating) === 2).length;
+  const star1Count = reviewsList.filter((r) => Math.round(r.rating) === 1).length;
 
   const star5Pct = totalReviews > 0 ? Math.round((star5Count / totalReviews) * 100) : 0;
   const star4Pct = totalReviews > 0 ? Math.round((star4Count / totalReviews) * 100) : 0;
@@ -98,13 +41,18 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({ book }) => {
           </span>
           <div className="flex items-center text-tertiary-container my-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <span key={i} className="material-symbols-outlined text-[20px] fill">
+              <span
+                key={i}
+                className={`material-symbols-outlined text-[20px] ${
+                  i <= Math.round(calculatedAverageRating) ? 'fill' : ''
+                }`}
+              >
                 star
               </span>
             ))}
           </div>
           <span className="font-body-sm text-body-sm text-secondary">
-            Dựa trên {totalReviews > 0 ? totalReviews : book.reviewCount} lượt đánh giá từ độc giả
+            Dựa trên {totalReviews} lượt đánh giá từ độc giả
           </span>
         </div>
 
@@ -174,32 +122,26 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({ book }) => {
         </div>
       </div>
 
-      {/* Loading & Error States */}
+      {/* Loading State */}
       {loading && (
         <div className="p-space-lg text-center text-secondary font-body-md">
           Đang tải đánh giá từ hệ thống...
         </div>
       )}
 
-      {error && (
-        <div className="p-space-md text-center text-error bg-error-container/20 rounded-2xl font-body-sm">
-          {error}
-        </div>
-      )}
-
       {/* Reviewer Cards */}
-      {!loading && !error && (
+      {!loading && (
         <div className="space-y-space-sm pt-space-sm">
           <h4 className="font-title-md text-title-md font-bold text-primary mb-space-sm">
             Đánh giá từ độc giả
           </h4>
 
-          {reviews.length === 0 ? (
+          {reviewsList.length === 0 ? (
             <div className="p-space-lg text-center rounded-2xl bg-surface-container-low text-secondary font-body-md">
               Chưa có đánh giá nào cho cuốn sách này. Hãy là người đầu tiên chia sẻ cảm nhận của bạn!
             </div>
           ) : (
-            reviews.map((rev) => (
+            reviewsList.map((rev) => (
               <div
                 key={rev.id}
                 className="p-space-md rounded-2xl bg-surface-container-lowest border border-outline-variant/30 shadow-xs"

@@ -5,6 +5,8 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  roleUser?: string;
+  readBookCount?: number;
   avatar?: string;
   phone?: string;
   address?: string;
@@ -65,10 +67,13 @@ export interface Book {
   price: number;
   originalPrice?: number;
   rating: number;
-  reviewCount: number;
+  reviewCount?: number; // optional — computed dynamically from Reviews collection in BookDetails
   inStock: boolean;
   stockCount: number;
   coverImage: string;
+  imgCoverPage?: string;
+  imgs?: string[];
+  categories?: string[];
   genre: BookGenre;
   format: BookFormat;
   description: string;
@@ -143,18 +148,9 @@ export interface Order {
   total?: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  methodPayment?: string;
+  paymentMethod?: string;
   voucherCode?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface Transaction {
-  id: string;
-  orderId: string;
-  userId: string;
-  amount: number;
-  payOsOrderCode: number;
-  paymentMethod: 'VietQR' | 'CreditCard' | 'COD';
-  status: PaymentStatus;
-  createdAt: string;
 }

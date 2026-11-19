@@ -209,8 +209,6 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
         categories: selectedCategoryIds,
         imgCoverPage: coverImage.trim(),
         imgs: additionalImagesList,
-        averageRating: 0,
-        reviewCount: 0,
         stockQuantity: totalNum,
         soldCount: 0,
         specifications: {

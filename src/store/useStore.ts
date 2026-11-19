@@ -65,7 +65,7 @@ export const useStore = create<StoreState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   idToken: null,
-  isAuthLoading: false,
+  isAuthLoading: true,
 
   login: (userData, idToken = null) => {
     if (!userData) {

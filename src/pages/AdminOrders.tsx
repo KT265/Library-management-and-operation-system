@@ -29,6 +29,7 @@ export const AdminOrders: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(6);
+  const [sortOption, setSortOption] = useState<string>('default');
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [consoleOrder, setConsoleOrder] = useState<FulfillmentOrder | null>(null);
 
@@ -43,7 +44,7 @@ export const AdminOrders: React.FC = () => {
       setOrders(fetched);
     } catch (err: any) {
       console.error('[AdminOrders] Error fetching from "Order":', err);
-      setError('Không thể tải dữ liệu đơn hàng luân chuyển từ Firestore.');
+      setError(`Không thể tải dữ liệu đơn hàng luân chuyển từ Firestore (${err?.message || err?.code || 'Lỗi kết nối'}).`);
     } finally {
       setLoading(false);
     }
@@ -88,6 +89,40 @@ export const AdminOrders: React.FC = () => {
     });
   }, [orders, filterState]);
 
+  // Derived / computed sorted orders based on sortOption
+  const sortedOrders = useMemo(() => {
+    if (sortOption === 'default') {
+      return filteredOrders;
+    }
+
+    const getMillis = (item: FulfillmentOrder): number => {
+      const ts = (item as any).createAt || (item as any).createdAt;
+      if (!ts) return 0;
+      if (typeof ts.toMillis === 'function') return ts.toMillis();
+      if (typeof ts.toDate === 'function') return ts.toDate().getTime();
+      if (ts.seconds) return ts.seconds * 1000 + (ts.nanoseconds ? ts.nanoseconds / 1000000 : 0);
+      const time = new Date(ts).getTime();
+      return isNaN(time) ? 0 : time;
+    };
+
+    const getPrice = (item: FulfillmentOrder): number => {
+      return Number((item as any).totalPrice ?? item.orderTotalVND ?? 0);
+    };
+
+    return [...filteredOrders].sort((a, b) => {
+      if (sortOption === 'newest') {
+        return getMillis(b) - getMillis(a);
+      }
+      if (sortOption === 'price_desc') {
+        return getPrice(b) - getPrice(a);
+      }
+      if (sortOption === 'price_asc') {
+        return getPrice(a) - getPrice(b);
+      }
+      return 0;
+    });
+  }, [filteredOrders, sortOption]);
+
   // Handlers
   const handleFilterUpdate = (updates: Partial<OrdersFilterState>) => {
     setFilterState((prev) => ({ ...prev, ...updates }));
@@ -102,6 +137,7 @@ export const AdminOrders: React.FC = () => {
       fromDate: '2025-10-15',
       toDate: '2025-11-15',
     });
+    setSortOption('default');
     setCurrentPage(1);
   };
 
@@ -147,14 +183,16 @@ export const AdminOrders: React.FC = () => {
       {/* 1. Header with Title & Sync Webhook Button */}
       <OrdersHeader onSyncWebhooks={handleSyncWebhooks} isSyncing={isSyncing} />
 
-      {/* 2. 4 Status Summary Pills / KPI Bar */}
-      <FulfillmentKpisBar />
+      {/* 2. Status Summary Pills / KPI Bar (Dynamic) */}
+      <FulfillmentKpisBar orders={orders} />
 
-      {/* 3. Filter Toolbar with Search, Status Chips, Payment Select, Date Range */}
+      {/* 3. Filter Toolbar with Search, Status Chips, Payment Select, Date Range & Sorting */}
       <OrdersFilterToolbar
         filterState={filterState}
         onFilterChange={handleFilterUpdate}
         onResetFilters={handleResetFilters}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
       />
 
       {/* Loading & Error States */}
@@ -185,7 +223,7 @@ export const AdminOrders: React.FC = () => {
       ) : (
         /* 4. 7-Column Fulfillment Orders Table */
         <FulfillmentOrdersTable
-          orders={filteredOrders}
+          orders={sortedOrders}
           totalFulfillmentsCount={orders.length}
           currentPage={currentPage}
           rowsPerPage={rowsPerPage}

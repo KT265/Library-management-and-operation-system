@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Book } from '../../types';
 import { formatVND } from '../../utils/currency';
+import { useBookRating } from '../../hooks/useBookRating';
 
 interface CatalogBookCardProps {
   book: Book;
@@ -19,6 +20,7 @@ export const CatalogBookCard: React.FC<CatalogBookCardProps> = ({
   onBuyNow,
 }) => {
   const navigate = useNavigate();
+  const { calculatedAverageRating, totalReviews, isLoading } = useBookRating(book.id);
 
   const discountPercent =
     book.originalPrice && book.originalPrice > book.price
@@ -70,49 +72,59 @@ export const CatalogBookCard: React.FC<CatalogBookCardProps> = ({
           </p>
 
           {/* Ratings Row */}
-          <div className="flex items-center gap-1.5 mt-2">
-            <div className="flex items-center text-tertiary">
-              {[1, 2, 3, 4, 5].map((starIdx) => {
-                const fillLevel = book.rating - starIdx + 1;
-                if (fillLevel >= 0.8) {
+          {isLoading ? (
+            <div
+              data-testid={`catalog-book-rating-loading-${book.id}`}
+              className="flex items-center gap-1.5 mt-2 h-4"
+            >
+              <div className="h-3.5 w-20 rounded-full bg-surface-container-high animate-pulse" />
+              <div className="h-3.5 w-8 rounded-full bg-surface-container-high animate-pulse" />
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center text-tertiary">
+                {[1, 2, 3, 4, 5].map((starIdx) => {
+                  const fillLevel = calculatedAverageRating - starIdx + 1;
+                  if (fillLevel >= 0.8) {
+                    return (
+                      <span
+                        key={starIdx}
+                        className="material-symbols-outlined text-[16px] fill"
+                      >
+                        star
+                      </span>
+                    );
+                  } else if (fillLevel >= 0.3) {
+                    return (
+                      <span
+                        key={starIdx}
+                        className="material-symbols-outlined text-[16px] fill"
+                      >
+                        star_half
+                      </span>
+                    );
+                  }
                   return (
                     <span
                       key={starIdx}
-                      className="material-symbols-outlined text-[16px] fill"
+                      className="material-symbols-outlined text-[16px] text-outline-variant"
                     >
                       star
                     </span>
                   );
-                } else if (fillLevel >= 0.3) {
-                  return (
-                    <span
-                      key={starIdx}
-                      className="material-symbols-outlined text-[16px] fill"
-                    >
-                      star_half
-                    </span>
-                  );
-                }
-                return (
-                  <span
-                    key={starIdx}
-                    className="material-symbols-outlined text-[16px] text-outline-variant"
-                  >
-                    star
-                  </span>
-                );
-              })}
+                })}
+              </div>
+              <span
+                data-testid={`catalog-book-rating-${book.id}`}
+                className="font-label-sm text-label-sm font-bold text-on-surface"
+              >
+                {calculatedAverageRating.toFixed(1)}
+              </span>
+              <span className="font-body-sm text-body-sm text-outline">
+                ({totalReviews.toLocaleString()})
+              </span>
             </div>
-            <span
-              data-testid={`catalog-book-rating-${book.id}`}
-              className="font-label-sm text-label-sm font-bold text-on-surface"
-            >
-              {book.rating.toFixed(1)}
-            </span>
-            <span className="font-body-sm text-body-sm text-outline">
-              ({book.reviewCount.toLocaleString()})
-            </span>
-          </div>
+          )}
 
           {/* Price & Discount Row */}
           <div className="flex items-center gap-2 mt-2">

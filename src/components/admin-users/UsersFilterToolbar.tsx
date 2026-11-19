@@ -9,9 +9,11 @@ interface UsersFilterToolbarProps {
   selectedStatus?: 'all' | UserStatus;
   onStatusChange?: (status: 'all' | UserStatus) => void;
   onRefresh: () => void;
-  totalCount: number;
+  totalUsers?: number;
+  totalCount?: number;
   adminCount: number;
-  userCount: number;
+  customerCount?: number;
+  userCount?: number;
 }
 
 export const UsersFilterToolbar: React.FC<UsersFilterToolbarProps> = ({
@@ -20,10 +22,14 @@ export const UsersFilterToolbar: React.FC<UsersFilterToolbarProps> = ({
   selectedRole,
   onRoleSelect,
   onRefresh,
+  totalUsers,
   totalCount,
   adminCount,
+  customerCount,
   userCount,
 }) => {
+  const actualTotalUsers = totalUsers ?? totalCount ?? 0;
+  const actualCustomerCount = customerCount ?? userCount ?? 0;
   return (
     <div
       id="users-filter-toolbar"
@@ -78,7 +84,7 @@ export const UsersFilterToolbar: React.FC<UsersFilterToolbarProps> = ({
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              Tất cả ({totalCount.toLocaleString('vi-VN')})
+              Tất cả ({actualTotalUsers.toLocaleString('vi-VN')})
             </button>
 
             <button
@@ -106,7 +112,7 @@ export const UsersFilterToolbar: React.FC<UsersFilterToolbarProps> = ({
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              Người dùng ({userCount.toLocaleString('vi-VN')})
+              Người dùng ({actualCustomerCount.toLocaleString('vi-VN')})
             </button>
           </div>
 

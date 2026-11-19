@@ -54,13 +54,13 @@ export const FulfillmentOrdersTable: React.FC<FulfillmentOrdersTableProps> = ({
                 Danh mục ấn phẩm
               </th>
               <th scope="col" id="col-due-date" className="py-3.5 px-4 font-semibold">
-                Hạn trả / Trạng thái
+                Ngày đặt
               </th>
               <th scope="col" id="col-payment" className="py-3.5 px-4 font-semibold">
                 Cổng thanh toán
               </th>
               <th scope="col" id="col-cycle" className="py-3.5 px-4 font-semibold text-center">
-                Tiến độ đơn hàng
+                Trạng thái đơn hàng
               </th>
               <th scope="col" id="col-actions" className="py-3.5 px-4 font-semibold text-right">
                 Thao tác
@@ -166,3 +166,6 @@ export const FulfillmentOrdersTable: React.FC<FulfillmentOrdersTableProps> = ({
     </div>
   );
 };
+
+export { FulfillmentOrdersTable as FulfillmentOrderTable };
+export default FulfillmentOrdersTable;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import {
   collection,
   query,
@@ -7,7 +7,6 @@ import {
   getDocs,
   doc,
   getDoc,
-  setDoc,
   limit,
 } from 'firebase/firestore';
 import { db, FIRESTORE_COLLECTIONS, mapFirestoreOrderToOrder } from '../services/firebase';
@@ -16,13 +15,28 @@ import { Order } from '../types';
 
 export const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const orderCodeParam = searchParams.get('orderCode');
-  const statusParam = searchParams.get('status') || 'PAID';
+  const location = useLocation();
+
+  const orderCodeParam =
+    searchParams.get('orderCode') ||
+    location.state?.orderCode ||
+    location.state?.codeOrder;
+  const statusParam = searchParams.get('status') || location.state?.status || 'PAID';
   const codeParam = searchParams.get('code');
-  const idParam = searchParams.get('id');
+  const idParam =
+    searchParams.get('id') ||
+    searchParams.get('orderId') ||
+    location.state?.id ||
+    location.state?.orderId;
+  const stateMethod =
+    searchParams.get('method') ||
+    searchParams.get('methodPayment') ||
+    location.state?.methodPayment ||
+    location.state?.paymentMethod;
 
   const { clearCart } = useStore();
   const [orderData, setOrderData] = useState<Order | null>(null);
+  const [methodPayment, setMethodPayment] = useState<string | null>(stateMethod || null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -66,14 +80,27 @@ export const PaymentSuccess: React.FC = () => {
           if (!snapStr.empty) {
             matchedDocSnap = snapStr.docs[0];
           } else {
+            const formattedCode = orderCodeParam.startsWith('#')
+              ? orderCodeParam
+              : `#${orderCodeParam}`;
             const qCode = query(
               collection(db, FIRESTORE_COLLECTIONS.ORDER),
-              where('codeOrder', '==', orderCodeParam),
+              where('codeOrder', '==', formattedCode),
               limit(1)
             );
             const snapCode = await getDocs(qCode);
             if (!snapCode.empty) {
               matchedDocSnap = snapCode.docs[0];
+            } else {
+              const qCodeRaw = query(
+                collection(db, FIRESTORE_COLLECTIONS.ORDER),
+                where('codeOrder', '==', orderCodeParam),
+                limit(1)
+              );
+              const snapCodeRaw = await getDocs(qCodeRaw);
+              if (!snapCodeRaw.empty) {
+                matchedDocSnap = snapCodeRaw.docs[0];
+              }
             }
           }
         }
@@ -89,26 +116,11 @@ export const PaymentSuccess: React.FC = () => {
 
         if (matchedDocSnap && isMounted) {
           const raw = matchedDocSnap.data();
-
-          // Reconcile payment status to PAID in Firestore if not already set
-          if (raw.statusPayment !== 'PAID') {
-            try {
-              await setDoc(
-                matchedDocSnap.ref,
-                {
-                  statusPayment: 'PAID',
-                  updateAt: new Date().toISOString(),
-                },
-                { merge: true }
-              );
-              raw.statusPayment = 'PAID';
-            } catch (updateErr) {
-              console.warn('[PaymentSuccess] Unable to update statusPayment:', updateErr);
-            }
-          }
-
           const mapped = mapFirestoreOrderToOrder(raw, matchedDocSnap.id);
           setOrderData(mapped);
+          if (raw.methodPayment || raw.paymentMethod) {
+            setMethodPayment(raw.methodPayment || raw.paymentMethod);
+          }
         }
       } catch (err) {
         console.error('[PaymentSuccess] Error resolving order details:', err);
@@ -126,15 +138,32 @@ export const PaymentSuccess: React.FC = () => {
     };
   }, [orderCodeParam, idParam, clearCart]);
 
-  const displayOrderCode =
-    orderCodeParam || (orderData?.orderNumber ? orderData.orderNumber.replace('#', '') : '1794309081702');
+  // Determine whether the payment was via COD or online via PayOS / VietQR
+  const effectiveMethod = (
+    methodPayment ||
+    orderData?.methodPayment ||
+    orderData?.paymentMethod ||
+    stateMethod ||
+    ''
+  ).trim();
+
+  const isCod =
+    effectiveMethod.toUpperCase() === 'COD' ||
+    effectiveMethod.toLowerCase().includes('nhận hàng') ||
+    effectiveMethod.toLowerCase().includes('cod');
+
+  const cleanOrderCode = (
+    orderCodeParam ||
+    (orderData?.orderNumber ? orderData.orderNumber.replace('#', '') : idParam ? idParam.slice(0, 8) : '1794309081702')
+  ).replace('#', '');
+
   const displayAmount = orderData?.totalAmount;
 
   if (loading) {
     return (
       <div className="min-h-[75vh] flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="font-body-md text-on-surface-variant">Đang tải thông tin xác nhận thanh toán...</p>
+        <p className="font-body-md text-on-surface-variant">Đang tải thông tin xác nhận đơn hàng...</p>
       </div>
     );
   }
@@ -155,10 +184,12 @@ export const PaymentSuccess: React.FC = () => {
 
         {/* Heading */}
         <h1 className="font-headline-sm text-headline-sm font-bold text-on-surface mb-2">
-          Thanh toán thành công!
+          {isCod ? 'Đặt hàng thành công!' : 'Thanh toán thành công!'}
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant mb-8">
-          Cảm ơn bạn đã tin tưởng BookVerse. Giao dịch thanh toán PayOS đã hoàn tất và đơn hàng của bạn đang được chuẩn bị.
+          {isCod
+            ? 'Cảm ơn bạn đã tin tưởng BookVerse. Đơn hàng của bạn đã được ghi nhận và đang được chuẩn bị.'
+            : 'Cảm ơn bạn đã tin tưởng BookVerse. Giao dịch thanh toán PayOS đã hoàn tất và đơn hàng của bạn đang được chuẩn bị.'}
         </p>
 
         {/* Order Details Table */}
@@ -170,20 +201,30 @@ export const PaymentSuccess: React.FC = () => {
               data-testid="payment-success-order-code"
               className="font-title-sm font-semibold text-primary"
             >
-              #{displayOrderCode}
+              #{cleanOrderCode}
             </span>
           </div>
 
           <div className="flex justify-between items-center py-1 border-b border-surface-container-high/40">
-            <span className="font-body-sm text-on-surface-variant">Trạng thái thanh toán</span>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-              {statusParam === 'PAID' ? 'Đã thanh toán (PAID)' : statusParam}
+            <span className="font-body-sm text-on-surface-variant">Trạng thái</span>
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                isCod ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {isCod
+                ? 'Chờ thanh toán khi nhận hàng'
+                : statusParam === 'PAID'
+                ? 'Đã thanh toán (PAID)'
+                : statusParam}
             </span>
           </div>
 
           <div className="flex justify-between items-center py-1 border-b border-surface-container-high/40">
-            <span className="font-body-sm text-on-surface-variant">Phương thức</span>
-            <span className="font-body-sm font-medium text-on-surface">Cổng PayOS (VietQR / Napas247)</span>
+            <span className="font-body-sm text-on-surface-variant">Phương thức thanh toán</span>
+            <span className="font-body-sm font-medium text-on-surface">
+              {isCod ? 'Thanh toán khi nhận hàng (COD)' : 'Cổng PayOS (VietQR / Napas247)'}
+            </span>
           </div>
 
           {codeParam && (
@@ -204,7 +245,9 @@ export const PaymentSuccess: React.FC = () => {
 
           {idParam && (
             <div className="flex justify-between items-center py-1">
-              <span className="font-body-sm text-on-surface-variant">Mã giao dịch PayOS</span>
+              <span className="font-body-sm text-on-surface-variant">
+                {isCod ? 'Mã chứng từ / Giao dịch' : 'Mã giao dịch PayOS'}
+              </span>
               <span className="font-label-sm text-outline truncate max-w-[200px]">{idParam}</span>
             </div>
           )}
@@ -235,3 +278,5 @@ export const PaymentSuccess: React.FC = () => {
     </div>
   );
 };
+
+export default PaymentSuccess;

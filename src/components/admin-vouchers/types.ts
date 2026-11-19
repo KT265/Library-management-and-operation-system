@@ -19,6 +19,12 @@ export interface AdminVoucher {
   startDate?: string;
   isPerUser?: boolean;
   canCombine?: boolean;
+  stateVoucher?: boolean;
+  usageVoucher?: number;
+  rateVoucher?: number;
+  minimumVoucher?: number;
+  typeVoucher?: string;
+  codeVouchers?: string;
 }
 
 export interface VoucherFilterOptions {

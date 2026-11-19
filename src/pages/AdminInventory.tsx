@@ -73,7 +73,7 @@ export const AdminInventory: React.FC = () => {
       setBooks(fetchedBooks);
     } catch (err: any) {
       console.error('[AdminInventory] Error querying Firestore "Books":', err);
-      setError('Không thể kết nối đến máy chủ cơ sở dữ liệu kho sách. Vui lòng thử lại.');
+      setError(`Không thể kết nối đến máy chủ cơ sở dữ liệu kho sách (${err?.message || err?.code || 'Lỗi kết nối'}). Vui lòng thử lại.`);
     } finally {
       setLoading(false);
     }

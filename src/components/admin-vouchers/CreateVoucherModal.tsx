@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { collection, addDoc, doc, updateDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../services/firebase';
 import { formatVND } from '../../utils/currency';
 import { AdminVoucher, VoucherDiscountType } from './types';
 
@@ -27,6 +29,7 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
   const [startDate, setStartDate] = useState('2026-11-01');
   const [expiryDate, setExpiryDate] = useState('2026-12-31');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (editingVoucher && mode === 'edit') {
@@ -36,9 +39,18 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
       setDiscountType(editingVoucher.discountType);
       setDiscountValue(String(editingVoucher.discountValue));
       setMinSpend(String(editingVoucher.minSpend || 0));
-      setTotalUsageLimit(String(editingVoucher.totalUsageLimit));
+      setTotalUsageLimit(String(editingVoucher.usageVoucher ?? editingVoucher.totalUsageLimit ?? 500));
+      // Normalize dates for input[type="date"]
+      if (editingVoucher.startDate) {
+        setStartDate(editingVoucher.startDate.split('T')[0]);
+      }
+      if (editingVoucher.expiryDate) {
+        setExpiryDate(editingVoucher.expiryDate.split('T')[0]);
+      }
       setError(null);
     } else if (mode === 'create') {
+      const today = new Date().toISOString().split('T')[0];
+      const nextMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       setCode('');
       setCampaign('');
       setDescription('');
@@ -46,13 +58,15 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
       setDiscountValue('20');
       setMinSpend('200000');
       setTotalUsageLimit('500');
+      setStartDate(today);
+      setExpiryDate(nextMonth);
       setError(null);
     }
   }, [editingVoucher, mode, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -90,26 +104,106 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
       conditionNote = minSpendNum > 0 ? `Đơn tối thiểu ${formatVND(minSpendNum)}` : 'Miễn phí giao hàng tiêu chuẩn';
     }
 
-    const voucher: AdminVoucher = {
-      id: editingVoucher?.id || `v-${Date.now()}`,
-      code: cleanCode,
-      campaign: campaign.trim(),
-      description: description.trim() || 'Chương trình ưu đãi độc quyền BookVerse',
-      discountType,
-      discountValue: valueNum,
-      discountLabel,
-      conditionNote,
-      usedCount: editingVoucher?.usedCount || 0,
-      totalUsageLimit: limitNum,
-      expiryDate,
-      expiryNote: 'Hiệu lực theo niên hạn chiến dịch',
-      status: 'active',
-      minSpend: minSpendNum,
-      startDate,
-    };
+    setIsSubmitting(true);
+    try {
+      const startTimestamp = Timestamp.fromDate(new Date(startDate + 'T00:00:00'));
+      const expiryTimestamp = Timestamp.fromDate(new Date(expiryDate + 'T23:59:59'));
+      const typeVoucherVal = discountType === 'percent' ? 'PERCENT' : discountType === 'fixed' ? 'FIXED' : 'FREESHIP';
 
-    onSaveVoucher(voucher);
-    onClose();
+      if (mode === 'create') {
+        // Create Mode: use addDoc mapping strictly to schema
+        const newVoucherData = {
+          codeVouchers: cleanCode,
+          typeVoucher: typeVoucherVal,
+          rateVoucher: valueNum,
+          minimumVoucher: minSpendNum,
+          usageVoucher: limitNum, // "Tổng lượt sử dụng tối đa"
+          usedCount: 0,           // Initialize usedCount to 0
+          startDate: startTimestamp,
+          expiryDate: expiryTimestamp,
+          stateVoucher: true,
+          campaign: campaign.trim(),
+          description: description.trim() || 'Chương trình ưu đãi độc quyền BookVerse',
+          createAt: serverTimestamp(),
+          updateAt: serverTimestamp(),
+        };
+
+        const docRef = await addDoc(collection(db, 'Vouchers'), newVoucherData);
+        await updateDoc(docRef, { id: docRef.id });
+
+        const createdVoucher: AdminVoucher = {
+          id: docRef.id,
+          code: cleanCode,
+          campaign: campaign.trim(),
+          description: newVoucherData.description,
+          discountType,
+          discountValue: valueNum,
+          discountLabel,
+          conditionNote,
+          usedCount: 0,
+          totalUsageLimit: limitNum,
+          usageVoucher: limitNum,
+          rateVoucher: valueNum,
+          minimumVoucher: minSpendNum,
+          typeVoucher: typeVoucherVal,
+          codeVouchers: cleanCode,
+          stateVoucher: true,
+          expiryDate,
+          expiryNote: `Hết hạn ${new Date(expiryDate).toLocaleDateString('vi-VN')}`,
+          status: 'active',
+          minSpend: minSpendNum,
+          startDate,
+        };
+
+        onSaveVoucher(createdVoucher);
+      } else if (editingVoucher) {
+        // Edit Mode: use updateDoc with specific voucher id
+        const updatedDocData: any = {
+          codeVouchers: cleanCode,
+          typeVoucher: typeVoucherVal,
+          rateVoucher: valueNum,
+          minimumVoucher: minSpendNum,
+          usageVoucher: limitNum,
+          startDate: startTimestamp,
+          expiryDate: expiryTimestamp,
+          campaign: campaign.trim(),
+          description: description.trim(),
+          updateAt: serverTimestamp(),
+        };
+
+        await updateDoc(doc(db, 'Vouchers', editingVoucher.id), updatedDocData);
+
+        const updatedVoucher: AdminVoucher = {
+          ...editingVoucher,
+          code: cleanCode,
+          campaign: campaign.trim(),
+          description: description.trim(),
+          discountType,
+          discountValue: valueNum,
+          discountLabel,
+          conditionNote,
+          totalUsageLimit: limitNum,
+          usageVoucher: limitNum,
+          rateVoucher: valueNum,
+          minimumVoucher: minSpendNum,
+          typeVoucher: typeVoucherVal,
+          codeVouchers: cleanCode,
+          expiryDate,
+          expiryNote: `Hết hạn ${new Date(expiryDate).toLocaleDateString('vi-VN')}`,
+          minSpend: minSpendNum,
+          startDate,
+        };
+
+        onSaveVoucher(updatedVoucher);
+      }
+
+      onClose();
+    } catch (err: any) {
+      console.error('[CreateVoucherModal] Error saving voucher to Firestore:', err);
+      setError(err.message || 'Lỗi lưu thông tin voucher vào Firestore.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -303,7 +397,8 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
               id="btn-cancel-voucher-modal"
               data-testid="admin-vouchers-modal-btn-cancel"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-full text-secondary hover:bg-surface-container font-label-md text-label-md cursor-pointer transition-colors"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-full text-secondary hover:bg-surface-container font-label-md text-label-md cursor-pointer transition-colors disabled:opacity-50"
             >
               Hủy bỏ
             </button>
@@ -311,9 +406,10 @@ export const CreateVoucherModal: React.FC<CreateVoucherModalProps> = ({
               type="submit"
               id="btn-submit-save-voucher"
               data-testid="admin-vouchers-modal-btn-submit"
-              className="px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm transition-colors cursor-pointer disabled:opacity-50"
             >
-              Lưu &amp; Kích hoạt mã ưu đãi
+              {isSubmitting ? 'Đang lưu vào Firestore...' : 'Lưu & Kích hoạt mã ưu đãi'}
             </button>
           </div>
         </form>

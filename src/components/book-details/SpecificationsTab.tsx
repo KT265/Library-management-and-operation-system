@@ -6,9 +6,6 @@ interface SpecificationsTabProps {
 }
 
 export const SpecificationsTab: React.FC<SpecificationsTabProps> = ({ book }) => {
-  // Debug: verify received payload structure
-  console.log('[SpecificationsTab] book.specifications:', book.specifications);
-
   const specRows = [
     {
       labelVi: 'Số trang',

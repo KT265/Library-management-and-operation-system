@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export interface GalleryThumbnail {
   id: string;
@@ -8,27 +8,69 @@ export interface GalleryThumbnail {
   alt: string;
 }
 
+export interface BookGalleryData {
+  imgCoverPage?: string;
+  imgs?: string[];
+  [key: string]: any;
+}
+
 interface CoverGalleryProps {
-  currentCover: string;
-  bookTitle: string;
-  pages: number;
-  isZoomed: boolean;
-  onToggleZoom: () => void;
-  thumbnails: GalleryThumbnail[];
-  activeThumbIndex: number;
-  onSelectThumb: (index: number) => void;
+  bookData?: BookGalleryData;
+  currentCover?: string;
+  bookTitle?: string;
+  pages?: number;
+  isZoomed?: boolean;
+  onToggleZoom?: () => void;
+  thumbnails?: GalleryThumbnail[];
+  activeThumbIndex?: number;
+  onSelectThumb?: (index: number) => void;
 }
 
 export const CoverGallery: React.FC<CoverGalleryProps> = ({
-  currentCover,
-  bookTitle,
-  pages,
-  isZoomed,
+  bookData,
+  currentCover: propCurrentCover,
+  bookTitle = 'Ấn phẩm',
+  pages = 300,
+  isZoomed = false,
   onToggleZoom,
   thumbnails,
   activeThumbIndex,
   onSelectThumb,
 }) => {
+  // Resolving bookData: prioritize passed bookData, fallback to props/thumbnails
+  const resolvedBookData: BookGalleryData = bookData || {
+    imgCoverPage: propCurrentCover || (thumbnails && thumbnails[0]?.url) || '',
+    imgs: thumbnails && thumbnails.length > 1 ? thumbnails.slice(1).map((t) => t.url) : [],
+  };
+
+  // Merge the two schema fields into a single combined array:
+  // imgCoverPage (main cover) and imgs (additional gallery images)
+  const allImages: string[] = [
+    resolvedBookData.imgCoverPage,
+    ...(resolvedBookData.imgs || []),
+  ].filter((img): img is string => typeof img === 'string' && img.trim() !== '');
+
+  // Handle case where allImages may be empty or undefined
+  const galleryImages =
+    allImages.length > 0
+      ? allImages
+      : propCurrentCover
+      ? [propCurrentCover]
+      : ['/assets/images/book-placeholder.jpg'];
+
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
+  const activeIndex = typeof activeThumbIndex === 'number' ? activeThumbIndex : selectedIdx;
+
+  const activeCoverUrl =
+    galleryImages[activeIndex] || galleryImages[0] || propCurrentCover || '';
+
+  const handleSelect = (index: number) => {
+    setSelectedIdx(index);
+    if (onSelectThumb) {
+      onSelectThumb(index);
+    }
+  };
+
   return (
     <div
       id="book-cover-gallery"
@@ -44,7 +86,7 @@ export const CoverGallery: React.FC<CoverGalleryProps> = ({
         <img
           id="mainCoverImg"
           data-testid="book-details-gallery-main-img"
-          src={currentCover}
+          src={activeCoverUrl}
           alt={bookTitle}
           className={`w-full h-full object-cover transition-transform duration-500 ${
             isZoomed ? 'scale-125 cursor-zoom-out' : 'group-hover:scale-105 cursor-zoom-in'
@@ -85,20 +127,20 @@ export const CoverGallery: React.FC<CoverGalleryProps> = ({
         </button>
       </div>
 
-      {/* 4 Interactive Thumbnail Previews */}
+      {/* Complete Image Gallery (mapped from allImages) */}
       <div
         data-testid="book-details-gallery-thumbs"
         className="grid grid-cols-4 gap-space-xs max-w-lg mx-auto w-full"
       >
-        {thumbnails.map((thumb, index) => {
-          const isActive = activeThumbIndex === index;
+        {galleryImages.map((imageUrl, index) => {
+          const isActive = activeIndex === index;
           return (
             <button
-              key={thumb.id}
+              key={`thumb-${index}`}
               type="button"
-              data-testid={`book-details-gallery-thumb-${thumb.id}`}
-              data-caption={thumb.label}
-              onClick={() => onSelectThumb(index)}
+              data-testid={`book-details-gallery-thumb-${index}`}
+              data-caption={index === 0 ? 'Front Cover Original' : `Gallery Image ${index}`}
+              onClick={() => handleSelect(index)}
               className={`gallery-thumb relative aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
                 isActive
                   ? 'active-thumb border-primary shadow-md scale-102 ring-2 ring-primary/20'
@@ -106,11 +148,13 @@ export const CoverGallery: React.FC<CoverGalleryProps> = ({
               }`}
             >
               <img
-                src={thumb.url}
-                alt={thumb.alt}
+                src={imageUrl}
+                alt={`${bookTitle} - ${index === 0 ? 'Bìa chính' : `Ảnh ${index}`}`}
                 className="w-full h-full object-cover"
               />
-              <span className="sr-only">{thumb.labelVi}</span>
+              <span className="sr-only">
+                {index === 0 ? 'Bìa trước nguyên bản' : `Ảnh chi tiết ${index}`}
+              </span>
             </button>
           );
         })}

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Book } from '../../types';
 import { formatVND } from '../../utils/currency';
+import { useBookRating } from '../../hooks/useBookRating';
 
 export interface FeaturedBookItem {
   id: string;
@@ -31,6 +32,7 @@ export const FeaturedBookCard: React.FC<FeaturedBookCardProps> = ({
   onBuyNow,
 }) => {
   const navigate = useNavigate();
+  const { calculatedAverageRating, totalReviews, isLoading } = useBookRating(book.id);
 
   return (
     <article
@@ -65,11 +67,21 @@ export const FeaturedBookCard: React.FC<FeaturedBookCardProps> = ({
             data-testid={`home-featured-rating-${book.id}`}
             className="flex items-center gap-1 font-label-sm text-label-sm text-on-surface"
           >
-            <span className="material-symbols-outlined text-[16px] text-tertiary-container fill">
-              star
-            </span>
-            <span className="font-bold">{book.rating}</span>
-            <span className="text-outline">({book.reviewCount})</span>
+            {isLoading ? (
+              <div className="h-4 w-16 rounded-full bg-surface-container-high animate-pulse" />
+            ) : (
+              <>
+                <span
+                  className={`material-symbols-outlined text-[16px] ${
+                    calculatedAverageRating > 0 ? 'text-tertiary-container fill' : 'text-outline-variant'
+                  }`}
+                >
+                  star
+                </span>
+                <span className="font-bold">{calculatedAverageRating.toFixed(1)}</span>
+                <span className="text-outline">({totalReviews})</span>
+              </>
+            )}
           </div>
         </div>
 

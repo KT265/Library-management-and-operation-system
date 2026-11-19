@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import '../components/admin-users/admin-users.css';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import {
   db,
   mapFirestoreUserToAdminManagedUser,
@@ -22,6 +22,9 @@ import { UsersToast } from '../components/admin-users/UsersToast';
 export const AdminUsers: React.FC = () => {
   const globalShowToast = useStore((state) => state.showToast);
   const [users, setUsers] = useState<AdminManagedUser[]>([]);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [adminCount, setAdminCount] = useState<number>(0);
+  const [customerCount, setCustomerCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,25 +55,42 @@ export const AdminUsers: React.FC = () => {
     setToastTimeoutId(id);
   };
 
-  const fetchUsers = async () => {
+  // Real-time Firestore centralized data fetching
+  useEffect(() => {
     setLoading(true);
     setError(null);
-    try {
-      const snap = await getDocs(collection(db, 'Users'));
-      const fetched = snap.docs.map((docSnap) =>
-        mapFirestoreUserToAdminManagedUser(docSnap.data(), docSnap.id)
-      );
-      setUsers(fetched);
-    } catch (err: any) {
-      console.error('[AdminUsers] Error querying Firestore "Users":', err);
-      setError('Không thể tải danh sách tài khoản người dùng từ Firestore.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchUsers();
+    const unsubscribe = onSnapshot(
+      collection(db, 'Users'),
+      (snapshot) => {
+        let admins = 0;
+        let customers = 0;
+
+        const fetched = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          const rawRole = String(data.roleUser || data.role || '').toUpperCase();
+          if (rawRole === 'ADMIN') {
+            admins++;
+          } else {
+            customers++;
+          }
+          return mapFirestoreUserToAdminManagedUser(data, docSnap.id);
+        });
+
+        setUsers(fetched);
+        setTotalUsers(snapshot.docs.length);
+        setAdminCount(admins);
+        setCustomerCount(customers);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('[AdminUsers] Error querying Firestore "Users":', err);
+        setError(`Không thể tải danh sách tài khoản người dùng từ Firestore (${err?.message || err?.code || 'Lỗi kết nối'}).`);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   // Toast timeout cleanup on unmount
@@ -81,23 +101,6 @@ export const AdminUsers: React.FC = () => {
       }
     };
   }, [toastTimeoutId]);
-
-  // Dynamic KPI and counter calculations adhering to Stitch Screen baseline (6 Admins, 2,839 Users)
-  const currentAdminInList = useMemo(
-    () => users.filter((u) => u.role === 'admin').length,
-    [users]
-  );
-  const currentUserInList = useMemo(
-    () => users.filter((u) => u.role === 'user').length,
-    [users]
-  );
-
-  const BASELINE_ADMIN_OFFSET = 3;
-  const BASELINE_USER_OFFSET = 2835;
-
-  const adminKpiCount = currentAdminInList + BASELINE_ADMIN_OFFSET;
-  const userKpiCount = currentUserInList + BASELINE_USER_OFFSET;
-  const totalSystemCount = adminKpiCount + userKpiCount;
 
   // Filter users based on search query and role
   const filteredUsers = useMemo(() => {
@@ -140,13 +143,30 @@ export const AdminUsers: React.FC = () => {
     });
   }, [users, searchQuery, selectedRole]);
 
+  // Reset page to 1 when filters change if current page exceeds total pages
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / 7));
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
   // Handlers
   const handleRefresh = () => {
     setSearchQuery('');
     setSelectedRole('all');
     setCurrentPage(1);
-    fetchUsers();
-    showToast('Đã làm mới dữ liệu người dùng thành công.');
+    showToast('Đã làm mới bộ lọc và dữ liệu người dùng.');
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
+  const handleRoleSelect = (role: 'all' | UserRole) => {
+    setSelectedRole(role);
+    setCurrentPage(1);
   };
 
   const handleOpenEditUser = (user: AdminManagedUser) => {
@@ -197,20 +217,20 @@ export const AdminUsers: React.FC = () => {
 
       {/* 2. 3-Card KPI Summary Grid */}
       <UsersKpisGrid
-        adminCount={adminKpiCount}
-        userCount={userKpiCount}
+        adminCount={adminCount}
+        customerCount={customerCount}
       />
 
       {/* 3. Filter and Search Toolbar */}
       <UsersFilterToolbar
         searchQuery={searchQuery}
         selectedRole={selectedRole}
-        onSearchChange={setSearchQuery}
-        onRoleSelect={setSelectedRole}
+        onSearchChange={handleSearchChange}
+        onRoleSelect={handleRoleSelect}
         onRefresh={handleRefresh}
-        totalCount={totalSystemCount}
-        adminCount={adminKpiCount}
-        userCount={userKpiCount}
+        totalUsers={totalUsers}
+        adminCount={adminCount}
+        customerCount={customerCount}
       />
 
       {/* Loading & Error States */}
@@ -232,7 +252,7 @@ export const AdminUsers: React.FC = () => {
           <span className="material-symbols-outlined text-4xl text-error mb-2">error</span>
           <p className="text-error font-medium mb-4">{error}</p>
           <button
-            onClick={fetchUsers}
+            onClick={handleRefresh}
             className="px-6 py-2.5 bg-primary text-on-primary rounded-xl font-medium hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
           >
             Thử lại
@@ -245,7 +265,6 @@ export const AdminUsers: React.FC = () => {
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           onEditRole={handleOpenEditUser}
-          totalSystemCount={totalSystemCount}
         />
       )}
 
