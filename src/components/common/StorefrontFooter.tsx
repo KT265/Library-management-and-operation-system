@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useStore } from '../../store/useStore';
 
 const systemLogo = new URL('../../Public/Logo.png', import.meta.url).href;
 
 export const StorefrontFooter: React.FC = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useStore();
+  const isAdmin = Boolean(isAuthenticated && user?.role === 'admin');
 
   return (
     <footer
@@ -115,29 +118,31 @@ export const StorefrontFooter: React.FC = () => {
         </div>
 
         {/* Col 4: Operations */}
-        <div
-          id="sf-footer-col-operations"
-          data-testid="sf-footer-col-operations"
-          className="space-y-space-sm"
-        >
-          <h3 className="font-title-sm text-title-sm font-bold text-on-surface uppercase tracking-wider">
-            Vận hành hệ thống
-          </h3>
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            Quản trị danh mục, kiểm soát giao dịch và bổ sung kho ấn phẩm nhanh chóng.
-          </p>
-          <button
-            id="sf-footer-btn-admin"
-            data-testid="sf-footer-btn-admin"
-            onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg hover:bg-primary transition-colors cursor-pointer shadow-sm"
-            data-path="dashboard-overview"
-            type="button"
+        {isAdmin && (
+          <div
+            id="sf-footer-col-operations"
+            data-testid="sf-footer-col-operations"
+            className="space-y-space-sm"
           >
-            <span className="material-symbols-outlined text-[18px]">space_dashboard</span>
-            Vào cổng quản trị
-          </button>
-        </div>
+            <h3 className="font-title-sm text-title-sm font-bold text-on-surface uppercase tracking-wider">
+              Vận hành hệ thống
+            </h3>
+            <p className="font-body-md text-body-md text-on-surface-variant">
+              Quản trị danh mục, kiểm soát giao dịch và bổ sung kho ấn phẩm nhanh chóng.
+            </p>
+            <button
+              id="sf-footer-btn-admin"
+              data-testid="sf-footer-btn-admin"
+              onClick={() => navigate('/admin')}
+              className="inline-flex items-center gap-space-xs px-space-md py-space-sm rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg hover:bg-primary transition-colors cursor-pointer shadow-sm"
+              data-path="dashboard-overview"
+              type="button"
+            >
+              <span className="material-symbols-outlined text-[18px]">space_dashboard</span>
+              Vào cổng quản trị
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bottom Sub-footer */}

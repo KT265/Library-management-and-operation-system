@@ -16,6 +16,8 @@ export const StorefrontHeader: React.FC = () => {
     isAuthenticated,
   } = useStore();
 
+  const isAdmin = Boolean(isAuthenticated && user?.role === 'admin');
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const profileRootRef = useRef<HTMLDivElement>(null);
@@ -147,32 +149,34 @@ export const StorefrontHeader: React.FC = () => {
         {/* Right: Mode Switcher & Reading Bag & User Profile */}
         <div className="flex items-center gap-space-sm shrink-0">
           {/* Mode Switcher Pill */}
-          <div
-            id="sf-header-mode-switcher"
-            data-testid="sf-header-mode-switcher"
-            className="flex items-center p-1 rounded-full bg-surface-container-high"
-          >
-            <Link
-              to="/"
-              id="sf-header-mode-btn-storefront"
-              data-testid="sf-header-mode-btn-storefront"
-              className="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm shadow-sm transition-all"
-              data-path="home"
+          {isAdmin && (
+            <div
+              id="sf-header-mode-switcher"
+              data-testid="sf-header-mode-switcher"
+              className="flex items-center p-1 rounded-full bg-surface-container-high"
             >
-              <span className="material-symbols-outlined text-[16px]">storefront</span>
-              <span className="hidden sm:inline">Cửa hàng</span>
-            </Link>
-            <Link
-              to="/admin"
-              id="sf-header-mode-btn-admin"
-              data-testid="sf-header-mode-btn-admin"
-              className="flex items-center gap-1.5 px-space-sm py-1 rounded-full text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-all"
-              data-path="dashboard-overview"
-            >
-              <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
-              <span className="hidden sm:inline">Quản trị</span>
-            </Link>
-          </div>
+              <Link
+                to="/"
+                id="sf-header-mode-btn-storefront"
+                data-testid="sf-header-mode-btn-storefront"
+                className="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-primary text-on-primary font-label-sm text-label-sm shadow-sm transition-all"
+                data-path="home"
+              >
+                <span className="material-symbols-outlined text-[16px]">storefront</span>
+                <span className="hidden sm:inline">Cửa hàng</span>
+              </Link>
+              <Link
+                to="/admin"
+                id="sf-header-mode-btn-admin"
+                data-testid="sf-header-mode-btn-admin"
+                className="flex items-center gap-1.5 px-space-sm py-1 rounded-full text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-all"
+                data-path="dashboard-overview"
+              >
+                <span className="material-symbols-outlined text-[16px]">admin_panel_settings</span>
+                <span className="hidden sm:inline">Quản trị</span>
+              </Link>
+            </div>
+          )}
 
           {/* Quick Header Cart Trigger */}
           <button
