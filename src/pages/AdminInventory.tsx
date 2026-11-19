@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db, mapFirestoreBookToInventoryBook } from '../services/firebase';
 import { useStore } from '../store/useStore';
 import { InventoryBook, StockFilterType, SortOptionType } from '../components/admin-inventory/types';
@@ -73,7 +73,7 @@ export const AdminInventory: React.FC = () => {
       setBooks(fetchedBooks);
     } catch (err: any) {
       console.error('[AdminInventory] Error querying Firestore "Books":', err);
-      setError('Không thể kết nối đến máy chủ cơ sở dữ liệu kho sách. Vui lòng thử lại.');
+      setError(`Không thể kết nối đến máy chủ cơ sở dữ liệu kho sách (${err?.message || err?.code || 'Lỗi kết nối'}). Vui lòng thử lại.`);
     } finally {
       setLoading(false);
     }
@@ -131,47 +131,12 @@ export const AdminInventory: React.FC = () => {
   }, [filteredBooks, currentPage, rowsPerPage]);
 
   // Handlers
-  const handleAddBook = async (newBookData: Omit<InventoryBook, 'id'>) => {
-    try {
-      const docRef = await addDoc(collection(db, 'Books'), {
-        title: newBookData.title,
-        nameAuthor: newBookData.author,
-        categories: [{ id: 'cat-gen', nameCategories: newBookData.category }],
-        ISBN12: newBookData.isbn,
-        stockQuantity: newBookData.availableUnits,
-        originalPrice: newBookData.price,
-        salePrice: newBookData.price,
-        imgCoverPage: newBookData.coverImage,
-        description: newBookData.description || '',
-        specifications: {
-          publisher: newBookData.publisher,
-          releaseDate: `${newBookData.publishYear || 2026}-01-01`,
-        },
-      });
-      const newBook: InventoryBook = { ...newBookData, id: docRef.id };
-      setBooks((prev) => [newBook, ...prev]);
-      displayToast(`Đã thêm thành công ấn phẩm “${newBook.title}” vào kho sách.`);
-    } catch (e) {
-      console.error('[AdminInventory] Error adding book to Firestore:', e);
-      displayToast('Lỗi khi lưu ấn phẩm lên cơ sở dữ liệu.');
-    }
+  const handleAddBook = (newBook: InventoryBook) => {
+    setBooks((prev) => [newBook, ...prev]);
   };
 
-  const handleSaveEditBook = async (updated: InventoryBook) => {
-    try {
-      await updateDoc(doc(db, 'Books', updated.id), {
-        title: updated.title,
-        nameAuthor: updated.author,
-        stockQuantity: updated.availableUnits,
-        salePrice: updated.price,
-        ISBN12: updated.isbn,
-      });
-      setBooks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
-      displayToast(`Đã cập nhật thông tin ấn phẩm “${updated.title}”.`);
-    } catch (e) {
-      console.error('[AdminInventory] Error updating book:', e);
-      displayToast('Lỗi khi cập nhật ấn phẩm.');
-    }
+  const handleSaveEditBook = (updated: InventoryBook) => {
+    setBooks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
   };
 
   const handleConfirmDelete = async (bookId: string) => {

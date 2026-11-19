@@ -141,47 +141,6 @@ export const DeliveryAddressForm: React.FC<DeliveryAddressFormProps> = ({
           />
         </div>
 
-        {/* Address Type & Default */}
-        <div className="flex flex-wrap items-center justify-between gap-space-md pt-1">
-          <div className="flex items-center gap-4">
-            <span className="font-label-md text-label-md text-on-surface-variant font-medium">
-              Loại địa chỉ:
-            </span>
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="radio"
-                name="addressType"
-                checked={formData.addressType === 'Primary Residence'}
-                onChange={() => onChange('addressType', 'Primary Residence')}
-                className="text-primary accent-primary"
-              />
-              <span className="font-body-sm text-body-sm text-on-surface">Nhà riêng</span>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="radio"
-                name="addressType"
-                checked={formData.addressType === 'Office'}
-                onChange={() => onChange('addressType', 'Office')}
-                className="text-primary accent-primary"
-              />
-              <span className="font-body-sm text-body-sm text-on-surface">Cơ quan / Văn phòng</span>
-            </label>
-          </div>
-
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={formData.isDefault}
-              onChange={(e) => onChange('isDefault', e.target.checked)}
-              className="w-4 h-4 rounded text-primary accent-primary cursor-pointer"
-            />
-            <span className="font-body-sm text-body-sm text-on-surface-variant">
-              Đặt làm địa chỉ giao hàng mặc định
-            </span>
-          </label>
-        </div>
-
         {/* Buttons */}
         <div className="flex items-center justify-end gap-space-sm pt-space-sm border-t border-outline-variant/30">
           <button

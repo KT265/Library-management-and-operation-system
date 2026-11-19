@@ -9,7 +9,8 @@ export interface OrderSummaryCardProps {
   finalTotal: number;
   isSubmitting: boolean;
   selectedCount: number;
-  onCheckout: () => void;
+  onCheckout?: () => void;
+  onConfirmOrder?: () => void;
 }
 
 export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
@@ -21,7 +22,9 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
   isSubmitting,
   selectedCount,
   onCheckout,
+  onConfirmOrder,
 }) => {
+  const handleAction = onConfirmOrder || onCheckout;
   return (
     <div
       id="order-summary-card"
@@ -115,7 +118,7 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
         data-testid="cart-checkout-summary-btn-checkout"
         type="button"
         disabled={isSubmitting || selectedCount === 0}
-        onClick={onCheckout}
+        onClick={handleAction}
         className="w-full h-12 bg-primary text-on-primary rounded-full font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-md hover:bg-primary-container hover:shadow-lg transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         {isSubmitting ? (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
+import { db } from '../../services/firebase';
 import { formatVND } from '../../utils/currency';
 
 export interface KpiMetricsBentoProps {
@@ -40,23 +40,29 @@ export const KpiMetricsBento: React.FC<KpiMetricsBentoProps> = ({
     setInternalLoading(true);
 
     Promise.all([
-      getDocs(collection(db, FIRESTORE_COLLECTIONS.ORDER)),
-      getDocs(collection(db, FIRESTORE_COLLECTIONS.BOOKS)),
-      getDocs(collection(db, FIRESTORE_COLLECTIONS.USERS)),
+      getDocs(collection(db, 'Order')),
+      getDocs(collection(db, 'Books')),
+      getDocs(collection(db, 'Users')),
     ])
       .then(([ordersSnap, booksSnap, usersSnap]) => {
         if (!isMounted) return;
 
         const rawOrders = ordersSnap.docs.map((d) => d.data());
         const totalRevenue = rawOrders
-          .filter((o: any) => String(o.statusPayment || o.paymentStatus || '').toUpperCase() === 'PAID')
-          .reduce((sum: number, o: any) => sum + (o.totalPrice ?? o.totalAmount ?? 0), 0);
+          .filter((o: any) => {
+            const pay = String(o.statusPayment || '').toUpperCase();
+            const stat = String(o.statusOrder || '').toUpperCase();
+            return pay === 'PAID' || stat === 'DELIVERED';
+          })
+          .reduce((sum: number, o: any) => {
+            const price = typeof o.totalPrice === 'number' ? o.totalPrice : (Number(o.totalPrice) || 0);
+            return sum + price;
+          }, 0);
 
         const successfulOrders = rawOrders.filter((o: any) => {
-          const pay = String(o.statusPayment || o.paymentStatus || '').toUpperCase();
-          const stat = String(o.statusOrder || o.status || '').toUpperCase();
-          return pay === 'PAID' || stat === 'DELIVERED';
-        }).length;
+          const stat = String(o.statusOrder || '').toUpperCase();
+          return stat === 'DELIVERED' || stat === 'PROCESSING' || stat === 'SHIPPED';
+        }).length || rawOrders.length;
 
         setInternalMetrics({
           revenue: totalRevenue,

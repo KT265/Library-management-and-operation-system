@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
-import { db, FIRESTORE_COLLECTIONS } from '../services/firebase';
-import { createPayOsPaymentLink } from '../services/payos';
+import { collection, getDocs, query, where, doc, getDoc, limit } from 'firebase/firestore';
+import { db, getFirebaseIdToken } from '../services/firebase';
+import { createPayOsPaymentLink, PaymentLinkResponse } from '../services/payos';
 import { useStore } from '../store/useStore';
 import { Order } from '../types';
 import {
@@ -108,6 +108,13 @@ export const CartCheckout: React.FC = () => {
   // Payment Method State
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('vietqr');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // PayOS payment data — populated after a payment link is created (instead of redirecting)
+  const [payosData, setPayosData] = useState<PaymentLinkResponse | null>(null);
+  const [isCreatingPayment, setIsCreatingPayment] = useState<boolean>(false);
+  const [isOrderConfirmed, setIsOrderConfirmed] = useState<boolean>(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [createdOrderCode, setCreatedOrderCode] = useState<number | string | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<string>('PENDING');
 
   // Computed Values
   const selectedItems = cartItems.filter((item) => item.selected);
@@ -246,6 +253,7 @@ export const CartCheckout: React.FC = () => {
     }
 
     setIsSubmitting(true);
+    setIsOrderConfirmed(true);
 
     try {
       const codeOrder = `#BK-${Math.floor(10000 + Math.random() * 90000)}`;
@@ -294,19 +302,32 @@ export const CartCheckout: React.FC = () => {
         updatedAt: new Date().toISOString(),
       };
 
-      let docId: string;
-      try {
-        const orderDocRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.ORDER), firestoreOrderData);
-        docId = orderDocRef.id;
-      } catch (fsErr) {
-        console.warn('[CartCheckout] Direct addDoc failed, using fallback docId:', fsErr);
-        docId = `ord-${Date.now()}`;
+      // 3. Create Order securely via Express backend (syncs inventory for COD atomically)
+      const token = await getFirebaseIdToken();
+      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const orderRes = await fetch(`${apiBaseUrl}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(firestoreOrderData),
+      });
+
+      const orderResult = await orderRes.json().catch(() => ({}));
+      if (!orderRes.ok || !orderResult?.id) {
+        throw new Error(orderResult?.message || orderResult?.error || 'Không thể tạo đơn hàng trên hệ thống.');
       }
+
+      const docId: string = orderResult.id;
+      const serverCodeOrder: string = orderResult.codeOrder || codeOrder;
+      setCreatedOrderId(docId);
+      setCreatedOrderCode(serverCodeOrder);
 
       // Sync into local Zustand store
       const localStoreOrder: Order = {
         id: docId,
-        orderNumber: codeOrder,
+        orderNumber: serverCodeOrder,
         userId: user.id,
         userName: recipient.name,
         userEmail: user.email || 'guest@bookverse.vn',
@@ -336,6 +357,8 @@ export const CartCheckout: React.FC = () => {
           typeof window !== 'undefined' && window.location?.origin
             ? window.location.origin
             : 'http://localhost:5173';
+
+        setIsCreatingPayment(true);
         const paymentResponse = await createPayOsPaymentLink({
           docId,
           totalPrice: finalAmount,
@@ -343,28 +366,127 @@ export const CartCheckout: React.FC = () => {
           returnUrl: `${origin}/payment-success`,
         });
 
-        if (paymentResponse?.checkoutUrl) {
-          showToast('Đang chuyển hướng tới cổng thanh toán PayOS...');
-          if (typeof window !== 'undefined' && window.location) {
-            window.location.href = paymentResponse.checkoutUrl;
+        if (paymentResponse) {
+          // Store PayOS data and display inline — do NOT redirect
+          setPayosData(paymentResponse);
+          if (paymentResponse.orderCode) {
+            setCreatedOrderCode(paymentResponse.orderCode);
           }
-          return;
+          showToast('Mã QR đã sẵn sàng. Vui lòng quét mã để hoàn tất thanh toán.');
         } else {
-          throw new Error('Không nhận được checkoutUrl hợp lệ từ cổng thanh toán PayOS.');
+          throw new Error('Không nhận được dữ liệu thanh toán hợp lệ từ PayOS.');
         }
+        setIsCreatingPayment(false);
       } else {
         // COD Payment Flow
-        selectedItems.forEach((item) => removeFromCart(item.id));
+        clearCart();
         showToast('Đặt hàng thành công! Cảm ơn bạn đã lựa chọn BookVerse.');
-        navigate('/orders');
+        navigate(`/payment-success?id=${docId}&orderCode=${encodeURIComponent(serverCodeOrder.replace('#', ''))}&method=COD`, {
+          state: { orderId: docId, orderCode: serverCodeOrder, methodPayment: 'COD' },
+        });
       }
     } catch (err: any) {
       console.error('[CartCheckout] Lỗi trong quá trình thanh toán:', err);
       showToast(err.message || 'Lỗi khi khởi tạo thanh toán PayOS. Vui lòng thử lại!');
     } finally {
       setIsSubmitting(false);
+      setIsCreatingPayment(false);
     }
   };
+
+  // Payment Status Polling & Auto-Redirect (Lifted from VietQrPaymentPanel)
+  useEffect(() => {
+    if (!isOrderConfirmed || !payosData) return;
+
+    const targetOrderCode = payosData.orderCode || createdOrderCode;
+    const targetOrderId = createdOrderId || payosData.id;
+
+    if (!targetOrderCode && !targetOrderId) return;
+
+    let isPollingActive = true;
+
+    const checkPaymentStatus = async () => {
+      try {
+        const identifier = targetOrderId || targetOrderCode;
+        const apiBaseUrl =
+          (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) ||
+          (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) ||
+          'http://localhost:5000';
+
+        let status: string | null = null;
+
+        // 1. Try checking via backend status endpoint
+        try {
+          const res = await fetch(`${apiBaseUrl}/api/payment/status/${identifier}`);
+          if (res.ok) {
+            const data = await res.json();
+            status = data?.statusPayment || data?.status;
+          }
+        } catch {
+          // Network fetch error, fallback to Firestore check below
+        }
+
+        // 2. Fallback check directly from Firestore "Order" collection
+        if (!status && targetOrderId) {
+          const directRef = doc(db, 'Order', String(targetOrderId));
+          const snap = await getDoc(directRef);
+          if (snap.exists()) {
+            status = snap.data()?.statusPayment;
+          }
+        }
+
+        // 3. Fallback check by orderCode in Firestore
+        if (!status && targetOrderCode) {
+          const q = query(
+            collection(db, 'Order'),
+            where('orderCode', '==', Number(targetOrderCode) || targetOrderCode),
+            limit(1)
+          );
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            status = snap.docs[0].data()?.statusPayment;
+          }
+        }
+
+        if (status) {
+          setPaymentStatus(status);
+        }
+
+        const normalized = String(status || '').trim().toUpperCase();
+
+        // As soon as statusPayment returns as 'success' or 'PAID', immediately clear and redirect
+        if (normalized === 'PAID' || normalized === 'SUCCESS') {
+          if (!isPollingActive) return;
+          isPollingActive = false;
+          clearInterval(pollInterval);
+
+          showToast('Thanh toán thành công! Đang chuyển hướng...');
+
+          const redirectUrl = targetOrderCode
+            ? `/payment-success?orderCode=${targetOrderCode}&status=PAID`
+            : targetOrderId
+            ? `/payment-success?id=${targetOrderId}&status=PAID`
+            : '/payment-success';
+
+          navigate(redirectUrl);
+        }
+      } catch (err) {
+        console.warn('[CartCheckout] Polling status check error:', err);
+      }
+    };
+
+    // Initial check after 2 seconds
+    const initialTimer = setTimeout(checkPaymentStatus, 2000);
+
+    // Polling interval every 3-5 seconds (3000ms)
+    const pollInterval = setInterval(checkPaymentStatus, 3000);
+
+    return () => {
+      isPollingActive = false;
+      clearTimeout(initialTimer);
+      clearInterval(pollInterval);
+    };
+  }, [isOrderConfirmed, payosData, createdOrderId, createdOrderCode, navigate, showToast]);
 
   return (
     <div
@@ -429,6 +551,11 @@ export const CartCheckout: React.FC = () => {
                   setAddressFormData({ ...recipient });
                   setIsEditingAddress(true);
                 }}
+                onFirestoreAddressLoaded={(loaded) => {
+                  // Sync fetched Firestore address into both display and form state
+                  setRecipient(loaded);
+                  setAddressFormData(loaded);
+                }}
               />
             )}
 
@@ -453,6 +580,11 @@ export const CartCheckout: React.FC = () => {
                   finalAmount={finalAmount}
                   transferMemo={transferMemo}
                   onCopySuccess={showToast}
+                  isOrderConfirmed={isOrderConfirmed}
+                  qrData={payosData}
+                  payosData={payosData}
+                  paymentStatus={paymentStatus}
+                  isCreatingPayment={isCreatingPayment}
                 />
               ) : (
                 <CodPaymentPanel />
@@ -482,6 +614,7 @@ export const CartCheckout: React.FC = () => {
               finalTotal={finalAmount}
               selectedCount={selectedCount}
               isSubmitting={isSubmitting}
+              onConfirmOrder={handleCheckout}
               onCheckout={handleCheckout}
             />
           </div>

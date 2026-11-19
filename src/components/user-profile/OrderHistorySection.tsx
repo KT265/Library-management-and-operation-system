@@ -8,11 +8,11 @@ export interface OrderHistorySectionProps {
   setSearchQuery: (query: string) => void;
   activeTab: OrderFilterTab;
   setActiveTab: (tab: OrderFilterTab) => void;
-  onOpenTracking: (order: OrderDisplay) => void;
   onOpenReview: (order: OrderDisplay) => void;
-  onOpenVietQr: (order: OrderDisplay) => void;
-  onReorder: (order: OrderDisplay) => void;
-  onCancelOrder: (order: OrderDisplay) => void;
+  onOpenTracking?: (order: OrderDisplay) => void;
+  onOpenVietQr?: (order: OrderDisplay) => void;
+  onReorder?: (order: OrderDisplay) => void;
+  onCancelOrder?: (order: OrderDisplay) => void;
 }
 
 export const OrderHistorySection: React.FC<OrderHistorySectionProps> = ({
@@ -21,29 +21,66 @@ export const OrderHistorySection: React.FC<OrderHistorySectionProps> = ({
   setSearchQuery,
   activeTab,
   setActiveTab,
-  onOpenTracking,
   onOpenReview,
-  onOpenVietQr,
-  onReorder,
-  onCancelOrder,
 }) => {
-  const filterTabs: { id: OrderFilterTab; label: string; legacyLabel: string; domId: string }[] = [
-    { id: 'all', label: 'Tất cả đơn hàng', legacyLabel: 'All Orders', domId: 'tab-all-orders' },
-    {
-      id: 'processing',
-      label: 'Đang xử lý & Đang giao',
-      legacyLabel: 'Paid & Dispatched',
-      domId: 'tab-processing-orders',
-    },
-    {
-      id: 'pending',
-      label: 'Chờ thanh toán',
-      legacyLabel: 'Pending Settlement',
-      domId: 'tab-pending-orders',
-    },
-    { id: 'delivered', label: 'Đã giao thành công', legacyLabel: 'Delivered', domId: 'tab-delivered-orders' },
-    { id: 'cancelled', label: 'Đã hủy', legacyLabel: 'Cancelled', domId: 'tab-cancelled-orders' },
+  const filterTabs: { id: OrderFilterTab; label: string; domId: string }[] = [
+    { id: 'all', label: 'Tất cả đơn hàng', domId: 'tab-all-orders' },
+    { id: 'pending', label: 'Chờ xử lý', domId: 'tab-pending-order' },
+    { id: 'processing', label: 'Đang giao', domId: 'tab-processing-order' },
+    { id: 'delivered', label: 'Đã giao thành công', domId: 'tab-delivered-orders' },
   ];
+
+  // Helper to extract timestamp ms
+  const getOrderTime = (o: OrderDisplay): number => {
+    if (o.createAt) {
+      if (typeof o.createAt.toMillis === 'function') return o.createAt.toMillis();
+      if (typeof o.createAt.toDate === 'function') return o.createAt.toDate().getTime();
+      if (typeof o.createAt.seconds === 'number') return o.createAt.seconds * 1000;
+      const parsed = new Date(o.createAt).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    if (o.createdAt) {
+      const parsed = new Date(o.createdAt).getTime();
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  };
+
+  // Filter orders by activeTab (strict string matches) and search query
+  const filteredOrders = orders.filter((order) => {
+    const rawState = String(order.stateOrder || order.statusOrder || order.status || '').toUpperCase();
+
+    if (activeTab === 'pending' && rawState !== 'PENDING') {
+      return false;
+    }
+    if (activeTab === 'processing' && rawState !== 'PROCESSING') {
+      return false;
+    }
+    if (activeTab === 'delivered' && rawState !== 'DELIVERED') {
+      return false;
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const orderNumMatch = order.orderNumber.toLowerCase().includes(q);
+      const itemMatch = order.items.some(
+        (item) => item.title.toLowerCase().includes(q) || item.author.toLowerCase().includes(q)
+      );
+      if (!orderNumMatch && !itemMatch) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Chronological Sorting: Newest to Oldest using createAt timestamp before rendering
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    if (b.createAt?.toMillis && a.createAt?.toMillis) {
+      return b.createAt.toMillis() - a.createAt.toMillis();
+    }
+    return getOrderTime(b) - getOrderTime(a);
+  });
 
   return (
     <div
@@ -98,7 +135,6 @@ export const OrderHistorySection: React.FC<OrderHistorySectionProps> = ({
               }`}
             >
               <span>{tab.label}</span>
-              <span className="sr-only"> ({tab.legacyLabel})</span>
             </button>
           );
         })}
@@ -113,7 +149,7 @@ export const OrderHistorySection: React.FC<OrderHistorySectionProps> = ({
         {/* Legacy ID alias */}
         <div id="userOrdersList" className="sr-only" />
 
-        {orders.length === 0 ? (
+        {sortedOrders.length === 0 ? (
           <div
             id="empty-orders"
             data-testid="user-profile-order-history-empty"
@@ -130,15 +166,11 @@ export const OrderHistorySection: React.FC<OrderHistorySectionProps> = ({
             </p>
           </div>
         ) : (
-          orders.map((order) => (
+          sortedOrders.map((order) => (
             <OrderHistoryCard
               key={order.id}
               order={order}
-              onOpenTracking={onOpenTracking}
               onOpenReview={onOpenReview}
-              onOpenVietQr={onOpenVietQr}
-              onReorder={onReorder}
-              onCancelOrder={onCancelOrder}
             />
           ))
         )}

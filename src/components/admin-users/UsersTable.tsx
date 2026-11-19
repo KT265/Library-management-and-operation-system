@@ -9,7 +9,8 @@ interface UsersTableProps {
   onViewSecurityLog?: (user: AdminManagedUser) => void;
   currentPage: number;
   onPageChange: (page: number) => void;
-  totalSystemCount: number;
+  totalSystemCount?: number;
+  itemsPerPage?: number;
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
@@ -17,38 +18,29 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   onEditRole,
   currentPage,
   onPageChange,
-  totalSystemCount,
+  itemsPerPage = 7,
 }) => {
   const hasUsers = users.length > 0;
-  const pageSize = 7;
+  const pageSize = itemsPerPage;
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
 
-  // When user dataset exceeds pageSize (e.g. after interactive user additions in session),
-  // slice to current page view; if baseline sample dataset (length <= pageSize),
-  // display the showcase sample rows across mocked pages.
-  let displayedUsers = users;
-  let startIndex = 0;
-  let endIndex = 0;
+  const pageStartIndex = (currentPage - 1) * pageSize;
+  const displayedUsers = hasUsers
+    ? users.slice(pageStartIndex, pageStartIndex + pageSize)
+    : [];
 
-  if (hasUsers) {
-    if (users.length > pageSize) {
-      const pageStartIndex = (currentPage - 1) * pageSize;
-      const sliced = users.slice(pageStartIndex, pageStartIndex + pageSize);
-      displayedUsers = sliced.length > 0 ? sliced : users.slice(0, pageSize);
-      startIndex = pageStartIndex + 1;
-      endIndex = Math.min(pageStartIndex + displayedUsers.length, totalSystemCount);
-    } else {
-      displayedUsers = users;
-      startIndex = Math.min((currentPage - 1) * pageSize + 1, totalSystemCount);
-      endIndex = Math.min(
-        startIndex + (currentPage === 1 ? users.length : pageSize) - 1,
-        totalSystemCount
-      );
+  const getPaginationItems = (): (number | string)[] => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
-  }
-
-  const displayRange = hasUsers
-    ? `${startIndex.toLocaleString('vi-VN')} - ${Math.max(startIndex, endIndex).toLocaleString('vi-VN')}`
-    : '0';
+    if (currentPage <= 3) {
+      return [1, 2, 3, '...', totalPages];
+    }
+    if (currentPage >= totalPages - 2) {
+      return [1, '...', totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, '...', currentPage, '...', totalPages];
+  };
 
   return (
     <div
@@ -110,20 +102,8 @@ export const UsersTable: React.FC<UsersTableProps> = ({
       <div
         id="users-pagination-footer"
         data-testid="admin-users-pagination"
-        className="px-space-md py-space-sm bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm border-t border-surface-container"
+        className="px-space-md py-space-sm bg-surface-container-low flex items-center justify-end border-t border-surface-container"
       >
-        <div className="font-body-sm text-body-sm text-secondary">
-          Hiển thị{' '}
-          <span className="font-semibold text-on-surface">
-            {displayRange}
-          </span>{' '}
-          trong{' '}
-          <span className="font-semibold text-on-surface">
-            {totalSystemCount.toLocaleString('vi-VN')}
-          </span>{' '}
-          tài khoản
-        </div>
-
         <div className="flex items-center gap-1 font-label-md text-label-md">
           <button
             type="button"
@@ -131,81 +111,53 @@ export const UsersTable: React.FC<UsersTableProps> = ({
             data-testid="admin-users-page-prev"
             disabled={!hasUsers || currentPage <= 1}
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-            className="w-8 h-8 rounded-full bg-surface-container text-outline hover:text-on-surface flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+            className="w-8 h-8 rounded-full bg-surface-container text-outline hover:text-on-surface flex items-center justify-center transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
             title="Trang trước"
           >
             <span className="material-symbols-outlined text-[18px]">chevron_left</span>
           </button>
 
-          <button
-            type="button"
-            id="btn-page-1"
-            data-testid="admin-users-page-1"
-            disabled={!hasUsers}
-            onClick={() => onPageChange(1)}
-            className={`w-8 h-8 rounded-full font-semibold flex items-center justify-center shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentPage === 1
-                ? 'bg-primary text-on-primary'
-                : 'hover:bg-surface-container text-on-surface'
-            }`}
-          >
-            1
-          </button>
+          {hasUsers &&
+            getPaginationItems().map((item, idx) => {
+              if (item === '...') {
+                return (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="px-1 text-outline select-none flex items-center justify-center"
+                  >
+                    ...
+                  </span>
+                );
+              }
 
-          <button
-            type="button"
-            id="btn-page-2"
-            data-testid="admin-users-page-2"
-            disabled={!hasUsers}
-            onClick={() => onPageChange(2)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentPage === 2
-                ? 'bg-primary text-on-primary font-semibold'
-                : 'hover:bg-surface-container text-on-surface'
-            }`}
-          >
-            2
-          </button>
+              const pageNum = Number(item);
+              const isActive = pageNum === currentPage;
 
-          <button
-            type="button"
-            id="btn-page-3"
-            data-testid="admin-users-page-3"
-            disabled={!hasUsers}
-            onClick={() => onPageChange(3)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentPage === 3
-                ? 'bg-primary text-on-primary font-semibold'
-                : 'hover:bg-surface-container text-on-surface'
-            }`}
-          >
-            3
-          </button>
-
-          <span className="px-1 text-outline">...</span>
-
-          <button
-            type="button"
-            id="btn-page-last"
-            data-testid="admin-users-page-last"
-            disabled={!hasUsers}
-            onClick={() => onPageChange(407)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-              currentPage === 407
-                ? 'bg-primary text-on-primary font-semibold'
-                : 'hover:bg-surface-container text-on-surface'
-            }`}
-          >
-            407
-          </button>
+              return (
+                <button
+                  key={`page-${pageNum}`}
+                  type="button"
+                  id={`btn-page-${pageNum}`}
+                  data-testid={`admin-users-page-${pageNum}`}
+                  onClick={() => onPageChange(pageNum)}
+                  className={`w-8 h-8 rounded-full font-semibold flex items-center justify-center shadow-xs cursor-pointer transition-colors ${
+                    isActive
+                      ? 'bg-primary text-on-primary'
+                      : 'hover:bg-surface-container text-on-surface'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
 
           <button
             type="button"
             id="btn-page-next"
             data-testid="admin-users-page-next"
-            disabled={!hasUsers || currentPage >= 407}
-            onClick={() => onPageChange(Math.min(407, currentPage + 1))}
-            className="w-8 h-8 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+            disabled={!hasUsers || currentPage >= totalPages}
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            className="w-8 h-8 rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high flex items-center justify-center transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
             title="Trang sau"
           >
             <span className="material-symbols-outlined text-[18px]">chevron_right</span>

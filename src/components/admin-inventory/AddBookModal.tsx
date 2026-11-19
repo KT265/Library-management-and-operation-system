@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InventoryBook } from './types';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { db, FIRESTORE_COLLECTIONS } from '../../services/firebase';
+import { useStore } from '../../store/useStore';
 
 interface AddBookModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddBook: (newBook: Omit<InventoryBook, 'id'>) => void;
+  onAddBook: (newBook: InventoryBook) => void;
   categories: string[];
+}
+
+interface CategoryOption {
+  id: string;
+  name: string;
 }
 
 export const AddBookModal: React.FC<AddBookModalProps> = ({
@@ -21,9 +29,8 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
   const [authorImage, setAuthorImage] = useState('');
 
   // 2. Multi-select Categories
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    categories[0] || 'Khoa học máy tính',
-  ]);
+  const [availableCategories, setAvailableCategories] = useState<CategoryOption[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [newCategoryInput, setNewCategoryInput] = useState('');
 
   // 3. Publishing & Book Specifications
@@ -53,24 +60,100 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
   const [additionalImage3, setAdditionalImage3] = useState('');
 
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+
+    async function loadCategories() {
+      try {
+        const snap = await getDocs(collection(db, FIRESTORE_COLLECTIONS.CATEGORIES));
+        const loaded: CategoryOption[] = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            name: data.nameCategories || data.name || d.id,
+          };
+        });
+
+        const initialOptions: CategoryOption[] =
+          loaded.length > 0
+            ? loaded
+            : categories.map((c, i) => ({ id: `cat_0${i + 1}`, name: c }));
+
+        if (isMounted) {
+          setAvailableCategories(initialOptions);
+          setSelectedCategoryIds((prev) =>
+            prev.length > 0 ? prev : (initialOptions.length > 0 ? [initialOptions[0].id] : [])
+          );
+        }
+      } catch (err) {
+        console.error('[AddBookModal] Error fetching categories:', err);
+        const fallbackOptions: CategoryOption[] = categories.map((c, i) => ({
+          id: `cat_0${i + 1}`,
+          name: c,
+        }));
+        if (isMounted) {
+          setAvailableCategories(fallbackOptions);
+          setSelectedCategoryIds((prev) =>
+            prev.length > 0 ? prev : (fallbackOptions.length > 0 ? [fallbackOptions[0].id] : [])
+          );
+        }
+      }
+    }
+
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, categories]);
 
   if (!isOpen) return null;
 
-  const handleToggleCategory = (cat: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+  const handleToggleCategory = (catId: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
     );
   };
 
-  const handleAddCustomCategory = () => {
+  const handleAddCustomCategory = async () => {
     const trimmed = newCategoryInput.trim();
-    if (trimmed && !selectedCategories.includes(trimmed)) {
-      setSelectedCategories((prev) => [...prev, trimmed]);
+    if (!trimmed) return;
+
+    const existing = availableCategories.find(
+      (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) {
+      if (!selectedCategoryIds.includes(existing.id)) {
+        setSelectedCategoryIds((prev) => [...prev, existing.id]);
+      }
+      setNewCategoryInput('');
+      return;
+    }
+
+    try {
+      const catDocRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.CATEGORIES), {
+        nameCategories: trimmed,
+      });
+      const newCat: CategoryOption = {
+        id: catDocRef.id,
+        name: trimmed,
+      };
+      setAvailableCategories((prev) => [...prev, newCat]);
+      setSelectedCategoryIds((prev) => [...prev, catDocRef.id]);
+      setNewCategoryInput('');
+    } catch (err) {
+      console.error('[AddBookModal] Error creating category in Firestore:', err);
+      const fallbackId = `cat_${Date.now()}`;
+      const fallbackCat: CategoryOption = { id: fallbackId, name: trimmed };
+      setAvailableCategories((prev) => [...prev, fallbackCat]);
+      setSelectedCategoryIds((prev) => [...prev, fallbackId]);
       setNewCategoryInput('');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -79,7 +162,7 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
       return;
     }
 
-    if (selectedCategories.length === 0) {
+    if (selectedCategoryIds.length === 0) {
       setError('Vui lòng chọn ít nhất 1 thể loại cho cuốn sách.');
       return;
     }
@@ -93,35 +176,94 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
     const heightNum = parseFloat(height) || 0;
 
     const dimensionsString = `${widthNum} x ${lengthNum} x ${heightNum} cm`;
-    const additionalImagesList = [additionalImage1, additionalImage2, additionalImage3].filter(
-      (url) => url.trim().length > 0
-    );
+    const additionalImagesList = [additionalImage1, additionalImage2, additionalImage3]
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0);
 
-    onAddBook({
-      title: title.trim(),
-      author: author.trim(),
-      authorBio: authorBio.trim(),
-      authorImage: authorImage.trim(),
-      category: selectedCategories.join(', '),
-      categories: selectedCategories,
-      isbn: isbn.trim() || `978-604${Math.floor(1000000 + Math.random() * 9000000)}`,
-      price: priceNum,
-      originalPrice: originalPriceNum || Math.round(priceNum * 1.2),
-      totalUnits: totalNum,
-      availableUnits: totalNum, // Tự động bằng tổng nhập kho
-      publisher: publisher.trim(),
-      publishYear: parseInt(publishYear, 10) || 2024,
-      pages: pagesNum,
-      language: language.trim() || 'Tiếng Việt',
-      dimensions: dimensionsString,
-      description: description.trim(),
-      formatVi: 'Ấn bản tiêu chuẩn',
-      coverImage: coverImage.trim(),
-      coverAlt: `Ảnh bìa tác phẩm ${title.trim()}`,
-      additionalImages: additionalImagesList,
-    });
+    const cleanIsbn = isbn.trim() || `978-604${Math.floor(1000000 + Math.random() * 9000000)}`;
+    const effectiveOrigPrice = originalPriceNum || Math.round(priceNum * 1.2);
 
-    onClose();
+    try {
+      setIsSubmitting(true);
+
+      // 1. Create Author document in "Authors" collection
+      const authorDocData = {
+        nameAuthor: author.trim(),
+        introduction: authorBio.trim(),
+        imgAuthor: authorImage.trim(),
+      };
+      const authorDocRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.AUTHORS), authorDocData);
+      const generatedAuthorId = authorDocRef.id;
+
+      // 2. Prepare 15-field book document
+      const firestoreBookData = {
+        ISBN13: cleanIsbn,
+        ISBN12: cleanIsbn,
+        title: title.trim(),
+        description: description.trim(),
+        originalPrice: effectiveOrigPrice,
+        saleprice: priceNum,
+        salePrice: priceNum,
+        idAuthor: generatedAuthorId,
+        nameAuthor: author.trim(),
+        categories: selectedCategoryIds,
+        imgCoverPage: coverImage.trim(),
+        imgs: additionalImagesList,
+        stockQuantity: totalNum,
+        soldCount: 0,
+        specifications: {
+          numPages: pagesNum,
+          language: language.trim() || 'Tiếng Việt',
+          size: dimensionsString,
+          weight: '350 g',
+          releaseDate: `${publishYear.trim() || '2024'}-01-01`,
+          publisher: publisher.trim() || 'NXB Trẻ',
+        },
+      };
+
+      // 3. Create Book document in "Books" collection
+      const docRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.BOOKS), firestoreBookData);
+
+      const selectedCategoryNames = availableCategories
+        .filter((c) => selectedCategoryIds.includes(c.id))
+        .map((c) => c.name);
+
+      const createdBook: InventoryBook = {
+        id: docRef.id,
+        idAuthor: generatedAuthorId,
+        title: title.trim(),
+        author: author.trim(),
+        authorBio: authorBio.trim(),
+        authorImage: authorImage.trim(),
+        category: selectedCategoryNames.length > 0 ? selectedCategoryNames.join(', ') : 'Văn học',
+        categories: selectedCategoryIds,
+        isbn: cleanIsbn,
+        price: priceNum,
+        originalPrice: effectiveOrigPrice,
+        totalUnits: totalNum,
+        availableUnits: totalNum,
+        publisher: publisher.trim(),
+        publishYear: parseInt(publishYear, 10) || 2024,
+        pages: pagesNum,
+        language: language.trim() || 'Tiếng Việt',
+        dimensions: dimensionsString,
+        description: description.trim(),
+        formatVi: 'Ấn bản tiêu chuẩn',
+        coverImage: coverImage.trim(),
+        coverAlt: `Ảnh bìa tác phẩm ${title.trim()}`,
+        additionalImages: additionalImagesList,
+      };
+
+      useStore.getState().showToast(`Đã thêm thành công ấn phẩm “${title.trim()}” vào kho sách.`);
+      onAddBook(createdBook);
+      onClose();
+    } catch (err: any) {
+      console.error('[AddBookModal] Error inserting book to Firestore:', err);
+      setError('Lỗi khi lưu ấn phẩm lên cơ sở dữ liệu. Vui lòng thử lại.');
+      useStore.getState().showToast('Lỗi khi lưu ấn phẩm lên cơ sở dữ liệu.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -273,7 +415,7 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
                 <span>2. Thể loại ấn phẩm (Cho phép chọn nhiều)</span>
               </div>
               <span className="text-xs text-secondary font-semibold">
-                Đã chọn: {selectedCategories.length}
+                Đã chọn: {selectedCategoryIds.length}
               </span>
             </div>
 
@@ -286,15 +428,15 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
               data-testid="admin-inventory-modal-add-categories-group"
               className="flex flex-wrap gap-2 pt-1"
             >
-              {categories.map((cat) => {
-                const isSelected = selectedCategories.includes(cat);
+              {availableCategories.map((cat) => {
+                const isSelected = selectedCategoryIds.includes(cat.id);
                 return (
                   <button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    id={`cat-chip-${cat}`}
-                    data-testid={`admin-inventory-modal-add-cat-${cat}`}
-                    onClick={() => handleToggleCategory(cat)}
+                    id={`cat-chip-${cat.name}`}
+                    data-testid={`admin-inventory-modal-add-cat-${cat.name}`}
+                    onClick={() => handleToggleCategory(cat.id)}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
                       isSelected
                         ? 'bg-primary text-on-primary border-primary shadow-xs'
@@ -304,7 +446,7 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
                     <span className="material-symbols-outlined text-[16px]">
                       {isSelected ? 'check_circle' : 'add'}
                     </span>
-                    <span>{cat}</span>
+                    <span>{cat.name}</span>
                   </button>
                 );
               })}
@@ -675,9 +817,13 @@ export const AddBookModal: React.FC<AddBookModalProps> = ({
               type="submit"
               id="btn-submit-add-book"
               data-testid="admin-inventory-modal-add-btn-submit"
-              className="px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Thêm sách vào kho
+              {isSubmitting && (
+                <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+              )}
+              <span>{isSubmitting ? 'Đang lưu vào kho...' : 'Thêm sách vào kho'}</span>
             </button>
           </div>
         </form>

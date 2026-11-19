@@ -67,7 +67,6 @@ export const Home: React.FC = () => {
   const handleGenreSelect = (genreName: string) => {
     setActiveGenre(genreName);
     setSearchQuery(genreName);
-    navigate('/catalog');
   };
 
   const handleAddToCart = (bookItem: FeaturedBookItem) => {
@@ -86,7 +85,13 @@ export const Home: React.FC = () => {
       className="flex flex-col w-full bg-surface text-primary font-body-md"
     >
       {/* 1. Hero Editorial Banner */}
-      <HeroBanner onSearch={handleSearch} onGenreSelect={handleGenreSelect} />
+      <HeroBanner
+        onSearch={handleSearch}
+        onGenreSelect={(genre) => {
+          handleGenreSelect(genre);
+          navigate(`/catalog?category=${encodeURIComponent(genre)}`);
+        }}
+      />
 
       {/* 2. Explore by Curated Genres */}
       <CuratedGenresSection onSelectGenre={handleGenreSelect} />

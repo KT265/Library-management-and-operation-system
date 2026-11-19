@@ -24,6 +24,10 @@ export interface OrderDisplay {
   estimatedDelivery?: string;
   deliveredDate?: string;
   items: OrderItemDisplay[];
+  createAt?: any;
+  createdAt?: any;
+  statusOrder?: string;
+  stateOrder?: string;
 }
 
 export interface PatronProfileData {
@@ -37,4 +41,4 @@ export interface PatronProfileData {
   bio: string;
 }
 
-export type OrderFilterTab = 'all' | 'processing' | 'pending' | 'delivered' | 'cancelled';
+export type OrderFilterTab = 'all' | 'pending' | 'processing' | 'delivered';

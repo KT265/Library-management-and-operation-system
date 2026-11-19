@@ -6,7 +6,13 @@ import { AuthSegmentedToggle } from '../components/auth/AuthSegmentedToggle';
 import { SignInForm } from '../components/auth/SignInForm';
 import { RegisterForm } from '../components/auth/RegisterForm';
 import { SocialOAuthDivider } from '../components/auth/SocialOAuthDivider';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { ToastNotification } from '../components/common/ToastNotification';
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+} from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import {
   auth,
@@ -15,6 +21,7 @@ import {
   lookupUserRoleAndProfile,
   mapFirebaseUserToUser,
   syncUserProfileToFirestore,
+  FIRESTORE_COLLECTIONS,
 } from '../services/firebase';
 
 const systemLogo = new URL('../Public/Logo.png', import.meta.url).href;
@@ -51,8 +58,9 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // Google OAuth Loading State
+  // Google OAuth & Register Loading State
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
   // Redirect destination helper
   const getRedirectPath = (isAdmin: boolean) => {
@@ -88,7 +96,7 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
   };
 
   // Register Handler
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regName.trim() || !regEmail.trim() || !regPassword) {
       showToast('Vui lòng điền đầy đủ các thông tin bắt buộc.');
@@ -107,18 +115,66 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
       return;
     }
 
-    login({
-      name: regName.trim(),
-      email: regEmail.trim(),
-      role: 'customer',
-    });
+    try {
+      setIsRegisterLoading(true);
+      const currentAuth = auth || getAuth();
+      const userCredential = await createUserWithEmailAndPassword(
+        currentAuth,
+        regEmail.trim(),
+        regPassword
+      );
+      const user = userCredential.user;
 
-    const safeName = regName.trim();
-    showToast('Chào mừng ' + safeName + ' đến với BookVerse! Tài khoản độc giả đã được tạo thành công.');
-    navigate(getRedirectPath(false));
+      const userDoc = {
+        id: user.uid,
+        roleUser: 'CUSTOMER',
+        nameUser: regName.trim(),
+        emailUser: regEmail.trim(),
+        imgUser: '',
+        numTelephone: '',
+        readBookCount: 0,
+        compltOrderCount: 0,
+        addresUser: [],
+      };
+
+      await setDoc(doc(db, FIRESTORE_COLLECTIONS.USERS, user.uid), userDoc);
+
+      const idToken = await user.getIdToken();
+      login(
+        {
+          id: user.uid,
+          name: userDoc.nameUser,
+          email: userDoc.emailUser,
+          role: 'customer',
+          avatar: '',
+          phone: '',
+          address: '',
+        },
+        idToken
+      );
+
+      const safeName = regName.trim();
+      showToast('Chào mừng ' + safeName + ' đến với BookVerse! Tài khoản độc giả đã được tạo thành công.');
+      navigate(getRedirectPath(false));
+    } catch (err: any) {
+      console.error('[Auth] Registration error:', err);
+      let errorMsg = 'Đăng ký không thành công. Vui lòng thử lại.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMsg = 'Địa chỉ email này đã được sử dụng. Vui lòng đăng nhập hoặc chọn email khác.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMsg = 'Địa chỉ email không hợp lệ.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMsg = 'Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn (ít nhất 8 ký tự).';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      showToast(errorMsg);
+    } finally {
+      setIsRegisterLoading(false);
+    }
   };
 
-  // Google OAuth Handler (lifted from SocialOAuthDivider, replaces handleGoogleAuth)
+  // Google OAuth Handler (wires handleGoogleAuth with real signInWithPopup)
   const handleGoogleLogin = async () => {
     try {
       setIsGoogleLoading(true);
@@ -133,18 +189,21 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
       const user = result.user;
       const fbUser = user;
 
-      // Check if user document exists in Firestore "users" collection
-      const userDocRef = doc(db, 'users', user.uid);
+      // Check if user document exists in Firestore "Users" collection
+      const userDocRef = doc(db, FIRESTORE_COLLECTIONS.USERS, user.uid);
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
         await setDoc(userDocRef, {
-          uid: user.uid,
-          name: user.displayName || '',
-          email: user.email || '',
-          avatar: user.photoURL || '',
-          role: 'customer',
-          createdAt: new Date().toISOString(),
+          id: user.uid,
+          roleUser: 'CUSTOMER',
+          nameUser: user.displayName || user.email?.split('@')[0] || 'Người dùng',
+          emailUser: user.email || '',
+          imgUser: user.photoURL || '',
+          numTelephone: user.phoneNumber || '',
+          readBookCount: 0,
+          compltOrderCount: 0,
+          addresUser: [],
         });
       }
 
@@ -174,6 +233,8 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
       setIsGoogleLoading(false);
     }
   };
+
+  const handleGoogleAuth = handleGoogleLogin;
 
   // Forgot Password Stub
   const handleForgotPassword = (e: React.MouseEvent) => {
@@ -293,11 +354,12 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
                   setAgreeTerms={setAgreeTerms}
                   onSubmit={handleRegisterSubmit}
                   isVisible={mode === 'register'}
+                  isLoading={isRegisterLoading}
                 />
 
                 {/* 5. Social OAuth & Guest Exploration */}
                 <SocialOAuthDivider
-                  onGoogleAuth={handleGoogleLogin}
+                  onGoogleAuth={handleGoogleAuth}
                   dividerText={mode === 'signin' ? 'hoặc tiếp tục với' : 'hoặc đăng ký bằng'}
                   isLoading={isGoogleLoading}
                 />
@@ -349,6 +411,9 @@ export const Auth: React.FC<AuthProps> = ({ initialMode = 'signin' }) => {
           </div>
         </footer>
       </main>
+
+      {/* Floating Toast Notification */}
+      <ToastNotification />
     </div>
   );
 };

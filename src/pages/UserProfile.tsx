@@ -13,8 +13,6 @@ import { ReadingStatsBento } from '../components/user-profile/ReadingStatsBento'
 import { OrderHistorySection } from '../components/user-profile/OrderHistorySection';
 import { EditProfileModal } from '../components/user-profile/EditProfileModal';
 import { WriteReviewModal } from '../components/user-profile/WriteReviewModal';
-import { OrderTrackingModal } from '../components/user-profile/OrderTrackingModal';
-import { VietQrModal } from '../components/user-profile/VietQrModal';
 
 export const UserProfile: React.FC = () => {
   const { user, login, showToast } = useStore();
@@ -39,8 +37,6 @@ export const UserProfile: React.FC = () => {
   // Modals state
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState<boolean>(false);
-  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState<boolean>(false);
-  const [isVietQrModalOpen, setIsVietQrModalOpen] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderDisplay | null>(null);
 
   const fetchUserData = async () => {
@@ -101,6 +97,10 @@ export const UserProfile: React.FC = () => {
           carrier: data.shipMethod?.method || 'BookVerse Express',
           trackingNumber: data.orderCode ? `BVE-${data.orderCode}` : undefined,
           items: mappedItems,
+          createAt: data.createAt || data.createdAt,
+          createdAt: data.createAt || data.createdAt,
+          statusOrder: String(data.statusOrder || data.status || 'PROCESSING').toUpperCase(),
+          stateOrder: String(data.statusOrder || data.stateOrder || data.status || 'PROCESSING').toUpperCase(),
         };
       });
       setOrders(mappedOrders);
@@ -109,29 +109,15 @@ export const UserProfile: React.FC = () => {
       const userDoc = await getDoc(doc(db, 'Users', user.id));
       if (userDoc.exists()) {
         const uData = userDoc.data();
-        const completedCount =
-          uData.compltOrderCount ??
-          uData.complOrderCount ??
-          mappedOrders.filter((o) => o.status === 'delivered' || o.status === 'paid').length;
-        const readCount =
-          uData.readBookCount ??
-          mappedOrders.reduce(
-            (sum, o) => sum + o.items.reduce((iSum, it) => iSum + it.quantity, 0),
-            0
-          );
+        const readCount = typeof uData.readBookCount === 'number' ? uData.readBookCount : 0;
         setReadingStats({
-          completedOrders: completedCount,
+          completedOrders: mappedOrders.length,
           booksRead: readCount,
         });
       } else {
         setReadingStats({
-          completedOrders: mappedOrders.filter(
-            (o) => o.status === 'delivered' || o.status === 'paid'
-          ).length,
-          booksRead: mappedOrders.reduce(
-            (sum, o) => sum + o.items.reduce((iSum, it) => iSum + it.quantity, 0),
-            0
-          ),
+          completedOrders: mappedOrders.length,
+          booksRead: 0,
         });
       }
     } catch (err: any) {
@@ -148,14 +134,14 @@ export const UserProfile: React.FC = () => {
 
   // Profile data for edit modal
   const profileData: PatronProfileData = {
-    name: user?.name || 'Minh Nguyễn',
-    email: user?.email || 'minh.nguyen@example.com',
-    phone: user?.phone || '0908 345 678',
-    address: user?.address || 'Tòa nhà Tower 3, 65 Đường Lê Lợi, Quận 1, TP. Hồ Chí Minh',
-    city: user?.city || 'TP. Hồ Chí Minh',
-    district: user?.district || 'Quận 1',
-    detailedAddress: user?.detailedAddress || 'Tòa nhà Tower 3, 65 Đường Lê Lợi',
-    bio: 'Độc giả đam mê kiến trúc phần mềm phân tán, hệ thống cơ sở dữ liệu và văn học kinh điển thế giới.',
+    name: user?.name || 'Độc giả',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
+    city: user?.city || '',
+    district: user?.district || '',
+    detailedAddress: user?.detailedAddress || '',
+    bio: '',
   };
 
   // Filtered Orders calculation
@@ -163,14 +149,20 @@ export const UserProfile: React.FC = () => {
     let result = orders;
 
     // Filter by tab status
-    if (activeTab === 'processing') {
-      result = result.filter((o) => o.status === 'processing' || o.status === 'paid');
-    } else if (activeTab === 'pending') {
-      result = result.filter((o) => o.status === 'pending');
+    if (activeTab === 'pending') {
+      result = result.filter(
+        (o) => (o.stateOrder || o.statusOrder || '').toUpperCase() === 'PENDING'
+      );
+    } else if (activeTab === 'processing') {
+      result = result.filter(
+        (o) => (o.stateOrder || o.statusOrder || '').toUpperCase() === 'PROCESSING'
+      );
     } else if (activeTab === 'delivered') {
-      result = result.filter((o) => o.status === 'delivered');
-    } else if (activeTab === 'cancelled') {
-      result = result.filter((o) => o.status === 'cancelled');
+      result = result.filter(
+        (o) =>
+          (o.stateOrder || o.statusOrder || '').toUpperCase() === 'DELIVERED' ||
+          o.status === 'delivered'
+      );
     }
 
     // Filter by search query
@@ -185,7 +177,28 @@ export const UserProfile: React.FC = () => {
       });
     }
 
-    return result;
+    // Chronological Sorting: Newest to Oldest using createAt timestamp before rendering
+    const getOrderTime = (o: OrderDisplay): number => {
+      if (o.createAt) {
+        if (typeof o.createAt.toMillis === 'function') return o.createAt.toMillis();
+        if (typeof o.createAt.toDate === 'function') return o.createAt.toDate().getTime();
+        if (typeof o.createAt.seconds === 'number') return o.createAt.seconds * 1000;
+        const parsed = new Date(o.createAt).getTime();
+        if (!isNaN(parsed)) return parsed;
+      }
+      if (o.createdAt) {
+        const parsed = new Date(o.createdAt).getTime();
+        if (!isNaN(parsed)) return parsed;
+      }
+      return 0;
+    };
+
+    return [...result].sort((a, b) => {
+      if (b.createAt?.toMillis && a.createAt?.toMillis) {
+        return b.createAt.toMillis() - a.createAt.toMillis();
+      }
+      return getOrderTime(b) - getOrderTime(a);
+    });
   }, [orders, activeTab, searchQuery]);
 
   // Modal Handlers
@@ -210,32 +223,6 @@ export const UserProfile: React.FC = () => {
   const handleOpenReview = (order: OrderDisplay) => {
     setSelectedOrder(order);
     setIsReviewModalOpen(true);
-  };
-
-  const handleOpenTracking = (order: OrderDisplay) => {
-    setSelectedOrder(order);
-    setIsTrackingModalOpen(true);
-  };
-
-  const handleOpenVietQr = (order: OrderDisplay) => {
-    setSelectedOrder(order);
-    setIsVietQrModalOpen(true);
-  };
-
-  const handleCancelOrder = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id === orderId) {
-          return {
-            ...o,
-            status: 'cancelled',
-            shippingNote: 'Đơn hàng đã được độc giả hủy yêu cầu',
-          };
-        }
-        return o;
-      })
-    );
-    showToast('Đã hủy đơn hàng thành công!');
   };
 
   return (
@@ -288,12 +275,6 @@ export const UserProfile: React.FC = () => {
             setActiveTab={setActiveTab}
             setSearchQuery={setSearchQuery}
             onOpenReview={handleOpenReview}
-            onOpenTracking={handleOpenTracking}
-            onOpenVietQr={handleOpenVietQr}
-            onReorder={(order) => {
-              showToast(`Đã thêm lại các sách từ đơn ${order.orderNumber} vào giỏ hàng!`);
-            }}
-            onCancelOrder={(order) => handleCancelOrder(order.id)}
           />
         )}
       </div>
@@ -302,6 +283,7 @@ export const UserProfile: React.FC = () => {
       <EditProfileModal
         isOpen={isEditModalOpen}
         initialData={profileData}
+        userId={user?.id}
         onClose={() => setIsEditModalOpen(false)}
         onSave={handleSaveProfile}
       />
@@ -313,25 +295,6 @@ export const UserProfile: React.FC = () => {
         onSubmit={(rating: number, _comment: string) => {
           setIsReviewModalOpen(false);
           showToast(`Cảm ơn bạn đã đánh giá ${rating} sao cho ấn phẩm!`);
-        }}
-      />
-
-      <OrderTrackingModal
-        isOpen={isTrackingModalOpen}
-        order={selectedOrder}
-        onClose={() => setIsTrackingModalOpen(false)}
-      />
-
-      <VietQrModal
-        isOpen={isVietQrModalOpen}
-        order={selectedOrder}
-        onClose={() => setIsVietQrModalOpen(false)}
-        onConfirmPaid={(order) => {
-          setOrders((prev) =>
-            prev.map((o) => (o.id === order.id ? { ...o, status: 'paid' } : o))
-          );
-          setIsVietQrModalOpen(false);
-          showToast('Xác thực thanh toán VietQR thành công!');
         }}
       />
     </div>

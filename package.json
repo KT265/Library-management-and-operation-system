@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "postbuild": "node scripts/sanitize-dist.cjs",
     "preview": "vite preview",
     "server": "node server.cjs",
     "test": "node scripts/run-e2e-tests.mjs",

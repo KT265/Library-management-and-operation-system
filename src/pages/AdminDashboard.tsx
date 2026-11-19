@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
-import { db, FIRESTORE_COLLECTIONS, convertTimestampToISO } from '../services/firebase';
+import { db, convertTimestampToISO } from '../services/firebase';
 import { DashboardHeader } from '../components/admin-dashboard/DashboardHeader';
 import { KpiMetricsBento } from '../components/admin-dashboard/KpiMetricsBento';
 import { RecentOrdersTable } from '../components/admin-dashboard/RecentOrdersTable';
@@ -26,9 +26,9 @@ export const AdminDashboard: React.FC = () => {
     setError(null);
     try {
       const [booksSnap, ordersSnap, usersSnap] = await Promise.all([
-        getDocs(collection(db, FIRESTORE_COLLECTIONS.BOOKS)),
-        getDocs(collection(db, FIRESTORE_COLLECTIONS.ORDER)),
-        getDocs(collection(db, FIRESTORE_COLLECTIONS.USERS)),
+        getDocs(collection(db, 'Books')),
+        getDocs(collection(db, 'Order')),
+        getDocs(collection(db, 'Users')),
       ]);
 
       // 1. Process Low Stock Alerts (copiesLeft < 10)
@@ -78,8 +78,8 @@ export const AdminDashboard: React.FC = () => {
         const itemSummary =
           count > 0 ? `${count} ấn phẩm • ${titles}${items.length > 2 ? '...' : ''}` : 'Chưa có ấn phẩm';
 
-        const paymentStatus = String(ord.statusPayment || ord.paymentStatus || '').toUpperCase();
-        const orderStatus = String(ord.statusOrder || ord.status || '').toUpperCase();
+        const paymentStatus = String(ord.statusPayment || '').toUpperCase();
+        const orderStatus = String(ord.statusOrder || '').toUpperCase();
 
         let badgeLabel = 'Chờ xử lý';
         let badgeClasses =
@@ -123,7 +123,7 @@ export const AdminDashboard: React.FC = () => {
           orderNumber: displayOrderNumber,
           customerName: ord.infoCustom?.cusName || ord.infoCustom?.name || ord.userName || 'Độc giả',
           itemSummary,
-          amount: ord.totalPrice ?? ord.totalAmount ?? 0,
+          amount: typeof ord.totalPrice === 'number' ? ord.totalPrice : (Number(ord.totalPrice) || 0),
           badgeLabel,
           badgeClasses,
           date: dateFormatted,
@@ -133,16 +133,22 @@ export const AdminDashboard: React.FC = () => {
       });
       setRecentOrders(mappedRecentOrders);
 
-      // 3. Process KPI Metrics
+      // 3. Process KPI Metrics (using totalPrice for revenue & statusOrder for counting)
       const totalRevenue = rawOrders
-        .filter((o: any) => String(o.statusPayment || o.paymentStatus || '').toUpperCase() === 'PAID')
-        .reduce((sum: number, o: any) => sum + (o.totalPrice ?? o.totalAmount ?? 0), 0);
+        .filter((o: any) => {
+          const paymentStatus = String(o.statusPayment || '').toUpperCase();
+          const orderStatus = String(o.statusOrder || '').toUpperCase();
+          return paymentStatus === 'PAID' || orderStatus === 'DELIVERED';
+        })
+        .reduce((sum: number, o: any) => {
+          const price = typeof o.totalPrice === 'number' ? o.totalPrice : (Number(o.totalPrice) || 0);
+          return sum + price;
+        }, 0);
 
       const successfulOrders = rawOrders.filter((o: any) => {
-        const pay = String(o.statusPayment || o.paymentStatus || '').toUpperCase();
-        const stat = String(o.statusOrder || o.status || '').toUpperCase();
-        return pay === 'PAID' || stat === 'DELIVERED';
-      }).length;
+        const orderStatus = String(o.statusOrder || '').toUpperCase();
+        return orderStatus === 'DELIVERED' || orderStatus === 'PROCESSING' || orderStatus === 'SHIPPED';
+      }).length || rawOrders.length;
 
       setKpiMetrics({
         revenue: totalRevenue,
@@ -152,7 +158,7 @@ export const AdminDashboard: React.FC = () => {
       });
     } catch (err: any) {
       console.error('[AdminDashboard] Error querying Firestore:', err);
-      setError('Không thể kết nối đến máy chủ cơ sở dữ liệu để tải dữ liệu thống kê tổng quan. Vui lòng thử lại.');
+      setError(`Không thể kết nối đến máy chủ cơ sở dữ liệu để tải dữ liệu thống kê tổng quan (${err?.message || err?.code || 'Lỗi kết nối'}). Vui lòng thử lại.`);
     } finally {
       setLoading(false);
     }

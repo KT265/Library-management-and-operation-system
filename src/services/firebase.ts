@@ -60,15 +60,15 @@ export interface FirebaseConfig {
   appId: string;
 }
 
-const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || {};
+const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) || (typeof process !== 'undefined' && process.env) || {};
 
 export const firebaseConfig: FirebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || 'AIzaSyChv3p3K7JqiVk-Y34aZvF96-B6sMZ0__s',
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || 'management-for-library.firebaseapp.com',
-  projectId: env.VITE_FIREBASE_PROJECT_ID || 'management-for-library',
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || 'management-for-library.firebasestorage.app',
-  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '553315753053',
-  appId: env.VITE_FIREBASE_APP_ID || '1:553315753053:web:c761c45300a1fa4769c1b4',
+  apiKey: env.VITE_FIREBASE_API_KEY || '',
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: env.VITE_FIREBASE_APP_ID || '',
 };
 
 // Singleton initialization with HMR guard
@@ -87,7 +87,6 @@ export const FIRESTORE_COLLECTIONS = {
   CATEGORIES: 'Categories',
   AUTHORS: 'Authors',
   REVIEWS: 'Reviews',
-  TRANSACTIONS: 'Transactions',
 } as const;
 
 // ============================================================================
@@ -167,26 +166,32 @@ export function mapFirestoreBookToBook(data: any, id: string): Book {
 
   return {
     id: id || data.id,
+    idAuthor: data.idAuthor || '',
     title: data.title || 'Chưa có tiêu đề',
     subtitle: data.subtitle || (data.description ? data.description.substring(0, 85) + '...' : ''),
     author: data.nameAuthor || data.author || 'Tác giả',
     authorBio: data.authorBio || '',
     authorImage: data.authorImage || '',
     publisher: specs.publisher || data.publisher || 'NXB Trẻ',
-    price: data.salePrice ?? data.price ?? 0,
-    originalPrice: data.originalPrice ?? data.salePrice ?? data.price ?? 0,
+    price: data.saleprice ?? data.salePrice ?? data.price ?? 0,
+    originalPrice: data.originalPrice ?? data.saleprice ?? data.salePrice ?? data.price ?? 0,
     rating: data.averageRating ?? data.rating ?? 5.0,
     reviewCount: data.reviewCount ?? 0,
     inStock: stock > 0,
     stockCount: stock,
     coverImage: data.imgCoverPage || data.coverImage || '',
+    imgCoverPage: data.imgCoverPage || data.coverImage || '',
+    imgs: Array.isArray(data.imgs) ? data.imgs : (Array.isArray(data.images) ? data.images : []),
+    categories: Array.isArray(data.categories)
+      ? data.categories.map((c: any) => (typeof c === 'object' && c !== null ? (c.id || c.nameCategories || c.name || '') : String(c)))
+      : (data.category ? [String(data.category)] : []),
     genre: resolvedGenre,
     format: 'Standard',
     description: data.description || '',
     featured: data.featured ?? (sold >= 300),
     isBestseller: data.isBestseller ?? (sold >= 300),
     specs: {
-      isbn: data.ISBN12 || specs.isbn || 'N/A',
+      isbn: data.ISBN13 || data.ISBN12 || specs.isbn || 'N/A',
       format: 'Standard',
       pages: specs.numPages || specs.pages || 0,
       language: specs.language || 'Tiếng Việt',
@@ -194,6 +199,15 @@ export function mapFirestoreBookToBook(data: any, id: string): Book {
       dimensions: specs.width ? `${specs.width} x ${specs.height || 20} cm` : specs.dimensions || '13 x 20 cm',
       weight: specs.weight ? `${specs.weight} g` : '350 g',
       publicationYear: specs.releaseDate ? new Date(specs.releaseDate).getFullYear() : specs.publicationYear || 2023,
+    },
+    // ERD-compliant specifications map — used by SpecificationsTab
+    specifications: {
+      numPages: specs.numPages ?? specs.pages ?? undefined,
+      language: specs.language || undefined,
+      size: specs.size || specs.dimensions || undefined,
+      weight: specs.weight || undefined,
+      releaseDate: specs.releaseDate || undefined,
+      publisher: specs.publisher || data.publisher || undefined,
     },
   };
 }
@@ -213,15 +227,16 @@ export function mapFirestoreBookToInventoryBook(data: any, id: string): Inventor
 
   return {
     id: id || data.id,
+    idAuthor: data.idAuthor || '',
     title: data.title || 'Chưa có tiêu đề',
     author: data.nameAuthor || data.author || 'Tác giả',
     category: typeof rawCat === 'string' ? rawCat : 'Văn học',
     categories: Array.isArray(data.categories) ? data.categories.map((c: any) => c.nameCategories || c) : [rawCat],
-    isbn: data.ISBN12 || specs.isbn || 'N/A',
+    isbn: data.ISBN13 || data.ISBN12 || specs.isbn || 'N/A',
     totalUnits: stock + sold,
     availableUnits: stock,
-    price: data.salePrice ?? data.price ?? 0,
-    originalPrice: data.originalPrice ?? data.salePrice ?? data.price ?? 0,
+    price: data.saleprice ?? data.salePrice ?? data.price ?? 0,
+    originalPrice: data.originalPrice ?? data.saleprice ?? data.salePrice ?? data.price ?? 0,
     coverImage: data.imgCoverPage || data.coverImage || '',
     coverAlt: `Bìa sách ${data.title || ''}`,
     publisher: specs.publisher || data.publisher || 'NXB Trẻ',
@@ -282,6 +297,8 @@ export function mapFirestoreOrderToOrder(data: any, id: string): Order {
     total,
     status: orderStatus,
     paymentStatus,
+    methodPayment: data.methodPayment || data.paymentMethod || undefined,
+    paymentMethod: data.methodPayment || data.paymentMethod || undefined,
     voucherCode: data.appliedVoucher || data.voucherCode || undefined,
     createdAt: convertTimestampToISO(data.createAt || data.createdAt),
     updatedAt: convertTimestampToISO(data.updateAt || data.updatedAt),
@@ -298,6 +315,7 @@ export function mapFirestoreOrderToFulfillmentOrder(data: any, id: string): Fulf
   const statusRaw = (data.statusOrder || '').toUpperCase();
   let fulfillmentCycle: OrderFulfillmentCycle = 'Pending';
   if (statusRaw === 'DELIVERED') fulfillmentCycle = 'Delivered';
+  else if (statusRaw === 'PROCESSING') fulfillmentCycle = 'Processing';
   else if (statusRaw === 'RETURNED') fulfillmentCycle = 'Returned';
   else if (statusRaw === 'CANCELLED') fulfillmentCycle = 'Cancelled';
   else fulfillmentCycle = 'Pending';
@@ -328,7 +346,12 @@ export function mapFirestoreOrderToFulfillmentOrder(data: any, id: string): Fulf
     dueSubtext: fulfillmentCycle === 'Delivered' ? 'Đã giao' : 'Đang xử lý',
     paymentStatus,
     fulfillmentCycle,
-    orderTotalVND: order.totalAmount,
+    statusOrder: (data.statusOrder || 'PROCESSING').toUpperCase(),
+    stateOrder: (data.statusOrder || data.stateOrder || 'PROCESSING').toUpperCase(),
+    orderTotalVND: data.totalPrice ?? order.totalAmount,
+    totalPrice: data.totalPrice ?? order.totalAmount,
+    createAt: data.createAt || data.createdAt || order.createdAt,
+    createdAt: data.createdAt || data.createAt || order.createdAt,
   };
 }
 
@@ -338,6 +361,7 @@ export function mapFirestoreOrderToFulfillmentOrder(data: any, id: string): Fulf
 export function mapFirestoreUserToUser(data: any, id: string): User {
   const rawRole = String(data.roleUser || data.role || 'USER').toUpperCase();
   const role: UserRole = rawRole === 'ADMIN' ? 'admin' : 'customer';
+  const roleUser = rawRole === 'ADMIN' ? 'ADMIN' : 'CUSTOMER';
 
   let city = '';
   let district = '';
@@ -363,6 +387,8 @@ export function mapFirestoreUserToUser(data: any, id: string): User {
     name: data.nameUser || data.name || 'Người dùng',
     email: data.emailUser || data.email || '',
     role,
+    roleUser,
+    readBookCount: typeof data.readBookCount === 'number' ? data.readBookCount : 0,
     avatar: data.imgUser || data.avatar || '',
     phone: data.numTelephone || data.phone || '',
     address: detailedAddress ? `${detailedAddress}, ${district}, ${city}`.replace(/^, |, $/g, '') : '',
@@ -453,7 +479,20 @@ export function mapFirestoreVoucherToVoucher(data: any, id: string): Voucher {
 export function mapFirestoreVoucherToAdminVoucher(data: any, id: string): AdminVoucher {
   const v = mapFirestoreVoucherToVoucher(data, id);
   const adminType = v.discountType === 'percentage' ? 'percent' : v.discountType;
-  const adminStatus = v.status === 'expired' ? 'expired' : 'active';
+
+  const now = Date.now();
+  const expiryMs = new Date(v.expiryDate).getTime();
+  const diffDays = (expiryMs - now) / (1000 * 60 * 60 * 24);
+  const isStateActive = data.stateVoucher !== false;
+
+  let adminStatus: 'active' | 'expiring' | 'expired' = 'active';
+  if (!isStateActive || v.status === 'expired') {
+    adminStatus = 'expired';
+  } else if (diffDays >= 0 && diffDays <= 5) {
+    adminStatus = 'expiring';
+  } else {
+    adminStatus = 'active';
+  }
 
   return {
     id: v.id,
@@ -466,6 +505,12 @@ export function mapFirestoreVoucherToAdminVoucher(data: any, id: string): AdminV
     conditionNote: `Đơn tối thiểu ${v.minSpend.toLocaleString('vi-VN')} ₫`,
     usedCount: v.usedCount,
     totalUsageLimit: v.totalUsageLimit,
+    usageVoucher: data.usageVoucher ?? v.totalUsageLimit,
+    rateVoucher: data.rateVoucher ?? v.discountValue,
+    minimumVoucher: data.minimumVoucher ?? v.minSpend,
+    typeVoucher: data.typeVoucher || data.discountType || 'PERCENT',
+    codeVouchers: data.codeVouchers || v.code,
+    stateVoucher: isStateActive,
     expiryDate: v.expiryDate,
     expiryNote: `Hết hạn ${new Date(v.expiryDate).toLocaleDateString('vi-VN')}`,
     status: adminStatus,
@@ -828,9 +873,12 @@ export async function syncUserProfileToFirestore(
           id: fbUser.uid,
           nameUser: fbUser.displayName || fbUser.email?.split('@')[0] || 'Người dùng',
           emailUser: fbUser.email || '',
-          roleUser: role === 'admin' ? 'ADMIN' : 'USER',
+          roleUser: role === 'admin' ? 'ADMIN' : 'CUSTOMER',
           imgUser: fbUser.photoURL || '',
           numTelephone: fbUser.phoneNumber || '',
+          readBookCount: 0,
+          compltOrderCount: 0,
+          addresUser: [],
           createAt: new Date().toISOString(),
           updateAt: new Date().toISOString(),
         },

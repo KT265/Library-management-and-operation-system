@@ -2,13 +2,17 @@ import React from 'react';
 
 interface UsersKpisGridProps {
   adminCount: number;
-  userCount: number;
+  customerCount?: number;
+  userCount?: number;
 }
 
 export const UsersKpisGrid: React.FC<UsersKpisGridProps> = ({
   adminCount,
+  customerCount,
   userCount,
 }) => {
+  const actualCustomerCount = customerCount ?? userCount ?? 0;
+
   return (
     <div
       id="users-kpis-grid"
@@ -66,7 +70,7 @@ export const UsersKpisGrid: React.FC<UsersKpisGridProps> = ({
               data-testid="admin-users-kpi-user-count"
               className="font-headline-md text-headline-md text-on-surface font-bold"
             >
-              {userCount.toLocaleString('vi-VN')}
+              {actualCustomerCount.toLocaleString('vi-VN')}
             </span>
           </div>
           <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-1">

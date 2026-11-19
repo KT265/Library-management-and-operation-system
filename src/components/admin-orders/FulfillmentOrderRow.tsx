@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatVND } from '../../utils/currency';
-import { FulfillmentOrder, OrderFulfillmentCycle } from './types';
+import { FulfillmentOrder } from './types';
 
 interface FulfillmentOrderRowProps {
   order: FulfillmentOrder;
@@ -33,7 +33,7 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container-high text-on-surface-variant">
             <span className="material-symbols-outlined text-[14px]">payments</span>
-            <span>Đã thu tiền COD</span>
+            <span>Thu tiền COD</span>
           </span>
         );
       default:
@@ -41,30 +41,32 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
     }
   };
 
-  const getCycleBadge = (cycle: OrderFulfillmentCycle) => {
-    switch (cycle) {
-      case 'Delivered':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
-            Đã giao hàng
-          </span>
-        );
-      case 'Returned':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-fixed text-on-secondary-fixed">
-            Đã hoàn trả
-          </span>
-        );
-      case 'Pending':
+  const getCycleBadge = (statusOrCycle?: string) => {
+    const rawState = (
+      statusOrCycle ||
+      order.stateOrder ||
+      order.statusOrder ||
+      order.fulfillmentCycle ||
+      ''
+    ).toUpperCase();
+
+    switch (rawState) {
+      case 'PENDING':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-tertiary-container text-on-tertiary-container">
             Chờ xử lý
           </span>
         );
-      case 'Cancelled':
+      case 'PROCESSING':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-error-container text-on-error-container">
-            Đã huỷ
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-fixed text-on-primary-fixed">
+            Đang giao hàng
+          </span>
+        );
+      case 'DELIVERED':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary-container text-on-secondary-container">
+            Đã giao hàng
           </span>
         );
       default:
@@ -131,16 +133,9 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
         </div>
       </td>
 
-      {/* 4. Hạn trả / Trạng thái */}
+      {/* 4. Ngày đặt */}
       <td className="py-3 px-4">
         <span className="font-semibold text-primary text-xs block">{order.dueDate}</span>
-        <span
-          className={`text-xs block ${
-            order.isOverdue ? 'text-error font-semibold' : 'text-secondary'
-          }`}
-        >
-          {order.dueSubtext}
-        </span>
       </td>
 
       {/* 5. Cổng thanh toán */}
@@ -154,7 +149,7 @@ export const FulfillmentOrderRow: React.FC<FulfillmentOrderRowProps> = ({
       {/* 6. Tiến độ giao hàng */}
       <td className="py-3 px-4 text-center">
         <div className="flex items-center justify-center">
-          {getCycleBadge(order.fulfillmentCycle)}
+          {getCycleBadge(order.stateOrder || order.statusOrder || order.fulfillmentCycle)}
         </div>
       </td>
 

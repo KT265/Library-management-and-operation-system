@@ -26,6 +26,7 @@ out/
 .env.production.local
 .env.*
 !.env.example
+firebase-key.json
 
 # Payment Gateways & API Configs containing Secrets
 payosConfig.cjs

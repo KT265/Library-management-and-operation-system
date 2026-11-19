@@ -1,6 +1,97 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../../services/firebase';
+import { AdminVoucher } from './types';
+import { parseDateToMs } from '../../hooks/useVoucherStatusCheck';
 
-export const VoucherKpisBento: React.FC = () => {
+export interface VoucherKpisBentoProps {
+  vouchers?: AdminVoucher[];
+}
+
+export const VoucherKpisBento: React.FC<VoucherKpisBentoProps> = ({ vouchers: propVouchers }) => {
+  const [liveKpis, setLiveKpis] = useState({
+    activeCount: 0,
+    totalRedemptions: 0,
+    expiringSoonCount: 0,
+  });
+
+  useEffect(() => {
+    // If propVouchers is provided and non-empty, we can calculate from it
+    if (propVouchers && propVouchers.length > 0) {
+      const now = Date.now();
+      const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
+
+      let active = 0;
+      let redemptions = 0;
+      let expiring = 0;
+
+      for (const v of propVouchers) {
+        // 1. MÃ ƯU ĐÃI ĐANG HIỆU LỰC: Sum where stateVoucher === true
+        if (v.stateVoucher === true || (v.stateVoucher !== false && v.status === 'active')) {
+          active++;
+        }
+
+        // 2. TỔNG LƯỢT SỬ DỤNG: Total sum of usedCount
+        redemptions += Number(v.usedCount) || 0;
+
+        // 3. SẮP HẾT THỜI HẠN ƯU ĐÃI: expiryDate is within exactly 5 days from now
+        const expMs = parseDateToMs(v.expiryDate, true);
+        if (expMs !== null && expMs >= now && expMs - now <= fiveDaysMs) {
+          expiring++;
+        }
+      }
+
+      setLiveKpis({
+        activeCount: active,
+        totalRedemptions: redemptions,
+        expiringSoonCount: expiring,
+      });
+      return;
+    }
+
+    // Otherwise, listen in real-time from Firestore collection "Vouchers"
+    const unsubscribe = onSnapshot(
+      collection(db, 'Vouchers'),
+      (snapshot) => {
+        const now = Date.now();
+        const fiveDaysMs = 5 * 24 * 60 * 60 * 1000;
+
+        let active = 0;
+        let redemptions = 0;
+        let expiring = 0;
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          // 1. MÃ ƯU ĐÃI ĐANG HIỆU LỰC: stateVoucher === true
+          if (data.stateVoucher === true) {
+            active++;
+          }
+
+          // 2. TỔNG LƯỢT SỬ DỤNG: sum of usedCount
+          redemptions += Number(data.usedCount) || 0;
+
+          // 3. SẮP HẾT THỜI HẠN: within 5 days from new Date()
+          const expMs = parseDateToMs(data.expiryDate, true);
+          if (expMs !== null && expMs >= now && expMs - now <= fiveDaysMs) {
+            expiring++;
+          }
+        });
+
+        setLiveKpis({
+          activeCount: active,
+          totalRedemptions: redemptions,
+          expiringSoonCount: expiring,
+        });
+      },
+      (err) => {
+        console.error('[VoucherKpisBento] Error listening to Vouchers collection:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [propVouchers]);
+
   return (
     <div
       id="voucher-kpis-grid"
@@ -28,10 +119,10 @@ export const VoucherKpisBento: React.FC = () => {
               data-testid="admin-vouchers-kpi-active-val"
               className="font-display-md text-display-md font-bold text-primary tracking-tight num-tabular"
             >
-              4
+              {liveKpis.activeCount.toLocaleString('vi-VN')}
             </span>
             <span className="text-secondary font-title-sm text-title-sm">mã</span>
-          </div>         
+          </div>
         </div>
       </div>
 
@@ -56,13 +147,14 @@ export const VoucherKpisBento: React.FC = () => {
               data-testid="admin-vouchers-kpi-redemptions-val"
               className="font-display-md text-display-md font-bold text-primary tracking-tight num-tabular"
             >
-              2.767
+              {liveKpis.totalRedemptions.toLocaleString('vi-VN')}
             </span>
             <span className="text-secondary font-title-sm text-title-sm">lượt</span>
           </div>
         </div>
       </div>
-      {/* Card 4: Expiring Soon */}
+
+      {/* Card 3: Expiring Soon */}
       <div
         id="kpi-expiring-soon"
         data-testid="admin-vouchers-kpi-expiring"
@@ -83,7 +175,7 @@ export const VoucherKpisBento: React.FC = () => {
               data-testid="admin-vouchers-kpi-expiring-val"
               className="font-display-md text-display-md font-bold text-tertiary tracking-tight num-tabular"
             >
-              2
+              {liveKpis.expiringSoonCount.toLocaleString('vi-VN')}
             </span>
             <span className="text-tertiary font-title-sm text-title-sm">mã sắp hết hạn</span>
           </div>

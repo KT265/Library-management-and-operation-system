@@ -4,20 +4,16 @@ import { formatVND } from '../../utils/currency';
 
 export interface OrderHistoryCardProps {
   order: OrderDisplay;
-  onOpenTracking: (order: OrderDisplay) => void;
   onOpenReview: (order: OrderDisplay) => void;
-  onOpenVietQr: (order: OrderDisplay) => void;
-  onReorder: (order: OrderDisplay) => void;
-  onCancelOrder: (order: OrderDisplay) => void;
+  onOpenTracking?: (order: OrderDisplay) => void;
+  onOpenVietQr?: (order: OrderDisplay) => void;
+  onReorder?: (order: OrderDisplay) => void;
+  onCancelOrder?: (order: OrderDisplay) => void;
 }
 
 export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   order,
-  onOpenTracking,
   onOpenReview,
-  onOpenVietQr,
-  onReorder,
-  onCancelOrder,
 }) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -29,25 +25,17 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
           </span>
         );
       case 'processing':
-      case 'paid':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-semibold bg-primary/10 text-primary border border-primary/20">
             <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-            <span>Đang xử lý &amp; Đang giao / Paid &amp; Dispatched</span>
+            <span>Đang xử lý / Processing</span>
           </span>
         );
       case 'pending':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-semibold bg-secondary-container text-on-secondary-container border border-secondary/30">
             <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
-            <span>Chờ thanh toán / Pending Settlement</span>
-          </span>
-        );
-      case 'cancelled':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-label-sm font-semibold bg-error-container/30 text-error border border-error/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-error" />
-            <span>Đã hủy / Cancelled</span>
+            <span>Chờ xử lý / Pending</span>
           </span>
         );
       default:
@@ -139,19 +127,8 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Tracking button */}
-          <button
-            id="trackOrderBtn"
-            data-testid={'user-profile-order-card-btn-track-' + order.id}
-            type="button"
-            onClick={() => onOpenTracking(order)}
-            className="h-9 px-4 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors cursor-pointer"
-          >
-            Tra cứu hành trình
-          </button>
-
           {/* Write review button */}
-          {order.status === 'delivered' && (
+          {(order.status === 'delivered' || (order.stateOrder || order.statusOrder || '').toUpperCase() === 'DELIVERED') && (
             <button
               id="writeReviewBtn"
               data-testid={'user-profile-order-card-btn-review-' + order.id}
@@ -160,41 +137,6 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
               className="h-9 px-4 rounded-full font-label-sm text-label-sm font-semibold bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 transition-colors cursor-pointer"
             >
               Viết đánh giá
-            </button>
-          )}
-
-          {/* Pending VietQR button */}
-          {order.status === 'pending' && (
-            <button
-              id="payVietQrBtn"
-              data-testid={'user-profile-order-card-btn-vietqr-' + order.id}
-              type="button"
-              onClick={() => onOpenVietQr(order)}
-              className="h-9 px-4 rounded-full font-label-sm text-label-sm font-bold bg-primary text-on-primary hover:bg-primary-container transition-all cursor-pointer shadow-sm"
-            >
-              Thanh toán VietQR
-            </button>
-          )}
-
-          {/* Reorder button */}
-          <button
-            data-testid={'user-profile-order-card-btn-reorder-' + order.id}
-            type="button"
-            onClick={() => onReorder(order)}
-            className="h-9 px-4 rounded-full font-label-sm text-label-sm font-semibold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
-          >
-            Đặt lại
-          </button>
-
-          {/* Cancel Order button (if pending) */}
-          {order.status === 'pending' && (
-            <button
-              data-testid={'user-profile-order-card-btn-cancel-' + order.id}
-              type="button"
-              onClick={() => onCancelOrder(order)}
-              className="h-9 px-3 rounded-full font-label-sm text-label-sm text-error hover:bg-error-container/20 transition-colors cursor-pointer"
-            >
-              Hủy đơn
             </button>
           )}
         </div>

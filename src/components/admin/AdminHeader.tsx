@@ -41,7 +41,7 @@ export const AdminHeader: React.FC = () => {
               type="button"
               onClick={handleClear}
               className="text-outline hover:text-on-surface p-1 rounded-full transition-colors cursor-pointer"
-              title="Xóa tìm kiếm"
+              title="Clear search"
             >
               <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
@@ -57,7 +57,7 @@ export const AdminHeader: React.FC = () => {
           data-testid="admin-header-btn-notifications"
           type="button"
           className="relative w-10 h-10 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer"
-          title="Thông báo"
+          title="Notifications"
         >
           <span className="material-symbols-outlined text-[20px]">notifications</span>
           <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-tertiary"></span>
@@ -70,7 +70,7 @@ export const AdminHeader: React.FC = () => {
           type="button"
           onClick={() => navigate('/')}
           className="w-10 h-10 rounded-full bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-secondary hover:text-primary transition-colors cursor-pointer"
-          title="Xem giao diện độc giả"
+          title="View Storefront"
         >
           <span className="material-symbols-outlined text-[20px]">storefront</span>
         </button>
@@ -80,7 +80,7 @@ export const AdminHeader: React.FC = () => {
           id="admin-header-avatar-badge"
           data-testid="admin-header-avatar-badge"
           className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0 shadow-sm"
-          title="Đã đăng nhập: Quản trị viên"
+          title="Logged in as Curator Admin"
         >
           <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
         </div>

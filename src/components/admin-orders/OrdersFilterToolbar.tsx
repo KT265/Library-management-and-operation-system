@@ -1,22 +1,28 @@
 import React from 'react';
 import { OrdersFilterState } from './types';
 
-interface OrdersFilterToolbarProps {
+export interface OrdersFilterToolbarProps {
   filterState: OrdersFilterState;
   onFilterChange: (updates: Partial<OrdersFilterState>) => void;
   onResetFilters: () => void;
+  sortOption?: string;
+  setSortOption?: (sort: string) => void;
+  onSortChange?: (sort: string) => void;
 }
 
 export const OrdersFilterToolbar: React.FC<OrdersFilterToolbarProps> = ({
   filterState,
   onFilterChange,
   onResetFilters,
+  sortOption = 'default',
+  setSortOption,
+  onSortChange,
 }) => {
   const statusTabs: { key: OrdersFilterState['statusChip']; label: string }[] = [
     { key: 'All', label: 'Tất cả' },
     { key: 'Pending', label: 'Chờ xử lý' },
-    { key: 'Delivered', label: 'Đã giao hàng' },
-    { key: 'Cancelled', label: 'Đã huỷ' },
+    { key: 'Processing', label: 'Đang giao hàng' },
+    { key: 'Delivered', label: 'Đã hoàn tất' },
   ];
 
   return (
@@ -89,9 +95,9 @@ export const OrdersFilterToolbar: React.FC<OrdersFilterToolbarProps> = ({
             <span>Đặt lại</span>
           </button>
         </div>
-      </div>
+      </div> 
 
-      {/* Lower Row: Status Chips & Date Range Picker */}
+      {/* Lower Row: Status Chips*/}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm pt-space-xs border-t border-surface-container-high/60">
         {/* Status Chips */}
         <div
@@ -120,41 +126,35 @@ export const OrdersFilterToolbar: React.FC<OrdersFilterToolbarProps> = ({
           })}
         </div>
 
-        {/* Vietnamese Date Range Controls */}
-        <div
-          id="orders-date-range-container"
-          data-testid="admin-orders-toolbar-date-range"
-          className="flex items-center gap-2 text-xs text-secondary flex-wrap"
-        >
-          <span className="font-medium text-on-surface">Khoảng thời gian:</span>
-          <div className="inline-flex items-center gap-1">
-            <label htmlFor="fromDateInput" className="text-secondary">
-              Từ ngày
-            </label>
-            <input
-              type="date"
-              id="fromDateInput"
-              data-testid="admin-orders-toolbar-input-from-date"
-              value={filterState.fromDate}
-              onChange={(e) => onFilterChange({ fromDate: e.target.value })}
-              className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 py-1 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div className="inline-flex items-center gap-1">
-            <label htmlFor="toDateInput" className="text-secondary">
-              Đến ngày
-            </label>
-            <input
-              type="date"
-              id="toDateInput"
-              data-testid="admin-orders-toolbar-input-to-date"
-              value={filterState.toDate}
-              onChange={(e) => onFilterChange({ toDate: e.target.value })}
-              className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-2 py-1 text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
+        {/* Sorting Dropdown Menu */}
+        <div className="relative inline-flex items-center self-end md:self-auto">
+          <span className="material-symbols-outlined text-outline text-[18px] absolute left-3 pointer-events-none">
+            swap_vert
+          </span>
+          <select
+            id="orderSortSelect"
+            data-testid="admin-orders-toolbar-select-sort"
+            value={sortOption}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSortOption?.(val);
+              onSortChange?.(val);
+            }}
+            className="appearance-none bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-full pl-9 pr-8 py-1.5 text-xs font-semibold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer transition-colors shadow-xs"
+          >
+            <option value="default">Không sắp xếp</option>
+            <option value="newest">Đơn hàng gần nhất</option>
+            <option value="price_desc">Giá trị lớn -&gt; bé</option>
+            <option value="price_asc">Giá trị bé -&gt; lớn</option>
+          </select>
+          <span className="material-symbols-outlined text-outline text-[16px] absolute right-2.5 pointer-events-none">
+            expand_more
+          </span>
         </div>
       </div>
     </div>
   );
 };
+
+export { OrdersFilterToolbar as OrderFilterBar };
+export default OrdersFilterToolbar;

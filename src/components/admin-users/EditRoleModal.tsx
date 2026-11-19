@@ -12,6 +12,7 @@ interface EditRoleModalProps {
   onClose: () => void;
   user: AdminManagedUser | null;
   isCreateMode?: boolean;
+  isSaving?: boolean;
   onSave: (updatedUser: AdminManagedUser) => void;
 }
 
@@ -20,6 +21,7 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
   onClose,
   user,
   isCreateMode = false,
+  isSaving = false,
   onSave,
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>('user');
@@ -379,11 +381,16 @@ export const EditRoleModal: React.FC<EditRoleModalProps> = ({
             type="button"
             id="btn-save-role-change"
             data-testid="admin-modal-btn-save"
+            disabled={isSaving}
             onClick={handleSave}
-            className="px-5 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-[18px]">check</span>
-            <span>Lưu thay đổi</span>
+            {isSaving ? (
+              <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+            ) : (
+              <span className="material-symbols-outlined text-[18px]">check</span>
+            )}
+            <span>{isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
           </button>
         </div>
       </div>
